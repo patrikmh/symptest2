@@ -2,7 +2,6 @@ import sqlite3
 import json
 import logging
 from typing import Optional, List, Dict, Any
-from pathlib import Path
 from grokcall.core.registry import CallSession
 
 logger = logging.getLogger("grokcall.db")
@@ -33,6 +32,9 @@ class Database:
                     status TEXT NOT NULL,
                     language TEXT,
                     summary TEXT,
+                    handled_by TEXT,
+                    end_reason TEXT,
+                    timings_json TEXT,
                     latencies_json TEXT
                 )
             """)
@@ -70,8 +72,9 @@ class Database:
             conn.execute("""
                 INSERT OR REPLACE INTO calls (
                     id, provider_call_id, caller_number, called_number,
-                    started_at, ended_at, status, language, summary, latencies_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    started_at, ended_at, status, language, summary,
+                    handled_by, end_reason, timings_json, latencies_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 session.call_id,
                 session.provider_call_id,
@@ -82,6 +85,9 @@ class Database:
                 session.status.value,
                 session.detected_language,
                 session.summary,
+                session.handled_by,
+                session.end_reason,
+                json.dumps(session.timings.model_dump(mode="json")),
                 json.dumps(latencies),
             ))
 
@@ -134,6 +140,7 @@ class Database:
             data["turns"] = turns
             data["messages"] = messages
             data["latencies"] = json.loads(data["latencies_json"]) if data.get("latencies_json") else {}
+            data["timings"] = json.loads(data["timings_json"]) if data.get("timings_json") else {}
             return data
 
     def list_recent_calls(self, limit: int = 50) -> List[Dict[str, Any]]:
