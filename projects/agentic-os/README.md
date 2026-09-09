@@ -1,11 +1,10 @@
 # agentic-os
 
-One or two sentences on what this project does and why it exists.
+Scaffold for the Agentic OS project.
 
 ## Run
 
-How to run it. For a static web page that is usually "open `index.html`"; for
-a script it is the command to invoke.
+Add run instructions once the project has an entry point.
 
 ## Test
 
