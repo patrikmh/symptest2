@@ -18,3 +18,7 @@ Thumbs.db
 
 # Agent orchestrator workspaces (see WORKFLOW.md)
 .pi/
+
+# Local SQLite databases (GrokCall call log etc.)
+*.db
+*.sqlite3

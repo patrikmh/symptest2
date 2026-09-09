@@ -101,8 +101,7 @@ Phone Gateway CallPipeline
   - `audio_format=ulaw_8000`
   - `commit_strategy=vad`
   - `vad_silence_threshold_secs=0.7`
-  - `language_code=sv`
-  - `secondary_languages=["en"]`
+  - language auto-detected by default (`include_language_detection=true`); `language_code`/`secondary_languages` optional hints
   - `include_language_detection=true`
 - **Header**: `xi-api-key: <ELEVENLABS_API_KEY>`
 - **Messages Sent**:

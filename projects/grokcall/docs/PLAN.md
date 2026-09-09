@@ -12,7 +12,7 @@ This plan organizes the implementation into 8 phases matching the system spec.
   - `CallMessage`: `caller_name`, `message`, `callback_requested`, `urgency`, `timestamp`.
   - `CallTimings`: all observability timestamps (`incoming_webhook_at`, `slack_event_sent_at`, `grok_first_mcp_call_at`, etc.).
   - `CallSession`: in-memory mutable session containing turns, messages, audio queue, event dispatchers.
-- `grokcall/core/config.py`: Pydantic settings loading from env (`FORTYSIX_ELKS_*`, `ELEVENLABS_*`, `SLACK_*`, `GROKCALL_MCP_TOKEN`, timeouts, etc.).
+- `grokcall/core/config.py`: Pydantic settings loading from env (`FORTYSIXELKS_*`, `ELEVENLABS_*`, `SLACK_WEBHOOK_URL`, `MCP_BEARER_TOKEN`, `REALTIME_PATH_TOKEN`, timeouts, etc.).
 - `grokcall/core/registry.py`:
   - `CallRegistry`: thread/async-safe lookup by `call_id` and `provider_call_id`.
   - Long-polling mechanism (`wait_for_turn`, `wait_for_live`).

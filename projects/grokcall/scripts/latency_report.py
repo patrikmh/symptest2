@@ -1,57 +1,63 @@
 #!/usr/bin/env python3
-"""Compute and report median, p90, and p95 latencies for GrokCall.
+"""Report p50/p90/p95 for the per-call latencies recorded in SQLite.
 
-Follows Section 32 & 33 (Test A wake latency and conversational turn latency).
+Usage: python scripts/latency_report.py [path/to/grokcall.db]
+
+This is the measurement side of the two critical experiments in the spec:
+Test A (Grok wake latency over many calls) and Test B (sustained turn latency).
 """
 
-import sys
 import json
 import sqlite3
-from typing import List, Dict
-import numpy as np
+import sys
+from statistics import quantiles
+from typing import Dict, List
+
+METRICS = [
+    "slack_wake_latency_ms",
+    "grok_wake_latency_ms",
+    "grok_inference_latency_ms",
+    "tts_startup_latency_ms",
+    "total_turn_latency_ms",
+]
 
 
-def analyze_latencies(db_path: str = "grokcall.db"):
+def percentile(values: List[float], pct: float) -> float:
+    if len(values) == 1:
+        return values[0]
+    # quantiles(n=100) yields the 1st..99th percentile cut points.
+    cuts = quantiles(values, n=100, method="inclusive")
+    return cuts[int(pct) - 1]
+
+
+def analyze(db_path: str) -> None:
     conn = sqlite3.connect(db_path)
-    cur = conn.execute("SELECT latencies_json FROM calls WHERE latencies_json IS NOT NULL")
-    rows = cur.fetchall()
+    rows = conn.execute("SELECT latencies_json FROM calls WHERE latencies_json IS NOT NULL").fetchall()
 
-    metrics: Dict[str, List[float]] = {
-        "slack_wake_latency_ms": [],
-        "grok_wake_latency_ms": [],
-        "grok_inference_latency_ms": [],
-        "tts_startup_latency_ms": [],
-        "total_turn_latency_ms": [],
-    }
-
-    for row in rows:
+    samples: Dict[str, List[float]] = {m: [] for m in METRICS}
+    for (raw,) in rows:
         try:
-            data = json.loads(row[0])
-            for key, val in data.items():
-                if val is not None and key in metrics:
-                    metrics[key].append(val)
-        except Exception:
+            data = json.loads(raw)
+        except (TypeError, json.JSONDecodeError):
             continue
+        for key, value in data.items():
+            if key in samples and isinstance(value, (int, float)):
+                samples[key].append(float(value))
 
-    print("=========================================================")
-    print("            GROKCALL OBSERVABILITY & LATENCY REPORT       ")
-    print("=========================================================")
-    print(f"Total analyzed calls: {len(rows)}\n")
-
-    for metric, values in metrics.items():
+    print(f"GrokCall latency report  ({len(rows)} calls in {db_path})")
+    print("-" * 78)
+    for metric in METRICS:
+        values = sorted(samples[metric])
         if not values:
-            print(f"{metric:30}: No samples recorded")
+            print(f"{metric:28} no samples")
             continue
-
-        arr = np.array(values)
-        p50 = np.percentile(arr, 50)
-        p90 = np.percentile(arr, 90)
-        p95 = np.percentile(arr, 95)
-        print(f"{metric:30}: count={len(values):3d} | p50={p50:6.1f}ms | p90={p90:6.1f}ms | p95={p95:6.1f}ms")
-
-    print("=========================================================")
+        print(
+            f"{metric:28} n={len(values):4d}  "
+            f"p50={percentile(values, 50):7.0f}ms  "
+            f"p90={percentile(values, 90):7.0f}ms  "
+            f"p95={percentile(values, 95):7.0f}ms"
+        )
 
 
 if __name__ == "__main__":
-    path = sys.argv[1] if len(sys.argv) > 1 else "grokcall.db"
-    analyze_latencies(path)
+    analyze(sys.argv[1] if len(sys.argv) > 1 else "grokcall.db")

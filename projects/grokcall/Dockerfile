@@ -2,18 +2,21 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Prevent Python from writing .pyc files & enable unbuffered stdout
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY grokcall ./grokcall
+COPY assets ./assets
+COPY scripts ./scripts
+
+RUN mkdir -p /app/data
 
 EXPOSE 8000
 

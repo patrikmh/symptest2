@@ -1,1 +1,3 @@
+# Monorepo-wide developer tooling. Each project lists its own runtime and test
+# dependencies in projects/<name>/requirements*.txt; CI installs all of them.
 pytest>=8.0
