@@ -5,8 +5,8 @@ and mid-sized companies. Assistants plan, research, draft and act across
 Gmail, Calendar, GitHub and the web, with company data kept on company
 hardware and every external effect gated by explicit authority.
 
-- [SPEC.md](SPEC.md) — canonical architecture specification (v6.1)
-- [RESEARCH-memory.md](RESEARCH-memory.md) — survey of Graphiti and other agent memory systems; v6.1 decision is to use Graphiti as a derived graph
+- [SPEC.md](SPEC.md) — canonical architecture specification (v6.2)
+- [RESEARCH-memory.md](RESEARCH-memory.md) — survey of Graphiti and other agent memory systems; Graphiti is a derived graph (v6.1+), product shape is v6.2
 
 ## Run
 

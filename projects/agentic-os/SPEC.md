@@ -1,8 +1,9 @@
-# Agentic OS Edge — Canonical Architecture Specification v6.1
+# Agentic OS Edge — Canonical Architecture Specification v6.2
 
-Status: production architecture baseline (supersedes v6.0 and v5.6)
+Status: production architecture baseline (supersedes v6.1, v6.0 and v5.6)
 Target: private, self-hosted agentic operating system for small and mid-sized organisations
-Deployment: one appliance (Raspberry Pi 5, Mac mini, DGX Spark or equivalent); optional worker machines later
+Product shape: Grok Bot ease and Hermes-style learning, with a kernel Grok Bot does not have
+Deployment: one appliance — Raspberry Pi 5 (`lite`), Mac mini M4 / M4 Pro (`standard`), NVIDIA DGX Spark (`pro`); optional worker machines later
 Core loop: Propose → Decide → Do → Prove
 Knowledge graph: Graphiti (self-hosted; never Zep Cloud)
 
@@ -11,32 +12,40 @@ Anything not marked V1 in Part XXI is roadmap.
 
 ## Revision note
 
-v6.1 adopts Graphiti as the V1 knowledge and memory graph. SQLite remains
+v6.2 is the full consolidated specification. It keeps the v5.6 security
+kernel and the v6.0 / v6.1 trims, and makes the product objects explicit so
+a 20-person company gets a Grok-like teammate roster without a shared
+signed-in cloud computer.
+
+v5.6 contributed the kernel: Propose → Decide → Do → Prove; CONTROL vs
+DATA; Effect Ledger with first-class UNKNOWN; Dispatch Barrier;
+digest-bound approvals; credential isolation; two browsers; no vendor
+root; evidence over claims; enabled ≠ authorized; widget ≠ kernel;
+`mail.send` as the reference irreversible effect.
+
+v6.0 removed what a first customer on one machine does not need: five
+roles became Owner / Member / Auditor; L0–L3 became `off | ask |
+automatic` plus grants; policy is an audited table; widgets ship in-repo;
+SQLite is the only authority database; Control Plane / Worker Plane is one
+`Worker.run` interface; Assistants and Skills are first-class; Gondolin is
+the same micro-VM on every host.
+
+v6.1 adopted Graphiti as the V1 knowledge and memory graph. SQLite remains
 the sole authority store. Graphiti is a derived, rebuildable index. Graph
-facts are DATA and never CONTROL. Graphiti's extraction LLM is called only
-through the model router. The graph backend is embedded FalkorDB Lite on
-solo appliances; Neo4j/Neptune/Kuzu are not V1.
+facts are DATA and never CONTROL. Extraction LLM and embedder are the
+model router only. Backend is FalkorDB Lite. No Zep Cloud, no OpenAI
+default, no Neptune, no Kuzu.
 
-v6.0 kept the v5.6 security kernel and removed what a first customer on one
-machine does not need. That kernel is unchanged.
+v6.2 adds the product shape that v5.6 lacked and that Grok Bot got right:
+five objects a person uses (Assistants, chats, Skills, tools, artifacts);
+a roster instead of a chat-history sidebar; presence; a Task workspace
+with status → preview → takeover; a heterogeneous transcript; teach-once
+Skills and Automations; inspectable memory (the Hermes property Grok Bot
+fails). It names the hardware range: Raspberry Pi 5, Mac mini M4, Mac mini
+M4 Pro, DGX Spark. It refuses Grok Bot's shared persistent VM, Auto Review
+as a kernel, and opaque memory.
 
-Kept: Propose → Decide → Do → Prove; CONTROL vs DATA; Effect Ledger with
-first-class UNKNOWN; Dispatch Barrier; digest-bound approvals; credential
-isolation; browser isolation; no vendor root; evidence over claims; the
-safety-test discipline.
-
-Added in v6.0: Control Plane / Worker Plane as a code boundary; Assistants;
-Skills and memory without authority; model routing; Gondolin on all
-hardware; three deployment profiles; explicit V1 build order.
-
-Added in v6.1: Graphiti as the temporal knowledge graph (Part X); graph
-search as hybrid retrieval; ingest as a `GRAPH_INGEST` worker job;
-`group_id` = project; fallback FTS5 when the graph is rebuilding;
-Graphiti-specific safety tests. Sections are numbered 1–192 with no gaps.
-
-Simplified (still): Owner/Member/Auditor; `off | ask | automatic` plus
-grants; policy as an audited table; in-repo widgets; SQLite as the
-authority database; one-command break-glass.
+Kernel sections remain 1–192. Product-shape sections are 193–210.
 
 ---
 
@@ -49,13 +58,24 @@ environment. It combines AI assistants, automation, company knowledge, coding
 sandboxes, web research and external integrations. Company data stays on
 company hardware. The model is never a trusted authority.
 
+The product is for small and mid-sized companies that want a Grok Bot /
+Hermes-style teammate they can talk to, that learns how they work, and that
+cannot send mail, open a PR or call an external model unless published
+policy allows it. Hardware is whatever they already own: a Raspberry Pi 5,
+a Mac mini M4 or M4 Pro, or a DGX Spark.
+
 ## 2. Promise
 
 A user states a goal in ordinary language. The system plans the work,
-retrieves evidence, delegates to agents, asks for approval when policy
+retrieves evidence, delegates to Assistants, asks for approval when policy
 requires it, executes, verifies the outcome and preserves evidence. A company
 with no IT department MUST be able to install it, connect one account and
 complete a governed task within an afternoon.
+
+The product is not merely a chat interface. It is a dashboard of named
+teammates, work that needs a human, and evidence of what left the machine.
+
+Product objects and the ease rule are normative in §193–§201.
 
 ## 3. Logical architecture
 
@@ -173,14 +193,20 @@ An identity that participates in policy evaluation. V1 kinds: `HUMAN`,
 
 A named, persistent teammate a user talks to. An Assistant is:
 
-- a persona (name, instructions, tone)
-- a memory scope (Part X)
+- a persona (name, avatar, title, instructions, tone)
+- a memory scope (Part X) that humans can open, correct and delete
 - a home project
 - zero or more standing grants shown on its card
+- a presence (idle, thinking, working, waiting, blocked, done)
 
 An Assistant never runs as a daemon. Every action it takes is a Run, and its
 authority is exactly the union of the initiating human's project membership
 and the Assistant's grants, evaluated at dispatch.
+
+The sidebar is a roster of Assistants, not a chat history. Coming back
+tomorrow means coming back to the same teammate. Two humans talking to the
+same Assistant in the same project share that Assistant's memory; they do
+not share credentials.
 
 ## 19. Run
 
@@ -677,9 +703,20 @@ agents negotiating.
 ## 78. Assistants in practice
 
 Creating an Assistant is one step: name, home project, optional
-instructions. It appears on Home, is reachable from the dashboard and mobile
-web, shows its standing grants and recent Runs on its card, and can be paused
-or deleted. Deleting an Assistant revokes its grants and archives its memory.
+instructions. It appears on the Home roster, is reachable from the dashboard
+and mobile web, shows presence, standing grants and recent Runs on its card,
+and can be paused or deleted. Deleting an Assistant revokes its grants and
+archives its memory.
+
+In the composer, `@` mentions an Assistant, a group thread, an Automation
+or a connection; `/` mentions a Skill. Mentioning is routing, not a grant.
+
+When a workspace is active, the Assistant card and the chat title-bar show
+it (purple status). Preview opens a side panel of the Gondolin or browserd
+screen. Takeover is full-screen human control, then hand-back. Closing the
+preview does not cancel the Task. Destroying the Task destroys the
+workspace. Assistants do not share a leftover desktop, cookie jar or
+`.ssh` directory.
 
 ## 79. Assistant authority
 
@@ -710,9 +747,14 @@ instead of a generic error.
 
 Gondolin runs coding Tasks and any risky local workload inside a Linux
 micro-VM (QEMU by default; libkrun where available) on every supported host:
-Raspberry Pi 5, Mac mini, DGX Spark and other ARM64 or x86_64 Linux/macOS
-machines. Isolation class is therefore uniform across the hardware range. A
-deployment profile changes sandbox count and memory, not sandbox kind.
+Raspberry Pi 5, Mac mini M4, Mac mini M4 Pro, DGX Spark and other ARM64 or
+x86_64 Linux/macOS machines. Isolation class is therefore uniform across the
+hardware range. A deployment profile changes sandbox count and memory, not
+sandbox kind.
+
+Gondolin is the Assistant's workspace for code and risky local work, not a
+login session. It MUST NOT persist browser cookies, OAuth tokens or host
+credentials across Tasks. Placeholders (§87) are the only secret path.
 
 ## 83. Host is the enforcement point
 
@@ -1089,13 +1131,22 @@ inference is budgeted in minutes on `lite` only.
 
 ## 127. Surfaces
 
-- Home: attention items, approvals, recent Runs, Assistants, budget and health tiles.
-- Work: Projects, Runs, Tasks, timeline, artifacts, Inspector.
-- Apps: enabled widgets with separate indicators for Connected, Available to project, Actual authority, Approval requirement, Health.
-- Automate: Automations and their standing grants.
-- Knowledge: browse, search, sources, Skills, graph entities and validity windows.
+- Home: Assistant roster with presence; attention items; approvals; recent
+  Runs; budget and health tiles. The roster is the primary navigation.
+- Work: Projects, Runs, Tasks, timeline, artifacts, workspace preview,
+  Inspector.
+- Chat: heterogeneous transcript — prose, approval cards, artifacts,
+  Automation events, and inline widgets (draft mail, comparison table).
+  System events (created a Skill, asked another Assistant) appear in the
+  same timeline.
+- Apps: enabled widgets with separate indicators for Connected, Available
+  to project, Actual authority, Approval requirement, Health.
+- Automate: Automations (Routines) and their standing grants.
+- Knowledge: browse, search, sources, Skills (as openable documents),
+  graph entities and validity windows, Assistant memory entries.
 - Approvals: pending and past decisions.
-- Admin: Overview, People, Widgets, Policies, Budgets, Audit, Backup, Updates, System.
+- Admin: Overview, People, Widgets, Policies, Budgets, Audit, Backup,
+  Updates, System.
 
 ## 128. First paint is local
 
@@ -1590,10 +1641,13 @@ API/hybrid use, or later as a Control Plane node with remote workers.
 
 ## 189. `standard`
 
-Mac mini M4 / M4 Pro class, 24–64 GB unified memory.
-SANDBOX 2 · BROWSER 1 · GRAPH_INGEST 1 · local_large a ~30B-class quantised
-model. Graph backend: FalkorDB Lite. Routing default `local_only`. This is
-the reference solo appliance.
+Mac mini M4 and Mac mini M4 Pro class, 24–64 GB unified memory.
+SANDBOX 2 (M4) or 3 (M4 Pro, 48 GB+) · BROWSER 1 · GRAPH_INGEST 1 ·
+local_large a ~30B-class quantised model (M4 Pro MAY run a larger quant
+when the memory reserve still holds). Graph backend: FalkorDB Lite.
+Routing default `local_only`. This is the reference solo appliance for
+most small companies. M4 and M4 Pro share the profile; the Pro only
+raises sandbox count and the local_large weight the reserve permits.
 
 ## 190. `pro`
 
@@ -1617,6 +1671,170 @@ Adding a worker machine binds `Worker.run` (§63) to a remote node. The
 Control Plane, SQLite, Graphiti store, credential store and audit stay on
 one machine. Cluster concerns (leases, node identity, placement) are
 deferred (Part XXII).
+
+---
+
+# Part XIX.A — Product shape (Grok ease, Hermes learning)
+
+These sections are V1. They do not create a second authority path.
+
+## 193. Five objects
+
+V1 exposes Assistants, chats (Runs), Skills, tools and artifacts. The
+workspace is glanced at, not operated as a second desktop. Barrier, ledger,
+Graphiti, epochs and profiles are Inspector/Admin concerns.
+
+## 194. Roster, not history
+
+Home navigation is the Assistant roster. Chats exist under an Assistant.
+A week-old thread is reachable from that Assistant's card, not from a
+global history that buries teammates.
+
+## 195. Presence
+
+An Assistant's avatar or card MUST show one of: idle, thinking, working,
+waiting (approval or human), blocked, done. Hover or tap reveals the
+current Step in one line. Presence is derived from Run/Task/effect state.
+It MUST NOT invent a sixth "looks busy" state.
+
+## 196. Workspace: status, preview, takeover
+
+When Gondolin or browserd is active for a Task:
+
+- **Status** — title-bar / card indicator.
+- **Preview** — side panel; work continues if the panel is closed.
+- **Takeover** — full-screen human control of that Task's workspace, then
+  hand-back.
+
+Takeover does not grant the human a shared cookie jar. Passwords, 2FA and
+CAPTCHAs during takeover are typed by the human into that Task session
+only and MUST NOT be stored as Assistant memory or Graphiti episodes.
+
+The workspace is destroyed with the Task after artifact collection.
+Assistants NEVER share leftover files, cookies or CLI credentials. That is
+the load-bearing difference from Grok Bot.
+
+## 197. Heterogeneous transcript
+
+A chat MAY answer in prose, a structured widget (draft email, table,
+board), an approval card, or a system event ("created Skill *Weekly
+vendor scan*", "waiting for you"). The form of the answer is part of the
+answer. Completion text still is not evidence (§11).
+
+## 198. Composer
+
+`/` inserts a Skill. `@` addresses an Assistant, a group thread, an
+Automation or a connection. Neither character changes policy. A Skill
+that says "then send to the steering list" does not make those recipients
+trusted CONTROL.
+
+## 199. Teach once
+
+A user MAY ask an Assistant to watch a Run and save a Skill, optionally
+with an Automation (§112). The Skill is DATA. The Automation is
+grant-bound. Re-runs appear in the Assistant's transcript so a human can
+handle exceptions. This is the Hermes / Grok learning loop. It MUST NOT
+install widgets or widen grants.
+
+## 200. Inspectable learning
+
+Users MUST be able to open, edit, correct, export and delete:
+
+- Assistant observational and episodic memory
+- Skills
+- canonical Knowledge
+- graph facts (via correction episodes, §110)
+
+There is no hidden memory store. If a fact cannot be shown, it MUST NOT
+be used in a prompt. This is the property Grok Bot lacks and Hermes has.
+
+## 201. Group threads
+
+A project MAY have a group thread with up to four Assistants plus humans.
+Each Assistant keeps its own memory. The thread is shared context for that
+conversation only. Assistants MAY @ each other; that creates a child Task
+in the same Run, still Barrier-bound. The user is not the router. V1 has
+no separate "Chief of Staff" role — any Assistant may be instructed to
+coordinate.
+
+## 202. Dashboard
+
+The dashboard (Home) is the product. It MUST answer, from local state,
+without providers:
+
+- who needs me (approvals, blocked, UNKNOWN)
+- who is working (presence)
+- what left the machine recently (effects with evidence)
+- whether the appliance is healthy
+- whether a budget is exhausted
+
+A Member who never opens Admin MUST be able to live here.
+
+## 203. Local, hybrid, API as a user sentence
+
+Onboarding and Admin → Policies express routing as:
+
+- "Keep everything on this machine"
+- "Use our machine first; ask me before a cloud model"
+- "Prefer a cloud model when policy allows"
+
+These map to `local_only`, `hybrid` + `model.infer.external=ask`, and
+`external_preferred` / `automatic` (§122). The UI never says "egress
+effect" to a Member.
+
+## 204. Hardware the Owner picks
+
+```
+lite      Raspberry Pi 5 (8–16 GB)
+standard  Mac mini M4 or Mac mini M4 Pro (24–64 GB unified)
+pro       NVIDIA DGX Spark (128 GB unified)
+```
+
+Same image, same tests, same Gondolin. The Owner chooses a profile at
+install or Admin → System. Changing profile is a restart, not a migration.
+
+## 205. What a Pi may drop
+
+On `lite`, Graphiti MAY store raw episodes without edges until a capable
+model is allowed (§188). `local_large` is absent. The kernel, dashboard,
+Assistants, FTS5, approvals and Gmail send MUST still work. Ease degrades
+to "the local model could not finish this; allow a cloud model?" (§81),
+not to a different security model.
+
+## 206. What Spark may add
+
+On `pro`, more sandbox and browser slots and a larger `local_large`. It
+MUST NOT add a second Barrier, a shared signed-in desktop, or a graph that
+the Barrier reads. Capacity is not authority.
+
+## 207. No shared computer
+
+The following are forbidden in V1 and later unless a future revision
+replaces this section:
+
+- one long-lived VM that all Assistants share
+- browser sessions that survive across Assistants
+- CLI credentials written into a guest for the next Task
+- treating "the Assistant is signed in to Salesforce" as a grant
+
+Reach is a Connection. Permission is a policy row or approval.
+
+## 208. MCP later, still behind the Barrier
+
+MCP is not V1 (Part XXII). When added it is an adapter transport. It MUST
+NOT bypass capability policy, MUST NOT inject secrets into Pi, and MUST
+NOT be required for Gmail / Calendar / GitHub / web.
+
+## 209. Auto Review is not the Barrier
+
+A tighten-only reviewer agent MAY flag or escalate to `ask` (§76). It MUST
+NOT allow an effect the Barrier would block. A second model is never the
+authority decision.
+
+## 210. Closing product law
+
+Steal Grok's objects. Keep Edge's choke point. Learn like Hermes, in
+public. Run on a Pi or a Spark without changing the law.
 
 ---
 
@@ -1674,6 +1892,12 @@ All MUST pass before first release.
 48. Knowledge search still returns FTS5 hits when Graphiti is unhealthy
 49. human graph correction invalidates the old edge rather than deleting history
 50. Graphiti health probes do not call an LLM
+51. two Assistants cannot observe each other's Gondolin or browserd session
+52. a workspace leftover (cookie, token, file) cannot be used by a later Task
+53. takeover 2FA or password is not stored as memory or a Graphiti episode
+54. a Skill or `@` mention cannot widen authority
+55. Home roster and attention tiles render with all providers offline
+56. memory the product cannot show to a human is not included in a prompt
 
 Deferred with their features: widget package digest verification, worker
 lease and epoch behaviour, Member access to shared mailboxes, Admin and
@@ -1703,10 +1927,13 @@ Phase 3  Runtime
          with local_small and one external model_provider connection
 
 Phase 4  Product
-         dashboard (Home, Work, Approvals, Apps, Admin), mobile web,
-         Assistants, Knowledge canonical store + FTS5, Graphiti with
-         FalkorDB Lite and router-bound extraction, Skills, Assistant
-         memory, Inspector, onboarding, graph rebuild
+         dashboard (Home roster + presence, Work, Approvals, Apps,
+         Admin), mobile web, Assistants, workspace status/preview/
+         takeover, heterogeneous transcript, Knowledge canonical store
+         + FTS5, Graphiti with FalkorDB Lite and router-bound
+         extraction, inspectable Skills and Assistant memory,
+         teach-once → Skill/Automation, Inspector, onboarding,
+         graph rebuild
 
 Phase 5  Packs, in this order
          Gmail read/search → Gmail draft → Gmail send (reference
@@ -1765,6 +1992,8 @@ Before shipping a feature, answer:
 10. Can a Skill, memory entry, Graphiti edge, webpage or webhook make this happen without a human trust transition?
 11. Does the SQLite schema enforce the invariant, or only the code? Would losing the graph file lose it?
 12. Which Part XX test covers it?
+13. Did a workspace, cookie or Skill accidentally become reach or authority?
+14. Can the Member finish this from Home without opening Admin?
 
 If any answer is unclear, the feature is not ready.
 
@@ -1803,8 +2032,14 @@ graphiti ≠ kernel
 owner ≠ root
 browser ≠ universal adapter
 widget ≠ kernel
+workspace leftover ≠ grant
+presence ≠ authority
+`@` mention ≠ grant
+auto review ≠ Barrier
 ```
 
 Everything may propose. Only explicit authority may decide. Only the
 Dispatch Barrier may let an external effect leave. After it leaves,
 evidence, not optimism, determines what happened.
+
+The person sees Kenny. The machine sees a Run. The Barrier sees a digest.
