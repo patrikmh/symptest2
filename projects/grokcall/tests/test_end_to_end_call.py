@@ -89,7 +89,10 @@ async def test_full_call_through_real_server_and_mcp_client(test_settings):
                 data={"callid": "c_voice_leg", "direction": "incoming", "from": "+46709876543", "to": "+46766861234"},
             )
             assert res.status_code == 200
-            assert res.json() == {"connect": test_settings.fortysixelks_realtime_number}
+            assert res.json() == {
+                "connect": test_settings.fortysixelks_realtime_number,
+                "whenhangup": f"{test_settings.base_url}/46elks/hangup",
+            }
 
         session = await registry.get_by_provider_id("c_voice_leg")
         call_id = session.call_id

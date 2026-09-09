@@ -34,15 +34,31 @@ def parse_hangup_form(form: Mapping[str, str]) -> Optional[str]:
 
 
 class FortySixElksActionBuilder:
-    """Builds the JSON call-action objects 46elks expects as webhook responses."""
+    """Builds the JSON call-action objects 46elks expects as webhook responses.
+
+    ``whenhangup`` is a sibling key on every action: 46elks POSTs to it once when
+    the call ends. Without it our /46elks/hangup safety net never fires.
+    """
 
     @staticmethod
-    def play_then_connect(play_url: str, connect_to: str) -> Dict[str, Any]:
-        return {"play": play_url, "next": {"connect": connect_to}}
+    def play_then_connect(
+        play_url: str, connect_to: str, whenhangup: Optional[str] = None
+    ) -> Dict[str, Any]:
+        action: Dict[str, Any] = {"play": play_url}
+        if whenhangup:
+            action["whenhangup"] = whenhangup
+        inner: Dict[str, Any] = {"connect": connect_to}
+        if whenhangup:
+            inner["whenhangup"] = whenhangup
+        action["next"] = inner
+        return action
 
     @staticmethod
-    def connect(connect_to: str) -> Dict[str, Any]:
-        return {"connect": connect_to}
+    def connect(connect_to: str, whenhangup: Optional[str] = None) -> Dict[str, Any]:
+        action: Dict[str, Any] = {"connect": connect_to}
+        if whenhangup:
+            action["whenhangup"] = whenhangup
+        return action
 
     @staticmethod
     def hangup(reason: str = "busy") -> Dict[str, Any]:
