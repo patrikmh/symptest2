@@ -30,9 +30,9 @@ Skills and memory without authority; model routing; Gondolin on all
 hardware; three deployment profiles; explicit V1 build order.
 
 Added in v6.1: Graphiti as the temporal knowledge graph (Part X); graph
-search as hybrid retrieval; ingest as a Worker MODEL job; `group_id` =
-project; fallback FTS5 when the graph is rebuilding; Graphiti-specific
-safety tests.
+search as hybrid retrieval; ingest as a `GRAPH_INGEST` worker job;
+`group_id` = project; fallback FTS5 when the graph is rebuilding;
+Graphiti-specific safety tests. Sections are numbered 1–192 with no gaps.
 
 Simplified (still): Owner/Member/Auditor; `off | ask | automatic` plus
 grants; policy as an audited table; in-repo widgets; SQLite as the
