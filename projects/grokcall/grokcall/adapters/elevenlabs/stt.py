@@ -1,64 +1,82 @@
 import asyncio
-import json
 import base64
+import json
 import logging
-from typing import Optional, Callable, Awaitable
+from typing import Awaitable, Callable, List, Optional
+from urllib.parse import urlencode
+
 import websockets
 
 from grokcall.core.ports import SpeechToTextPort
 
 logger = logging.getLogger("grokcall.elevenlabs.stt")
 
+_FATAL_MESSAGE_TYPES = {
+    "error", "auth_error", "quota_exceeded", "unaccepted_terms", "rate_limited",
+    "queue_overflow", "resource_exhausted", "session_time_limit_exceeded",
+    "invalid_request", "transcriber_error",
+}
+
 
 class ElevenLabsScribeSTT(SpeechToTextPort):
-    """ElevenLabs Realtime Scribe Speech-to-Text WebSocket adapter.
+    """ElevenLabs Scribe realtime speech-to-text over WebSocket.
 
-    Connects to wss://api.elevenlabs.io/v1/speech-to-text/realtime with:
-    - audio_format=ulaw_8000
-    - commit_strategy=vad
-    - language_code=sv (with secondary_languages=['en'])
+    Audio is forwarded as-is in G.711 mu-law 8 kHz (``audio_format=ulaw_8000``) and
+    turns are committed by the service's voice-activity detection. Language is
+    auto-detected unless a primary language is configured; ``committed_transcript``
+    events then carry ``language_code``.
     """
 
     def __init__(
         self,
         api_key: str,
         base_url: str = "wss://api.elevenlabs.io/v1/speech-to-text/realtime",
-        sample_rate: int = 8000,
+        model_id: str = "scribe_v2_realtime",
+        language_code: Optional[str] = None,
+        secondary_languages: Optional[List[str]] = None,
         vad_silence_threshold_secs: float = 0.7,
+        sample_rate: int = 8000,
     ):
         self.api_key = api_key
         self.base_url = base_url
-        self.sample_rate = sample_rate
+        self.model_id = model_id
+        self.language_code = language_code
+        self.secondary_languages = secondary_languages or []
         self.vad_silence_threshold_secs = vad_silence_threshold_secs
+        self.sample_rate = sample_rate
 
-        self._ws = None
+        self._ws: Optional[websockets.ClientConnection] = None
         self._rx_task: Optional[asyncio.Task] = None
-        self._is_running = False
+        self._running = False
+
+    def build_url(self) -> str:
+        params = {
+            "model_id": self.model_id,
+            "audio_format": "ulaw_8000",
+            "commit_strategy": "vad",
+            "vad_silence_threshold_secs": f"{self.vad_silence_threshold_secs:g}",
+            "include_language_detection": "true",
+        }
+        if self.language_code:
+            params["language_code"] = self.language_code
+            if self.secondary_languages:
+                params["secondary_languages"] = ",".join(self.secondary_languages)
+        return f"{self.base_url}?{urlencode(params)}"
 
     async def start(
         self,
         on_partial: Callable[[str], Awaitable[None]],
         on_committed: Callable[[str, Optional[str]], Awaitable[None]],
     ) -> None:
-        params = [
-            ("audio_format", "ulaw_8000"),
-            ("commit_strategy", "vad"),
-            ("vad_silence_threshold_secs", str(self.vad_silence_threshold_secs)),
-            ("language_code", "sv"),
-            ("secondary_languages", "en"),
-            ("include_language_detection", "true"),
-        ]
-        query_string = "&".join(f"{k}={v}" for k, v in params)
-        url = f"{self.base_url}?{query_string}"
-
-        headers = {
-            "xi-api-key": self.api_key,
-        }
-
-        logger.info(f"Connecting to ElevenLabs STT: {url}")
-        self._ws = await websockets.connect(url, extra_headers=headers)
-        self._is_running = True
-
+        url = self.build_url()
+        logger.info("Connecting to ElevenLabs STT")
+        self._ws = await websockets.connect(
+            url,
+            additional_headers={"xi-api-key": self.api_key},
+            open_timeout=10,
+            ping_interval=20,
+        )
+        self._running = True
         self._rx_task = asyncio.create_task(self._receive_loop(on_partial, on_committed))
 
     async def _receive_loop(
@@ -66,51 +84,54 @@ class ElevenLabsScribeSTT(SpeechToTextPort):
         on_partial: Callable[[str], Awaitable[None]],
         on_committed: Callable[[str, Optional[str]], Awaitable[None]],
     ) -> None:
+        assert self._ws is not None
         try:
             async for raw in self._ws:
                 msg = json.loads(raw)
-                msg_type = msg.get("message_type")
+                kind = msg.get("message_type")
 
-                if msg_type == "partial_transcript":
-                    text = msg.get("text", "").strip()
+                if kind == "partial_transcript":
+                    text = (msg.get("text") or "").strip()
                     if text:
                         await on_partial(text)
 
-                elif msg_type in ("committed_transcript", "committed_transcript_with_timestamps"):
-                    text = msg.get("text", "").strip()
-                    lang = msg.get("language_code")
+                elif kind in ("committed_transcript", "committed_transcript_with_timestamps"):
+                    text = (msg.get("text") or "").strip()
                     if text:
-                        await on_committed(text, lang)
+                        await on_committed(text, msg.get("language_code"))
 
-                elif msg_type == "session_started":
-                    logger.info("ElevenLabs STT session started.")
+                elif kind == "session_started":
+                    logger.info("ElevenLabs STT session %s started", msg.get("session_id"))
 
-                elif msg_type in ("error", "auth_error", "quota_exceeded"):
-                    logger.error(f"ElevenLabs STT error: {msg}")
+                elif kind == "warning":
+                    logger.warning("ElevenLabs STT warning: %s", msg.get("warning"))
+
+                elif kind in _FATAL_MESSAGE_TYPES:
+                    logger.error("ElevenLabs STT %s: %s", kind, msg.get("error"))
 
         except asyncio.CancelledError:
             pass
-        except Exception as e:
-            logger.warning(f"ElevenLabs STT receive loop terminated: {e}")
+        except Exception as exc:  # noqa: BLE001 - network teardown of any kind
+            logger.warning("ElevenLabs STT receive loop ended: %s", exc)
         finally:
-            self._is_running = False
+            self._running = False
 
     async def push_audio(self, chunk: bytes) -> None:
-        if not self._is_running or not self._ws:
+        if not self._running or self._ws is None:
             return
-
-        b64 = base64.b64encode(chunk).decode("ascii")
-        msg = {
-            "message_type": "input_audio_chunk",
-            "audio_base_64": b64,
-            "commit": False,
-            "sample_rate": self.sample_rate,
-        }
-        await self._ws.send(json.dumps(msg))
+        try:
+            await self._ws.send(json.dumps({
+                "message_type": "input_audio_chunk",
+                "audio_base_64": base64.b64encode(chunk).decode("ascii"),
+                "commit": False,
+                "sample_rate": self.sample_rate,
+            }))
+        except websockets.ConnectionClosed:
+            self._running = False
 
     async def close(self) -> None:
-        self._is_running = False
-        if self._rx_task:
+        self._running = False
+        if self._rx_task is not None:
             self._rx_task.cancel()
-        if self._ws:
+        if self._ws is not None:
             await self._ws.close()
