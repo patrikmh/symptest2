@@ -134,6 +134,34 @@ async def test_pending_speech_from_before_connect_is_played_on_start():
 
 
 @pytest.mark.asyncio
+async def test_duplicate_stt_commits_are_one_caller_turn():
+    session, telephony, stt, tts, pipeline = make_pipeline()
+    await pipeline.start()
+    await stt.simulate_committed("Hej, det är Johan", None)
+    await stt.simulate_committed("Hej, det är Johan", "swe")
+    callers = [t for t in session.turns if t.speaker.value == "caller"]
+    assert len(callers) == 1
+    assert callers[0].language == "sv"
+    await pipeline.hangup()
+
+
+@pytest.mark.asyncio
+async def test_hangup_before_connect_plays_final_words_and_does_not_fallback():
+    session, telephony, stt, tts, pipeline = make_pipeline(
+        hold_timeout_seconds=0.05, fallback_timeout_seconds=0.1, speak_connecting_line=True
+    )
+    session.pending_speech.append(("Tack, hej då!", "sv"))
+    session.close_on_connect = True
+    await session.set_status(CallStatus.ENDED, reason="assistant_hangup_before_connect")
+    await pipeline.start()
+    await asyncio.sleep(0.2)
+    assert tts.synthesized_texts == ["Tack, hej då!"]
+    assert not any("automatisk assistent" in t for t in tts.synthesized_texts)
+    assert telephony.hungup
+    assert session.status == CallStatus.ENDED
+
+
+@pytest.mark.asyncio
 async def test_hold_line_then_fallback_when_agent_never_arrives():
     session, telephony, stt, tts, pipeline = make_pipeline(
         hold_timeout_seconds=0.05, fallback_timeout_seconds=0.1

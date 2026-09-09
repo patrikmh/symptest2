@@ -163,7 +163,17 @@ async def fortysixelks_hangup(request: Request):
         session = await registry.get_by_provider_id(provider_id)
         if session is not None and not session.is_terminal:
             if session.pipeline is not None:
-                await session.pipeline.on_leg_closed(reason="provider_hangup_callback")
+                # Once the realtime WebSocket is up, that leg owns teardown. The
+                # original voice number's whenhangup can fire when the *connect*
+                # action completes, which must not kill a live conversation.
+                if session.realtime_call_id and provider_id != session.realtime_call_id:
+                    logger.info(
+                        "Ignoring voice-leg hangup for live call %s (realtime=%s)",
+                        session.call_id,
+                        session.realtime_call_id,
+                    )
+                else:
+                    await session.pipeline.on_leg_closed(reason="provider_hangup_callback")
             else:
                 await session.set_status(CallStatus.ENDED, reason="hangup_before_connect")
                 await persist_session(session)

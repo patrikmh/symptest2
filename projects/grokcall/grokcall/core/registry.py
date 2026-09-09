@@ -59,6 +59,9 @@ class CallSession:
         self.current_partial_transcript: str = ""
         # speak() calls made before the audio leg exists are played on connect.
         self.pending_speech: List[Tuple[str, Optional[str]]] = []
+        # hang_up() before the realtime leg arrived: bind the leg, play any
+        # queued final words, then send bye instead of starting a new call.
+        self.close_on_connect: bool = False
 
         self.started_at: datetime = _now()
         self.ended_at: Optional[datetime] = None
@@ -103,6 +106,27 @@ class CallSession:
             self.handled_by = "grok"
         if self.pipeline is not None:
             self.pipeline.on_agent_activity()
+
+    async def attach_pipeline(self, pipeline: Any) -> List[Tuple[str, Optional[str]]]:
+        """Install the audio pipeline and take any speech queued before it existed.
+
+        Holding the session lock here closes the race where MCP ``speak`` sees
+        ``pipeline is None``, the leg then starts, and the words land in
+        ``pending_speech`` after it has already been drained.
+        """
+        async with self._lock:
+            self.pipeline = pipeline
+            pending = list(self.pending_speech)
+            self.pending_speech.clear()
+            return pending
+
+    async def queue_or_handoff_speech(self, text: str, language: Optional[str]) -> Any:
+        """Queue ``text`` if the audio leg is not up yet; otherwise return the pipeline."""
+        async with self._lock:
+            if self.pipeline is None:
+                self.pending_speech.append((text, language))
+                return None
+            return self.pipeline
 
     # ------------------------------------------------------------- transcript
 
@@ -321,6 +345,23 @@ class CallRegistry:
             match = next((s for s in pending if s.caller == caller), None)
             if match is None and len(pending) == 1:
                 match = pending[0]
+
+            # Grok (or fallback) already hung up while 46elks was still bridging.
+            # Reclaim that session so the incoming leg is closed instead of
+            # becoming a brand-new call that the fallback assistant would answer.
+            if match is None:
+                now = _now()
+                reclaim = [
+                    s for s in self._sessions.values()
+                    if s.realtime_call_id is None
+                    and s.caller == caller
+                    and (s.close_on_connect or s.is_terminal)
+                    and s.ended_at is not None
+                    and (now - s.ended_at).total_seconds() < 120
+                ]
+                reclaim.sort(key=lambda s: s.ended_at or s.started_at, reverse=True)
+                if reclaim:
+                    match = reclaim[0]
 
             if match is not None:
                 match.realtime_call_id = realtime_call_id

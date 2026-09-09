@@ -129,6 +129,29 @@ async def test_bind_realtime_leg_matching_rules():
 
 
 @pytest.mark.asyncio
+async def test_bind_reclaims_session_hung_up_before_audio_leg():
+    reg = CallRegistry()
+    session = await reg.create_session("+46705", "+46760", provider_call_id="voice_1")
+    session.close_on_connect = True
+    await session.set_status(CallStatus.ENDED, reason="assistant_hangup_before_connect")
+
+    found, created = await reg.bind_realtime_leg("rt_late", "+46705", "+46769")
+    assert found is session and not created
+    assert session.realtime_call_id == "rt_late"
+
+
+@pytest.mark.asyncio
+async def test_bind_does_not_reclaim_old_ended_call_from_same_number():
+    reg = CallRegistry()
+    old = await reg.create_session("+46705", "+46760", provider_call_id="old")
+    await old.set_status(CallStatus.ENDED)
+    old.ended_at -= timedelta(minutes=10)
+
+    found, created = await reg.bind_realtime_leg("rt_new", "+46705", "+46769")
+    assert created and found is not old
+
+
+@pytest.mark.asyncio
 async def test_expire_stale_sessions():
     reg = CallRegistry()
     stuck = await reg.create_session("+46701", "+46760", provider_call_id="stuck")

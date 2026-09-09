@@ -68,6 +68,24 @@ async def test_hangup_callback_is_lenient_and_ends_pending_call(client):
 
 
 @pytest.mark.asyncio
+async def test_hangup_callback_does_not_kill_live_call_for_voice_leg_id(client):
+    await client.post("/46elks/incoming", data={"callid": "c_voice", "from": "+4670", "to": "+4676"})
+    session = await registry.get_by_provider_id("c_voice")
+    session.realtime_call_id = "c_rt"
+    registry._provider_map["c_rt"] = session.call_id
+    from grokcall.adapters.fakes import FakeSTT, FakeTelephonyLeg, FakeTTS
+    from grokcall.core.pipeline import CallPipeline
+    pipeline = CallPipeline(session, FakeTelephonyLeg(), FakeSTT(), FakeTTS(delay_per_chunk=0.0))
+    await pipeline.start()
+    assert session.status == CallStatus.LIVE
+
+    res = await client.post("/46elks/hangup", data={"id": "c_voice", "state": "success"})
+    assert res.status_code == 200
+    assert session.status == CallStatus.LIVE
+    await pipeline.hangup()
+
+
+@pytest.mark.asyncio
 async def test_mcp_requires_bearer_token(client):
     assert (await client.post("/mcp", json={})).status_code == 401
     assert (await client.post("/mcp", json={}, headers={"Authorization": "Bearer wrong"})).status_code == 401

@@ -106,12 +106,11 @@ async def speak(call_id: str, text: str, language: Optional[str] = None) -> Dict
     if session.handled_by == "fallback":
         return {"error": "handled_by_fallback", "detail": "The fallback assistant has taken over this call."}
 
-    if session.pipeline is not None:
-        await session.pipeline.speak(text, language=language)
-        return {"status": "speaking", "turn": session.latest_turn_number}
-
-    session.pending_speech.append((text, language))
-    return {"status": "queued", "call_status": session.status.value}
+    pipeline = await session.queue_or_handoff_speech(text, language)
+    if pipeline is None:
+        return {"status": "queued", "call_status": session.status.value}
+    await pipeline.speak(text, language=language)
+    return {"status": "speaking", "turn": session.latest_turn_number}
 
 
 @mcp_server.tool()
@@ -158,5 +157,10 @@ async def hang_up(call_id: str, final_words: Optional[str] = None) -> Dict[str, 
     if session.pipeline is not None:
         await session.pipeline.hangup(final_words=final_words)
     else:
+        if final_words:
+            session.pending_speech.append((final_words, session.detected_language))
+        session.close_on_connect = True
         await session.set_status(CallStatus.ENDED, reason="assistant_hangup_before_connect")
+        from grokcall.api.app import persist_session
+        await persist_session(session)
     return {"status": "ended", "turns": session.latest_turn_number, "messages": len(session.messages)}

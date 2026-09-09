@@ -4,7 +4,8 @@ import time
 from datetime import datetime, timezone
 from typing import Awaitable, Callable, Optional, Tuple
 
-from grokcall.core.models import CallStatus
+from grokcall.core.language import normalize_language
+from grokcall.core.models import CallStatus, Speaker
 from grokcall.core.ports import SpeechToTextPort, TelephonyLeg, TextToSpeechPort
 from grokcall.core.registry import CallSession
 
@@ -101,21 +102,27 @@ class CallPipeline:
 
     async def start(self) -> None:
         logger.info("Pipeline starting for %s", self.session.call_id)
+        already_over = self.session.is_terminal or self.session.close_on_connect
         self._active = True
-        self.session.pipeline = self
-        await self.session.set_status(CallStatus.CONNECTING)
+        pending = await self.session.attach_pipeline(self)
+        if not already_over:
+            await self.session.set_status(CallStatus.CONNECTING)
         self.session.timings.realtime_connected_at = datetime.now(timezone.utc)
 
         await self.stt.start(on_partial=self.on_stt_partial, on_committed=self.on_stt_committed)
         self._speaker_task = asyncio.create_task(self._speaker_loop())
-        await self.session.set_status(CallStatus.LIVE)
+        if not already_over:
+            await self.session.set_status(CallStatus.LIVE)
 
-        if self.session.pending_speech:
-            for text, lang in self.session.pending_speech:
+        if pending:
+            for text, lang in pending:
                 await self._enqueue(text, lang)
-            self.session.pending_speech.clear()
-        elif self.speak_connecting_line and not self.session.agent_ready:
+        elif self.speak_connecting_line and not self.session.agent_ready and not already_over:
             await self._say("connecting")
+
+        if already_over:
+            await self.hangup(reason=self.session.end_reason or "assistant_hangup_before_connect")
+            return
 
         self._monitor_task = asyncio.create_task(self._monitor_agent_arrival())
 
@@ -151,6 +158,12 @@ class CallPipeline:
             await self.telephony.hangup()
         except Exception:  # noqa: BLE001
             logger.exception("Telephony hangup failed")
+        closer = getattr(self.tts, "aclose", None)
+        if closer is not None:
+            try:
+                await closer()
+            except Exception:  # noqa: BLE001
+                logger.exception("TTS close failed")
         await self.session.set_status(CallStatus.ENDED, reason=reason)
         logger.info("Call %s ended (%s)", self.session.call_id, reason)
         if self.on_ended is not None:
@@ -176,6 +189,21 @@ class CallPipeline:
         if not text:
             return
         logger.info("Caller turn: %r (%s)", text, detected_lang)
+        last = self.session.turns[-1] if self.session.turns else None
+        if (
+            last is not None
+            and last.speaker == Speaker.CALLER
+            and last.text == text
+            and (datetime.now(timezone.utc) - last.created_at).total_seconds() < 1.5
+        ):
+            # Scribe may emit both committed_transcript and the timestamped
+            # variant for the same segment; keep a single caller turn but take
+            # language_code from the later event when it arrives.
+            lang = normalize_language(detected_lang)
+            if lang:
+                last.language = lang
+                self.session.detected_language = lang
+            return
         if self.output_pending:
             await self.interrupt_playback()
         self._awaiting_first_audio = True

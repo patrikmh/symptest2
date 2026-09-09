@@ -76,15 +76,16 @@ def test_stt_url_auto_detect_by_default():
     assert q["audio_format"] == ["ulaw_8000"]
     assert q["commit_strategy"] == ["vad"]
     assert q["include_language_detection"] == ["true"]
+    assert q["include_timestamps"] == ["true"]
     assert q["model_id"] == ["scribe_v2_realtime"]
     assert "language_code" not in q
 
 
 def test_stt_url_with_pinned_language_and_hints():
-    stt = ElevenLabsScribeSTT(api_key="k", language_code="sv", secondary_languages=["en"])
+    stt = ElevenLabsScribeSTT(api_key="k", language_code="sv", secondary_languages=["en", "de"])
     q = parse_qs(urlparse(stt.build_url()).query)
     assert q["language_code"] == ["sv"]
-    assert q["secondary_languages"] == ["en"]
+    assert q["secondary_languages"] == ["en", "de"]
 
 
 @pytest.mark.asyncio

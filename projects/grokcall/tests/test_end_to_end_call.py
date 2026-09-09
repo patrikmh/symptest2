@@ -185,6 +185,42 @@ async def test_full_call_through_real_server_and_mcp_client(test_settings):
 
 
 @pytest.mark.asyncio
+async def test_hang_up_before_realtime_leg_closes_the_bridged_call(test_settings):
+    async with RunningServer(free_port()) as srv:
+        async with httpx.AsyncClient(base_url=srv.base) as http:
+            await http.post(
+                "/46elks/incoming",
+                data={"callid": "c_voice_early", "from": "+46701110000", "to": "+46766861234"},
+            )
+        session = await registry.get_by_provider_id("c_voice_early")
+        call_id = session.call_id
+
+        async with GrokBotClient(srv.base, test_settings.mcp_bearer_token) as grok:
+            res = await grok.call("hang_up", call_id=call_id, final_words="Hej då!")
+            assert res["status"] == "ended"
+            assert session.close_on_connect
+
+            async with websockets.connect(f"{srv.ws_base}/46elks/realtime") as elks:
+                await elks.send(json.dumps({
+                    "t": "hello",
+                    "callid": "c_rt_late",
+                    "from": "+46701110000",
+                    "to": test_settings.fortysixelks_realtime_number,
+                }))
+                assert json.loads(await elks.recv()) == {"t": "listening", "format": "ulaw"}
+                assert json.loads(await elks.recv()) == {"t": "sending", "format": "ulaw"}
+                seen = [json.loads(await elks.recv()) for _ in range(4)]
+                assert [m["t"] for m in seen] == ["audio", "audio", "audio", "bye"]
+                await elks.send(json.dumps({"t": "bye", "reason": "hangup"}))
+                await asyncio.sleep(0.1)
+
+            bound = await registry.get_by_id(call_id)
+            assert bound.status == CallStatus.ENDED
+            assert bound.realtime_call_id == "c_rt_late"
+            assert bound.handled_by != "fallback"
+
+
+@pytest.mark.asyncio
 async def test_caller_hangs_up_mid_call(test_settings):
     async with RunningServer(free_port()) as srv:
         async with websockets.connect(f"{srv.ws_base}/46elks/realtime") as elks:

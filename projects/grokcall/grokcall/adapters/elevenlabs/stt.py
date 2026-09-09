@@ -50,17 +50,19 @@ class ElevenLabsScribeSTT(SpeechToTextPort):
         self._running = False
 
     def build_url(self) -> str:
-        params = {
-            "model_id": self.model_id,
-            "audio_format": "ulaw_8000",
-            "commit_strategy": "vad",
-            "vad_silence_threshold_secs": f"{self.vad_silence_threshold_secs:g}",
-            "include_language_detection": "true",
-        }
+        params = [
+            ("model_id", self.model_id),
+            ("audio_format", "ulaw_8000"),
+            ("commit_strategy", "vad"),
+            ("vad_silence_threshold_secs", f"{self.vad_silence_threshold_secs:g}"),
+            ("include_language_detection", "true"),
+            # language_code is only present on committed_transcript_with_timestamps
+            ("include_timestamps", "true"),
+        ]
         if self.language_code:
-            params["language_code"] = self.language_code
-            if self.secondary_languages:
-                params["secondary_languages"] = ",".join(self.secondary_languages)
+            params.append(("language_code", self.language_code))
+            for lang in self.secondary_languages:
+                params.append(("secondary_languages", lang))
         return f"{self.base_url}?{urlencode(params)}"
 
     async def start(
@@ -133,5 +135,9 @@ class ElevenLabsScribeSTT(SpeechToTextPort):
         self._running = False
         if self._rx_task is not None:
             self._rx_task.cancel()
+            try:
+                await self._rx_task
+            except (asyncio.CancelledError, Exception):  # noqa: BLE001
+                pass
         if self._ws is not None:
             await self._ws.close()
