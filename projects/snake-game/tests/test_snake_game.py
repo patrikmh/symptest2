@@ -3,6 +3,9 @@ import pytest
 import re
 from pathlib import Path
 
+PROJECT_DIR = Path(__file__).resolve().parents[1]
+HTML_PATH = PROJECT_DIR / "index.html"
+
 
 class TestSnakeGameFile:
     """Test that the snake game HTML file exists and is valid."""
@@ -10,16 +13,14 @@ class TestSnakeGameFile:
     @pytest.fixture
     def html_content(self):
         """Load the HTML file content."""
-        html_path = Path(__file__).parent / "snake_game.html"
-        if not html_path.exists():
-            pytest.fail("snake_game.html file not found")
-        return html_path.read_text()
+        if not HTML_PATH.exists():
+            pytest.fail(f"{HTML_PATH.name} file not found")
+        return HTML_PATH.read_text()
 
     def test_html_file_exists(self):
         """Snake game HTML file should exist."""
-        html_path = Path(__file__).parent / "snake_game.html"
-        assert html_path.exists(), "snake_game.html must exist"
-        assert html_path.stat().st_size > 0, "File should not be empty"
+        assert HTML_PATH.exists(), f"{HTML_PATH.name} must exist"
+        assert HTML_PATH.stat().st_size > 0, "File should not be empty"
 
     def test_html_has_doctype(self, html_content):
         """HTML should have proper DOCTYPE declaration."""
@@ -53,8 +54,7 @@ class TestSnakeGameFeatures:
     @pytest.fixture
     def html_content(self):
         """Load the HTML file content."""
-        html_path = Path(__file__).parent / "snake_game.html"
-        return html_path.read_text()
+        return HTML_PATH.read_text()
 
     def test_has_score_tracking(self, html_content):
         """Game should have score tracking."""
@@ -116,8 +116,7 @@ class TestAdvancedFeatures:
     @pytest.fixture
     def html_content(self):
         """Load the HTML file content."""
-        html_path = Path(__file__).parent / "snake_game.html"
-        return html_path.read_text()
+        return HTML_PATH.read_text()
 
     def test_has_pause_functionality(self, html_content):
         """Game should have pause functionality."""
@@ -152,8 +151,7 @@ class TestCodeQuality:
     @pytest.fixture
     def html_content(self):
         """Load the HTML file content."""
-        html_path = Path(__file__).parent / "snake_game.html"
-        return html_path.read_text()
+        return HTML_PATH.read_text()
 
     def test_no_syntax_errors_in_html(self, html_content):
         """HTML should have matching opening and closing tags."""
