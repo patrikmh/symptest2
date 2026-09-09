@@ -16,6 +16,26 @@ ENGLISH_INDICATORS = {
 }
 
 
+_LANGUAGE_ALIASES = {
+    "swe": "sv", "swedish": "sv", "sv-se": "sv",
+    "eng": "en", "english": "en", "en-us": "en", "en-gb": "en",
+}
+
+
+def normalize_language(code: Optional[str]) -> Optional[str]:
+    """Map provider language codes (ISO 639-3, BCP-47, names) onto the two-letter
+    codes the rest of the system uses. Unknown codes are passed through lower-cased.
+    """
+    if not code:
+        return None
+    lowered = code.strip().lower()
+    if lowered in _LANGUAGE_ALIASES:
+        return _LANGUAGE_ALIASES[lowered]
+    if "-" in lowered:
+        lowered = lowered.split("-", 1)[0]
+    return lowered or None
+
+
 def detect_language(text: str, default: str = "sv") -> str:
     """Heuristic language detection between Swedish ('sv') and English ('en').
 
