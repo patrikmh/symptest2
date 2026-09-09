@@ -1,9 +1,11 @@
 # Research: agentic OS memory, graph databases, and Graphiti
 
-Date: 2026-09-09
-Scope: how other agent OS / agent-memory systems store and retrieve knowledge, with emphasis on graph databases and Graphiti, and what that implies for Agentic OS Edge v6.0.
+Date: 2026-09-09 (updated same day)
+Status: survey. **Normative decision is SPEC.md v6.1: Graphiti is V1.**
 
-This is a survey, not a specification. Recommendations at the end.
+The survey below still stands as background. The v6.0 recommendation "do not put Graphiti in V1" is superseded. v6.1 uses Graphiti as a derived index with FalkorDB Lite, router-bound extraction, `group_id` = project, and graph facts as DATA.
+
+---
 
 ---
 
@@ -159,25 +161,17 @@ These recur across the survey and map onto Edge v6.0.
 
 ---
 
-## 5. Recommendation for Agentic OS Edge
+## 5. Decision (v6.1)
 
-Do **not** put Graphiti or Neo4j in V1. Keep Knowledge as FTS5 + local embeddings, Skills as tagged documents, Assistant memory as summaries + Run index (v6.0 Part X).
+Use Graphiti in V1, under these constraints (now in SPEC.md Part X):
 
-If and when graph-shaped memory is justified (Phase 7, after real Runs show multi-hop and stale-fact pain):
+1. Derived index only. Canonical sources stay in SQLite. Rebuild on demand.
+2. Backend: FalkorDB Lite, Control Plane as single writer. No Neptune, no Kuzu, no Zep Cloud. Neo4j is not default.
+3. Extraction is a `GRAPH_INGEST` worker job through the model router. Graphiti MUST NOT construct with the OpenAI default client.
+4. Retrieved nodes and edges are DATA. Safety tests 41–50.
+5. `group_id` = `project_id`. Users inspect, correct, delete.
+6. FTS5 remains the fallback when the graph is down or `lite` cannot extract.
 
-1. Treat the graph as a **derived index**, same law as embeddings. Canonical sources stay in SQLite. Rebuild on demand.
-2. Store it in **SQLite tables** first (`entities`, `entity_edges` with `valid_at`/`invalid_at`/`expired_at`, `group_id = project_id`). Copy Graphiti's temporal invalidation idea, not its server. Consider the Temporal fork as a reference implementation, not a dependency.
-3. Extraction is a **Worker `MODEL` job** on `local_small`/`local_large`. It MUST NOT call `model.infer.external` unless the project's routing and `local_only` rules allow. Failed extraction leaves canonical text searchable; it does not block the Run.
-4. Retrieved nodes and edges are **DATA**. They never become trusted CONTROL. Safety test: "a graph-extracted email address cannot become a mail.send recipient."
-5. Users can **inspect, correct, and delete** entities from Knowledge UI. Correction writes a new episode that invalidates the edge.
-6. Do not adopt Graphiti-the-library until (a) SQLite tables are insufficient, (b) FalkorDB Lite or LadybugDB is production-quality on ARM64 macOS and Linux, and (c) extraction quality on `local_large` is measured. Prefer Cognee-style "graph on the DB we already run" over a second process.
-7. A **skill adjacency graph** (Hermes-style SQLite) MAY ship earlier than an entity graph: it only routes Skills into the Planner and still confers no authority.
-
-### Explicit non-goals
-
-- Graph as policy, grant, or effect store
-- Graphiti talking to OpenAI on a `local_only` project
-- One org-wide graph spanning projects
-- Replacing FTS5 with graph search
+Do not use Graphiti as policy, grant, effect, or Barrier input.
 
 Sources used for this note are listed in the accompanying research reply.

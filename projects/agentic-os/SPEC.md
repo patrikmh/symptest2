@@ -1,36 +1,42 @@
-# Agentic OS Edge — Canonical Architecture Specification v6.0
+# Agentic OS Edge — Canonical Architecture Specification v6.1
 
-Status: production architecture baseline (supersedes v5.6)
+Status: production architecture baseline (supersedes v6.0 and v5.6)
 Target: private, self-hosted agentic operating system for small and mid-sized organisations
 Deployment: one appliance (Raspberry Pi 5, Mac mini, DGX Spark or equivalent); optional worker machines later
 Core loop: Propose → Decide → Do → Prove
+Knowledge graph: Graphiti (self-hosted; never Zep Cloud)
 
 Normative words: MUST, MUST NOT, SHOULD, MAY have their usual meaning.
 Anything not marked V1 in Part XXI is roadmap.
 
 ## Revision note
 
-v6.0 keeps the v5.6 security kernel intact and removes what a first customer
-on one machine does not need. Removed items are listed in Part XXII so the
-roadmap is explicit rather than lost.
+v6.1 adopts Graphiti as the V1 knowledge and memory graph. SQLite remains
+the sole authority store. Graphiti is a derived, rebuildable index. Graph
+facts are DATA and never CONTROL. Graphiti's extraction LLM is called only
+through the model router. The graph backend is embedded FalkorDB Lite on
+solo appliances; Neo4j/Neptune/Kuzu are not V1.
+
+v6.0 kept the v5.6 security kernel and removed what a first customer on one
+machine does not need. That kernel is unchanged.
 
 Kept: Propose → Decide → Do → Prove; CONTROL vs DATA; Effect Ledger with
 first-class UNKNOWN; Dispatch Barrier; digest-bound approvals; credential
 isolation; browser isolation; no vendor root; evidence over claims; the
 safety-test discipline.
 
-Added: Control Plane / Worker Plane as a normative code boundary;
-Assistants; Skills and memory without authority; model routing for local,
-hybrid and API inference with external inference treated as data egress;
-Gondolin as the single sandbox on all supported hardware; three deployment
-profiles; an explicit V1 build order including the kernel phases.
+Added in v6.0: Control Plane / Worker Plane as a code boundary; Assistants;
+Skills and memory without authority; model routing; Gondolin on all
+hardware; three deployment profiles; explicit V1 build order.
 
-Simplified: roles (Owner, Member, Auditor); authority (`off | ask |
-automatic` per capability plus expiring grants); policy editing (an audited
-table, not a publish engine); widgets (in-repo packs versioned with the
-appliance); database (SQLite, single writer); break-glass (one command);
-ConflictFence, Reconciler and Resource Governor (functions and configuration,
-not components).
+Added in v6.1: Graphiti as the temporal knowledge graph (Part X); graph
+search as hybrid retrieval; ingest as a Worker MODEL job; `group_id` =
+project; fallback FTS5 when the graph is rebuilding; Graphiti-specific
+safety tests.
+
+Simplified (still): Owner/Member/Auditor; `off | ask | automatic` plus
+grants; policy as an audited table; in-repo widgets; SQLite as the
+authority database; one-command break-glass.
 
 ---
 
@@ -58,9 +64,11 @@ Humans
   ↓
 Presentation      dashboard, mobile web
   ↓
-Control Plane     authority, Effect Ledger, audit, canonical Knowledge, scheduling, approvals
+Control Plane     authority, Effect Ledger, audit, canonical Knowledge, Graphiti ingest queue, scheduling, approvals
   ↓
-Worker Plane      model inference, Gondolin sandboxes, browserd, embeddings
+Worker Plane      model inference (including Graphiti extraction), Gondolin, browserd, embeddings
+  ↓
+Stores            SQLite (authority) · Graphiti/FalkorDB Lite (derived graph) · artifact files
   ↓
 Adapters          one per widget
   ↓
@@ -68,7 +76,9 @@ External systems  Gmail, Calendar, GitHub, the web, model providers
 ```
 
 Every external effect crosses the Control Plane. Nothing in the Worker Plane
-or Presentation layer may reach an external system directly.
+or Presentation layer may reach an external system directly. Graphiti never
+calls a provider, never writes SQLite authority tables, and never talks to
+Zep Cloud.
 
 ## 4. Primary invariant
 
@@ -205,6 +215,8 @@ bounded grant request. Single-use, expiring.
 
 A typed operation policy can evaluate, namespaced by domain: `mail.*`,
 `calendar.*`, `repo.*`, `web.*`, `knowledge.*`, `model.*`, `file.*`.
+`knowledge.search`, `knowledge.get_source`, `knowledge.write` and
+`knowledge.suggest_correction` are kernel capabilities, not a widget pack.
 
 ## 25. Grant
 
@@ -222,6 +234,16 @@ permission.
 
 A project-scoped, versioned procedure in natural language or a simple step
 format, with provenance. A Skill is DATA and carries no authority (Part X).
+Skills are canonical SQLite rows that are also ingested as Graphiti
+episodes so the Planner can retrieve them by relationship as well as by
+search.
+
+## 27a. Graphiti
+
+Graphiti is the temporal knowledge graph engine. It stores episodes,
+entities and bi-temporal facts derived from canonical sources. It is not
+an authority store, not a policy store, and not an effect ledger. See
+Part X.
 
 ## 28. Widget
 
@@ -265,11 +287,13 @@ Parsing into JSON, extraction by a model, summarisation, translation, or a
 valid webhook signature does not make content trusted. Tool schemas constrain
 syntax, not authority.
 
-## 33. Memory and Skills are DATA
+## 33. Memory, Skills and graph facts are DATA
 
-Remembered facts and learned procedures are untrusted for CONTROL purposes.
-"Last time we sent this to alice@…" does not make alice@… a trusted
-recipient today.
+Remembered facts, learned procedures, Graphiti entities and Graphiti edges
+are untrusted for CONTROL purposes. "Last time we sent this to alice@…"
+and a graph edge `alice --[email]--> alice@example.com` do not make that
+address a trusted recipient. Graphiti extraction is model output and
+MUST NOT raise trust (§6, §32).
 
 ## 34. Provenance
 
@@ -343,7 +367,7 @@ appears in every project as `off`. Nothing gains authority by appearing.
 ## 40. Policy bundles
 
 Onboarding offers three bundles that fill `policy_rules` for the default
-project: `Cautious`, `Standard`, `Trusting`. `Standard` is defined in §127.
+project: `Cautious`, `Standard`, `Trusting`. `Standard` is defined in §132.
 Owners edit rows afterwards from Admin → Policies, one row at a time, with a
 plain-language description of what changes.
 
@@ -513,9 +537,12 @@ capability. Every later irreversible capability copies its ledger handling.
 ## 61. Two planes
 
 The Control Plane owns authority, the Effect Ledger, audit, canonical
-Knowledge and indexes, scheduling, approvals and the credential store. The
-Worker Plane performs model inference, sandbox execution, browser automation
-and embedding computation.
+Knowledge sources, the Graphiti ingest queue, scheduling, approvals and the
+credential store. The Worker Plane performs model inference (including
+Graphiti entity/edge extraction), sandbox execution, browser automation and
+embedding computation. Graphiti's graph store is a derived index owned by
+the Control Plane as the single writer; workers only produce extraction
+results that the Control Plane commits.
 
 ## 62. One interface
 
@@ -523,7 +550,7 @@ and embedding computation.
 Worker.run(job: JobEnvelope) → JobResult
 
 JobEnvelope {
-  run_id, task_id, kind: MODEL | SANDBOX | BROWSER | EMBEDDING,
+  run_id, task_id, kind: MODEL | SANDBOX | BROWSER | EMBEDDING | GRAPH_INGEST,
   resource_limits, network_policy, capability_refs,
   credential_placeholders, inputs
 }
@@ -541,16 +568,27 @@ never hold provider secrets (only placeholders, §86), and never call the
 Dispatch Barrier. Tool calls proposed by an agent inside a worker return to
 the Control Plane as proposals.
 
-## 64. One authoritative store
+## 64. Two stores, one authority
 
-SQLite in WAL mode, written only by the Control Plane. Schema constraints
-enforce invariants where SQLite can (uniqueness, foreign keys, check
-constraints); application code enforces the rest and tests cover both.
+SQLite in WAL mode, written only by the Control Plane, is the authoritative
+store for principals, policy, grants, effects, audit, canonical Knowledge
+sources, Skills and Assistant memory rows.
+
+Graphiti's graph (FalkorDB Lite file in V1) is a derived store. It MAY be
+wiped and rebuilt from canonical sources. It MUST NOT be the only copy of
+any fact the product depends on. The Control Plane is the single writer to
+the graph file (FalkorDB Lite is single-process).
+
+Schema constraints on SQLite enforce invariants where SQLite can
+(uniqueness, foreign keys, check constraints); application code enforces
+the rest and tests cover both.
 
 ## 65. Resource admission
 
-A semaphore per resource class (`MODEL`, `BROWSER`, `SANDBOX`, `EMBEDDING`)
-with limits from the deployment profile (Part XIX). A memory reserve for OS,
+A semaphore per resource class (`MODEL`, `BROWSER`, `SANDBOX`, `EMBEDDING`,
+`GRAPH_INGEST`) with limits from the deployment profile (Part XIX).
+`GRAPH_INGEST` shares the model semaphore in practice (extraction is an LLM
+call) but is queued behind interactive Runs so ingest cannot starve the UI. A memory reserve for OS,
 database and UI is checked before admitting `MODEL` or `SANDBOX` work. Work
 beyond capacity queues with a visible reason; the appliance is never
 destabilised to run one more task.
@@ -566,6 +604,7 @@ Inside `agent-osd`:
 - Reconciliation: runs `reconcile` functions on `UNKNOWN` rows on a schedule and on demand.
 - Artifact collection: the only path for outputs out of sandboxes and browsers.
 - Event intake: normalises and deduplicates inbound events.
+- Graph ingest: dequeues canonical writes, runs Graphiti `add_episode` via a worker, commits as the single graph writer.
 
 ## 67. Automations
 
@@ -587,9 +626,10 @@ effects to the ledger.
 
 ## 70. Health
 
-The Control Plane exposes local health for itself, the database, each worker
-class and each connection. Health probes MUST NOT cause external side
-effects.
+The Control Plane exposes local health for itself, SQLite, the Graphiti
+backend, each worker class and each connection. Health probes MUST NOT
+cause external side effects. Graphiti health is "file open, query a known
+node"; it MUST NOT call an LLM.
 
 ---
 
@@ -603,10 +643,11 @@ secrets or generic provider clients.
 
 ## 72. Agent context
 
-MAY contain: the goal, Assistant persona, relevant Knowledge and Skills,
-Assistant memory, prior Step state, tool results, capability descriptions.
-MUST NOT contain long-lived credentials, another project's data, or content
-marked `local_only` when an external model is the target (Part XI).
+MAY contain: the goal, Assistant persona, relevant Knowledge, Graphiti
+search hits (tagged DATA, `trusted: false`), Skills, Assistant memory, prior
+Step state, tool results, capability descriptions. MUST NOT contain
+long-lived credentials, another project's data, Graphiti admin handles, or
+content marked `local_only` when an external model is the target (Part XI).
 
 ## 73. Tool calls are proposals
 
@@ -697,7 +738,7 @@ credential store are never mounted.
 Each coding Task works on its own clone or worktree and its own branch. The
 default branch is protected on the provider side and never targeted by a
 sandbox push. Pushing to the Task branch is `EXTERNAL_REVERSIBLE`; opening a
-PR is a separate capability (§161).
+PR is a separate capability (§166).
 
 ## 86. Secrets by placeholder
 
@@ -769,7 +810,7 @@ opened only inside a Gondolin sandbox when a Task requires it.
 ## 96. Recipes
 
 `web.recipe.run` executes a checkpointed sequence of read-only navigation and
-extraction steps saved as a Skill (§107). Recipes obey the same network
+extraction steps saved as a Skill (§110). Recipes obey the same network
 policy as ad-hoc browsing.
 
 ## 97. Not a universal adapter
@@ -796,91 +837,196 @@ shares a profile with research or with any other widget.
 
 ---
 
-# Part X — Knowledge, memory and learning
+# Part X — Knowledge, Graphiti, memory and learning
 
-## 101. Knowledge
+## 101. Two layers
 
-The organisation and project retrieval layer. Canonical sources (uploaded
-files, connected documents, saved pages) are stored separately from derived
-indexes; indexes MAY be rebuilt at any time without losing canonical data.
+Knowledge has a canonical layer and a derived layer.
 
-## 102. Retrieval
+**Canonical (SQLite):** uploaded files, saved pages, Skill documents,
+Assistant memory rows, Run summaries the product has chosen to keep. These
+survive graph rebuilds.
 
-Hybrid: lexical (SQLite FTS5) plus semantic (local embeddings). Results carry
-chunk provenance (§34) and are shown with source links.
+**Derived (Graphiti):** episodes, entity nodes, bi-temporal edges,
+community summaries. Rebuildable at any time from canonical sources plus
+ingest logs. Losing the graph file is an operational incident, not data
+loss.
 
-## 103. Local embeddings by default
+FTS5 over canonical SQLite remains the fallback search path. Home and
+Knowledge MUST still answer from FTS5 if Graphiti is rebuilding or
+unhealthy.
 
-Embeddings are the inference most likely to leak an entire corpus. They run
-locally on every profile; `lite` uses a small CPU model. An external
-embedding provider is an Owner-enabled exception subject to Part XI and to
-`local_only` marking.
+## 102. Graphiti is the graph engine
 
-## 104. Scope
+V1 uses the Graphiti library (`graphiti-core`) in-process. It MUST NOT
+call Zep Cloud, MUST NOT default to OpenAI, and MUST NOT be given a
+generic provider client. Its LLM client and embedder are the model router
+(Part XI). Its graph driver in V1 is FalkorDB Lite (embedded file,
+Python 3.12+, Linux and macOS).
 
-Project Knowledge is visible only within the project. Organisation Knowledge
-is a separately scoped space readable by all members. Sharing between
-projects is an explicit Owner action with an AuditEvent.
+Forbidden V1 backends: Amazon Neptune (data leaves the appliance), Kuzu
+(deprecated upstream), Neo4j server (extra process; MAY be a profile
+override later, not the default). FalkorDB server MAY be used on `pro` if
+Lite is insufficient; it is still local.
 
-## 105. `local_only`
+## 103. Partitioning
 
-Any Knowledge source can be marked `local_only`. Its chunks MUST NOT be
-included in prompts sent to external model providers or in external
-embedding requests. The router enforces this (§116).
+```
+group_id = project_id          for project Knowledge, Skills, Assistant memory, Run episodes
+group_id = org:<organisation_id>  for organisation Knowledge
+```
 
-## 106. Correction and deletion
+Search, ingest and delete are always scoped to one `group_id`. A query
+from Project A MUST NOT return nodes from Project B. Sharing copies
+canonical sources into the destination project and re-ingests; it does
+not union `group_id`s at query time.
 
-Users can correct, supersede or delete Knowledge. Deleting a canonical source
-removes its derived index entries and its chunks from any future context.
+## 104. Episode ingest
 
-## 107. Skills
+Canonical writes enqueue an ingest job. The Control Plane calls
+`add_episode` with:
 
-A Skill is a tagged Knowledge document describing how a kind of task is done
-well here: steps, checks, preferred sources, pitfalls. Skills are project
-scoped and versioned. Agents MAY write or update a Skill after a Run without
-approval because a Skill is DATA. Humans can edit, delete, or mark a Skill
-`REVIEWED`. The Planner is offered relevant Skills as context. A Skill never
-widens authority; every effect it leads to crosses the Barrier normally.
+```
+name              source type + id
+episode_body      canonical text (or a bounded excerpt)
+source            text | json | message
+reference_time    when the fact occurred (email date, Run time, document date)
+                  never "now" for historical material
+group_id          as §103
+source_description  SQLite source id, Run id, producing model tier
+```
 
-## 108. Routines from demonstration
+Extraction (entities, edges, invalidation) is a `GRAPH_INGEST` worker job
+that uses the model router. It is subject to `model.routing`,
+`model.infer.external`, `local_only`, and budgets. If the router refuses
+or the local model cannot produce structured output, the episode is stored
+as raw text only (searchable via FTS5 and as an `EpisodicNode` without
+edges) and the Run or Knowledge item is not blocked.
 
-A user can ask an Assistant to watch one execution of a task (a conversation
-that led to a good result, a browser session, a sequence of dashboard steps)
-and save it as a Skill, optionally with an Automation. The Automation runs
-under grants like any other; the Skill guides the plan, not the authority.
+Graphiti's OpenAI default client MUST be overridden at construction. There
+is no code path that reads `OPENAI_API_KEY` for Graphiti unless that key
+belongs to a configured `model_provider` Connection and policy permits
+external inference.
 
-## 109. Assistant memory
+## 105. Bi-temporal facts
 
-Each Assistant has:
+Edges use Graphiti's timestamps:
 
-- observational memory: rolling summaries of interactions and preferences
-- episodic memory: an index of prior Runs, decisions and outcomes
+```
+valid_at     when the fact was true in the world
+invalid_at   when it stopped being true
+created_at   when this system ingested it
+expired_at   when this system superseded it
+```
 
-Memory is scoped to the Assistant's home project. Users can view, correct
-and delete entries. Memory is DATA (§33).
+Contradictions invalidate; they do not delete. Point-in-time search
+("what did we believe about the vendor on the day of this approval?") is
+supported and remains DATA. The Effect Ledger, not the graph, is
+authoritative for whether an effect dispatched.
 
-## 110. Memory consolidation
+## 106. Retrieval
 
-Consolidation runs as a low-priority `MODEL` job on the local tier after
-Runs complete. It never calls an external model unless the project's routing
-policy permits and no `local_only` content is involved.
+The Planner and Pi `knowledge.search` tool run Graphiti hybrid search
+(semantic + BM25 + graph-distance rerank) inside the Run's `group_id`,
+then merge FTS5 hits from canonical SQLite. Every hit carries provenance:
+source id, episode id, edge id, `valid_at`, producing model tier, and
+`trusted: false`.
 
-## 111. Retention
+Pi MUST NOT receive a Cypher endpoint or a generic Graphiti admin client.
+Tools are `knowledge.search`, `knowledge.get_source`, and
+`knowledge.suggest_correction`.
 
-Knowledge, memory and artifact retention are configurable per organisation.
+## 107. Local embeddings by default
+
+Graphiti embeddings use `local_small` on every profile. An external
+embedding Connection is an Owner-enabled exception, subject to Part XI and
+`local_only`. `local_only` sources MUST NOT be sent to an external
+embedder or to Graphiti extraction that would call `model.infer.external`.
+
+## 108. `local_only`
+
+Any canonical source can be marked `local_only`. Ingest of that source
+MUST use a local model tier. If no local extractor can run, ingest stops
+at the raw episode and the UI shows "indexed for search, not graphed".
+
+## 109. Correction and deletion
+
+Users correct graph facts from Knowledge UI. A correction is a new
+canonical row plus a new episode; Graphiti's invalidation updates the
+edge. Deleting a canonical source deletes its SQLite row, removes FTS5
+entries, and deletes Graphiti nodes/edges for that episode by uuid /
+group. Users can also expire an edge without deleting the source.
+
+Agents MAY propose a correction (`knowledge.suggest_correction`); applying
+it is a human or `automatic` Knowledge-write according to policy. Agent
+proposals never write the graph directly.
+
+## 110. Skills
+
+A Skill is a tagged canonical document (§27). Ingest creates a Skill
+entity and `used_in` / `depends_on` edges when the episode text declares
+them. The Planner retrieves Skills by Graphiti search and by FTS5. A Skill
+never widens authority. Agents MAY write a Skill after a Run without
+approval because a Skill is DATA. Humans can edit, delete, or mark
+`REVIEWED`.
+
+## 111. Routines from demonstration
+
+A user can ask an Assistant to watch one execution and save it as a Skill,
+optionally with an Automation. The Automation runs under grants; the Skill
+guides the plan. The demonstration is an episode with `reference_time` =
+the Run's time.
+
+## 112. Assistant memory
+
+Each Assistant has observational memory (rolling summaries) and episodic
+memory (index of prior Runs). Both are canonical SQLite rows in the
+Assistant's home project, ingested into that project's `group_id`.
+Memory is DATA (§33). Users view, correct and delete entries. Deleting an
+Assistant archives canonical rows and deletes that Assistant's episodes
+from the graph.
+
+## 113. Consolidation
+
+After a Run completes, a low-priority `GRAPH_INGEST` job writes the Run
+summary, important tool results (as DATA, redacted) and any new Skill as
+episodes. It never calls an external model unless the project's routing
+permits and no `local_only` content is involved. Consolidation failure
+leaves the Run complete; the graph catches up later.
+
+## 114. Retention
+
+Knowledge, memory, graph edges and artifacts are configurable.
 Defaults: Knowledge indefinite, memory 365 days, artifacts 180 days, audit
-indefinite.
+indefinite. Expired memory rows are deleted canonically and their episodes
+removed from Graphiti. Invalidated edges older than retention MAY be
+pruned; live history needed for point-in-time audit SHOULD be kept as long
+as the corresponding AuditEvents.
 
-## 112. Search evidence
+## 115. Search evidence
 
-Knowledge answers in the UI show the chunks used and their sources so a
-human can verify the claim.
+Knowledge answers show the episodes, edges and canonical sources used, with
+validity windows, so a human can see "this fact was true from … to …" and
+"the system learned it on …".
+
+## 116. Rebuild
+
+Admin → System offers "rebuild graph". It wipes the Graphiti store for a
+`group_id` (or all) and re-enqueues canonical sources. Rebuild is
+recoverable: SQLite is untouched. During rebuild, FTS5 serves search.
+
+## 117. What Graphiti is not
+
+Graphiti MUST NOT store policy, grants, credentials, effect state, or
+approvals. It MUST NOT be consulted by the Dispatch Barrier. It MUST NOT
+expose Cypher, a generic admin API, or raw credentials to Pi, Gondolin or
+the browser. It is not a back door to Gmail or GitHub.
 
 ---
 
 # Part XI — Models: local, hybrid, API
 
-## 113. Tiers
+## 118. Tiers
 
 ```
 local_small    always present: embeddings, classification, summarisation, cheap drafting
@@ -888,50 +1034,51 @@ local_large    present on standard and pro profiles: agent reasoning and tool us
 external       API providers, if an Owner has connected one
 ```
 
-## 114. External inference is data egress
+## 119. External inference is data egress
 
 Sending a prompt to an external provider sends company data off the machine.
 It is a capability, `model.infer.external`, with `leaves_company = true`.
 It is evaluated per project like any capability: `off`, `ask` (approval per
 Run, with grant-from-approval), or `automatic`.
 
-## 115. Providers are Connections
+## 120. Providers are Connections
 
 External model providers are a widget kind (`model_provider`) with
 Connections, health checks and epochs. Keys live in the credential store and
 never enter agent context, sandboxes or browsers. Local model servers are
 also Connections so routing and health are uniform.
 
-## 116. Router rules
+## 121. Router rules
 
 Per project, `model.routing`:
 
 - `local_only`: never use `external`
-- `hybrid`: prefer local; use `external` for tasks the local tier reports it cannot handle, subject to §114 and §105
+- `hybrid`: prefer local; use `external` for tasks the local tier reports it cannot handle, subject to §119 and §108
 - `external_preferred`: use `external` when permitted, fall back to local
 
-Before any external call the router removes `local_only` chunks from the
-prompt; if the task cannot proceed without them, it fails with a legible
-reason rather than sending them.
+Graphiti extraction and Graphiti embeddings are router calls. They MUST NOT
+bypass `model.routing` or `local_only`. A `GRAPH_INGEST` job that would
+need `model.infer.external` when that capability is `off` stores a raw
+episode without edges instead of calling out.
 
-## 117. Profile defaults
+## 122. Profile defaults
 
 `lite` defaults to `hybrid` with `model.infer.external` set to `ask` because
 it has no useful local agent model. `standard` and `pro` default to
 `local_only`.
 
-## 118. Weaker models raise friction, not risk
+## 123. Weaker models raise friction, not risk
 
 Small local models follow tool schemas less reliably and produce more
 `FAILED` outcomes and more stop-and-explain. The kernel makes this safe; the
 UI makes it legible (§80).
 
-## 119. Model evidence
+## 124. Model evidence
 
 Each Run records which model tier and Connection served each Step, so audit
 can answer "did any of this leave the machine".
 
-## 120. Budgets
+## 125. Budgets
 
 External tokens are budgeted per project and per Automation (§45). Local
 inference is budgeted in minutes on `lite` only.
@@ -940,46 +1087,46 @@ inference is budgeted in minutes on `lite` only.
 
 # Part XII — User interface
 
-## 121. Surfaces
+## 126. Surfaces
 
 - Home: attention items, approvals, recent Runs, Assistants, budget and health tiles.
 - Work: Projects, Runs, Tasks, timeline, artifacts, Inspector.
 - Apps: enabled widgets with separate indicators for Connected, Available to project, Actual authority, Approval requirement, Health.
 - Automate: Automations and their standing grants.
-- Knowledge: browse, search, sources, Skills.
+- Knowledge: browse, search, sources, Skills, graph entities and validity windows.
 - Approvals: pending and past decisions.
 - Admin: Overview, People, Widgets, Policies, Budgets, Audit, Backup, Updates, System.
 
-## 122. First paint is local
+## 127. First paint is local
 
 Home renders from SQLite-backed summaries before any provider is contacted.
 Provider refresh is asynchronous; externally sourced tiles show when they
 were last refreshed. A provider outage degrades that widget's tile, not the
 page.
 
-## 123. Honest state
+## 128. Honest state
 
 The UI always distinguishes proposed, running, waiting for approval,
 dispatching, unknown, completed and failed. "Done" appears only with
 evidence attached.
 
-## 124. Progressive disclosure
+## 129. Progressive disclosure
 
 Members see product language ("Sent", "Waiting for you", "Couldn't confirm").
 Effect states, digests, policy versions and connection epochs are in the
 Inspector and Admin views.
 
-## 125. Timeline
+## 130. Timeline
 
 A Run's timeline shows request → plan → approvals → execution → evidence,
 with each effect's state transitions and Barrier decisions.
 
-## 126. Mobile
+## 131. Mobile
 
 Approving, denying, reading a Run and messaging an Assistant MUST work from a
 phone through the web UI.
 
-## 127. `Standard` bundle
+## 132. `Standard` bundle
 
 ```
 Gmail       search, read automatic · draft automatic · send ask · label apply ask
@@ -987,25 +1134,25 @@ GitHub      issue/pr read automatic · comment ask · pr create ask · clone aut
 Calendar    search, read automatic · create ask · update ask · respond ask · delete off
 Web         named domains automatic · open web off
 Models      local automatic · external ask
-Knowledge   read automatic · write automatic (project) · share off
+Knowledge   read automatic · write automatic (project) · share off · graph ingest automatic (local)
 ```
 
 `Cautious` sets every external write to `off` and external models to `off`.
 `Trusting` sets reversible external writes to `automatic` and leaves
 irreversible ones (`mail.send`, `calendar.delete`) at `ask`.
 
-## 128. Plain-language risk
+## 133. Plain-language risk
 
 Every capability has a one-line human description of what it can cause,
 shown wherever it can be enabled or approved.
 
-## 129. Inspector
+## 134. Inspector
 
 For any Run, Task or Effect: full CONTROL and DATA, trust flags, provenance,
 policy version, connection epoch, Barrier decision, evidence, and links to
 AuditEvents.
 
-## 130. Onboarding
+## 135. Onboarding
 
 Onboarding walks the first Owner through: set up account → choose bundle →
 connect one provider (Gmail suggested) → create an Assistant → run one
@@ -1017,13 +1164,13 @@ once.
 
 # Part XIII — Approvals
 
-## 131. Purpose
+## 136. Purpose
 
 Approvals exist for authority transitions policy does not allow
 automatically, and for creating grants. They are not a general confirmation
 dialog.
 
-## 132. Card content
+## 137. Card content
 
 An approval card shows the fields that determine what will happen: every
 CONTROL value, the content-relevant DATA (body, title) or a faithful
@@ -1031,35 +1178,35 @@ rendering of it, the connection identity acting, the project, an expiry, a
 "this sends company data outside the company" line where
 `leaves_company`, and the grant-from-approval option (§41).
 
-## 133. Digest binding
+## 138. Digest binding
 
 Approving binds the approval to the effect digest. If the effect changes,
 the card is withdrawn and re-presented; the old approval is void.
 
-## 134. Eligibility
+## 139. Eligibility
 
 Eligible approvers are Owners and project Members with an approver flag for
 that project. Eligibility is evaluated at decision time. Auditors cannot
 approve. A revoked or suspended principal cannot approve queued effects.
 
-## 135. Absence
+## 140. Absence
 
 Members can mark themselves absent with a date range. Routing skips absent
 approvers. If no eligible approver exists, the effect stays
 `WAITING_APPROVAL` with a visible "no one can approve this" state; it is
 never bypassed.
 
-## 136. Expiry
+## 141. Expiry
 
 Approvals expire (default 24 hours). Expired approvals return the effect to
 `WAITING_APPROVAL` with a note.
 
-## 137. Batch review
+## 142. Batch review
 
 Multiple pending effects from one Run MAY be shown together, but each is
 approved individually and bound to its own digest.
 
-## 138. Audit
+## 143. Audit
 
 Every approval, denial, expiry and grant-from-approval is an AuditEvent
 correlated to the effect.
@@ -1068,7 +1215,7 @@ correlated to the effect.
 
 # Part XIV — People and roles
 
-## 139. Roles
+## 144. Roles
 
 ```
 Owner     organisation   governance: policy, widgets, connections, people, budgets, backup, updates
@@ -1081,7 +1228,7 @@ Auditor and Owner are mutually exclusive. There is always at least one Owner.
 The last Owner cannot be revoked, suspended or demoted. Manager and Admin
 roles are deferred (Part XXII).
 
-## 140. Schema
+## 145. Schema
 
 ```
 principals(id, organisation_id, kind, email, display_name, status,
@@ -1097,31 +1244,31 @@ project_memberships(project_id, principal_id, approver, added_by, added_at,
 A trigger or transactional check enforces the last-Owner invariant in the
 database, not only in application code.
 
-## 141. Auth epochs
+## 146. Auth epochs
 
 Revoking a user, resetting their authentication or a sensitive security
 change increments `auth_epoch`. Sessions, in-flight Runs and effects carrying
 an older epoch fail at the Barrier and at the API. Revocation takes effect
 on the next request.
 
-## 142. Bootstrap
+## 147. Bootstrap
 
 Create organisation → first `HUMAN` principal → Owner binding → default
 project with membership → recovery key generated and shown once → commit
 atomically. No vendor password or default account remains.
 
-## 143. Invitations
+## 148. Invitations
 
 Owners invite by email. An invitation creates a pending principal; it becomes
 active on first login. Invitations expire.
 
-## 144. Departure
+## 149. Departure
 
 Revoking a person disables their `USER_OAUTH` connections, removes their
 memberships, voids their pending approvals, and marks any shared connection
-they owned as needing reassignment (§155).
+they owned as needing reassignment (§160).
 
-## 145. Break-glass
+## 150. Break-glass
 
 For total Owner authentication loss. Requires host access (physical console
 or already-authorised SSH) and the recovery key shown at bootstrap or
@@ -1129,18 +1276,18 @@ rotated since. `agent-os reset-owner` restores or replaces Owner
 authentication, rotates the recovery key, writes an AuditEvent and
 authorises nothing else. There is no vendor-side path.
 
-## 146. Local administration
+## 151. Local administration
 
 Host administration (updates, disk, network) is organisation-controlled host
 access. It is separate from product roles and cannot approve effects or read
 the credential store without the recovery key.
 
-## 147. Client distrust
+## 152. Client distrust
 
 The browser client never decides authority or roles. All checks are server
 side.
 
-## 148. Sessions
+## 153. Sessions
 
 Sessions are bound to principal and auth epoch, expire, and can be revoked
 individually from People.
@@ -1149,26 +1296,26 @@ individually from People.
 
 # Part XV — Widgets and connections
 
-## 149. Widget contents
+## 154. Widget contents
 
 A widget pack contains: an immutable version tied to the appliance release;
 capability descriptors (§37); one adapter implementing narrow methods per
 capability; connection kinds; a UI card; a health check with no side
 effects; plain-language risk text; resource requirements.
 
-## 150. In-repo, versioned with the appliance
+## 155. In-repo, versioned with the appliance
 
 V1 widgets live in the appliance repository and ship with the appliance
 release. There is no runtime installation of widgets by anyone, and no
 independent widget packaging (deferred, Part XXII).
 
-## 151. Enablement grants nothing
+## 156. Enablement grants nothing
 
 Enabling a widget for the organisation exposes its capabilities to project
 policy tables as `off`. Enabling it for a project makes its connections
 selectable there. Neither creates authority.
 
-## 152. Connections grant nothing
+## 157. Connections grant nothing
 
 ```
 connections(id, widget, kind, subject_identity, owner_principal_id,
@@ -1179,31 +1326,31 @@ connection_projects(connection_id, project_id, exposed_by, exposed_at)
 `status ∈ { DRAFT, CONNECTED, DISABLED, ORPHANED, REVOKED }`. A `CONNECTED`
 connection is reach, not permission.
 
-## 153. Connection protocol
+## 158. Connection protocol
 
 Connect → `DRAFT` → provider OAuth or app install → verify identity server
 side → store credential in the credential store → `CONNECTED` → health
 loop. Tokens never leave the credential store except as placeholders (§86)
 or inside adapter calls in the Control Plane.
 
-## 154. Who may connect
+## 159. Who may connect
 
 Members connect only their own `USER_OAUTH` identity. Shared accounts,
 GitHub App installations and model provider keys require an Owner.
 
-## 155. Orphaning
+## 160. Orphaning
 
 A shared connection whose owning Owner is revoked becomes `ORPHANED`. It
 cannot dispatch until another Owner takes ownership. Home shows orphaned
 connections as attention items.
 
-## 156. Epochs
+## 161. Epochs
 
 Reauthorisation, scope change, or credential rotation increments the
 connection epoch. Effects prepared under an older epoch are blocked at the
 Barrier and must be re-prepared.
 
-## 157. Adapter contract
+## 162. Adapter contract
 
 Adapters expose one method per capability with typed CONTROL and DATA
 inputs, return structured evidence, map provider errors to stable internal
@@ -1211,7 +1358,7 @@ classes (`AUTH`, `RATE_LIMIT`, `NOT_FOUND`, `CONFLICT`, `TRANSIENT`,
 `UNKNOWN_OUTCOME`), and never retry irreversible calls (§54). No adapter
 exposes a generic "request" method to agents.
 
-## 158. Provider ceiling
+## 163. Provider ceiling
 
 Provider scope may reduce what a capability can do. It never increases
 authority. A broad OAuth scope changes nothing in policy.
@@ -1220,7 +1367,7 @@ authority. A broad OAuth scope changes nothing in policy.
 
 # Part XVI — V1 packs
 
-## 159. Catalog
+## 164. Catalog
 
 ```
 gmail            mail.*
@@ -1232,7 +1379,7 @@ model_provider   model.*
 
 Slack, Notion, CRM and Microsoft integrations are not in V1.
 
-## 160. Gmail
+## 165. Gmail
 
 Connections: `USER_OAUTH`, `SHARED_ACCOUNT` (Owner only).
 Capabilities:
@@ -1255,7 +1402,7 @@ Reconciliation of an `UNKNOWN` send searches the Sent folder by an
 idempotency header this system adds to every outgoing message. No browser
 scraping.
 
-## 161. GitHub
+## 166. GitHub
 
 Connection: GitHub App installation (Owner). A PAT is break-glass fallback
 only and expires.
@@ -1276,7 +1423,7 @@ and PR text are DATA. Merging to the default branch is not a V1 capability.
 Webhook payloads remain untrusted text after signature verification and are
 deduplicated by delivery ID.
 
-## 162. Google Calendar
+## 167. Google Calendar
 
 Capabilities:
 
@@ -1294,7 +1441,7 @@ description are DATA. Updates bind the provider ETag; a mismatch fails
 rather than overwrites. Compensation for a system-created event deletes only
 that event; `calendar.delete` on arbitrary events is `off` by default.
 
-## 163. Web Research
+## 168. Web Research
 
 Capabilities: `web.page.fetch`, `web.page.extract`, `web.search`,
 `web.recipe.run`, all `READ`. Rules in Part IX apply. Extracted content and
@@ -1304,7 +1451,7 @@ summaries are untrusted with retained provenance.
 
 # Part XVII — Audit, credentials, secrets
 
-## 164. AuditEvent
+## 169. AuditEvent
 
 Append-only rows for: policy changes, grants, role and membership changes,
 connection lifecycle, approvals and denials, Barrier decisions and dispatch
@@ -1312,47 +1459,47 @@ outcomes, reconciliation results, Knowledge sharing, break-glass, backups,
 updates. Each carries actor principal, Run/Task/Effect correlation where
 applicable, before/after for configuration changes, and a timestamp.
 
-## 165. Immutability
+## 170. Immutability
 
 Ordinary users and agents cannot mutate history. Owners cannot delete audit
 rows; retention is by policy and is itself audited.
 
-## 166. Sensitive logging
+## 171. Sensitive logging
 
 Secrets, message bodies beyond what the digest requires, and unnecessary
 personal data are excluded from audit payloads. Evidence is stored in the
 artifact store and referenced.
 
-## 167. Credential store
+## 172. Credential store
 
 One encrypted store on the appliance, readable only by the Control Plane
 process, keyed by a key derived at boot from local material plus the
 organisation recovery material for backup encryption. Agents, sandboxes and
 browsers see logical connection references and placeholders only.
 
-## 168. Rotation and revocation
+## 173. Rotation and revocation
 
 Credentials support replacement and revocation. Both increment the
-connection epoch (§156). Revocation blocks stale dispatch on the next Barrier
+connection epoch (§161). Revocation blocks stale dispatch on the next Barrier
 evaluation.
 
-## 169. Redaction
+## 174. Redaction
 
 Credentials are redacted from logs, artifacts, timeline entries and error
 messages by pattern and by known-value matching.
 
-## 170. Minimum scope
+## 175. Minimum scope
 
 Provider scopes requested are the minimum for the enabled capabilities.
 Enabling a new capability that needs a wider scope triggers reauthorisation
 and a new connection epoch.
 
-## 171. Host separation
+## 176. Host separation
 
 Worker processes run as a separate OS user from the Control Plane with no
 read access to the credential store or the authority database.
 
-## 172. Admin Overview
+## 177. Admin Overview
 
 Admin Overview shows operational health, pending governance issues (orphaned
 connections, expired grants, failed backups, `UNKNOWN` effects awaiting a
@@ -1362,48 +1509,51 @@ human), and recent high-impact audit events.
 
 # Part XVIII — Backup, release, updates
 
-## 173. Backup contents
+## 178. Backup contents
 
-The SQLite database, configuration, Knowledge canonical sources, artifacts,
-and the encrypted credential blob with its recovery metadata. Backups are
-encrypted with organisation recovery material.
+The SQLite database, the Graphiti/FalkorDB Lite graph file, configuration,
+Knowledge canonical sources, artifacts, and the encrypted credential blob
+with its recovery metadata. Backups are encrypted with organisation recovery
+material. The graph file is included so restore is fast; if it is missing or
+corrupt, restore still succeeds and Admin offers rebuild (§116).
 
-## 174. Backup targets
+## 179. Backup targets
 
 Local disk, an attached drive, or an organisation-controlled object store.
 The vendor never receives backups.
 
-## 175. Restore
+## 180. Restore
 
 Restore preserves logical IDs so audit and effect correlation remain valid.
 Effects in `DISPATCHING` become `UNKNOWN` (§57). Connections are restored as
 `CONNECTED` only if their credentials decrypt and a health probe succeeds;
-otherwise `DISABLED` pending reauthorisation.
+otherwise `DISABLED` pending reauthorisation. If the graph file is absent or
+fails to open, canonical data is still live and a rebuild is queued.
 
-## 176. Test restore
+## 181. Test restore
 
 Admin → Backup has a "test restore" action that restores the latest backup
 into a scratch database and reports integrity. A backup strategy without a
 passed test restore is shown as incomplete.
 
-## 177. Retention
+## 182. Retention
 
 Backup retention is configurable; default keeps daily for 14 days, weekly
 for 8 weeks.
 
-## 178. Appliance image and channels
+## 183. Appliance image and channels
 
 The appliance ships as a signed image. Organisations choose a channel
 (`stable`, `early`). The Control Plane verifies signatures before staging.
 
-## 179. Staged updates and rollback
+## 184. Staged updates and rollback
 
 Updates are downloaded, verified and staged; activation is an Owner action
 or a scheduled window. Rollback to the previous release is supported where
 migrations permit. Migrations are explicit and versioned; a high-risk
 migration takes a pre-migration backup automatically.
 
-## 180. Capabilities in updates
+## 185. Capabilities in updates
 
 New capabilities arrive as `off` in every project (§39). Critical security
 updates raise a Home attention item for Owners.
@@ -1412,14 +1562,15 @@ updates raise a Home attention item for Owners.
 
 # Part XIX — Deployment profiles
 
-## 181. Profiles are configuration
+## 186. Profiles are configuration
 
 A profile is a small file:
 
 ```
 memory_reserve_mb
-limits: { MODEL, BROWSER, SANDBOX, EMBEDDING }
+limits: { MODEL, BROWSER, SANDBOX, EMBEDDING, GRAPH_INGEST }
 sandbox_memory_mb
+graph_backend: falkordb_lite | falkordb
 tiers: { local_small: <model>, local_large: <model | none> }
 routing_default: local_only | hybrid | external_preferred
 ```
@@ -1427,40 +1578,45 @@ routing_default: local_only | hybrid | external_preferred
 The logical architecture and the safety tests are identical across
 profiles.
 
-## 182. `lite`
+## 187. `lite`
 
 Raspberry Pi 5 class, 8–16 GB, no accelerator.
-SANDBOX 1 · BROWSER 1 · EMBEDDING 1 · local_large none · local_small a small
-CPU embedding/classification model. Routing default `hybrid` with
-`model.infer.external` at `ask`. Suitable as a full appliance for
+SANDBOX 1 · BROWSER 1 · EMBEDDING 1 · GRAPH_INGEST 1 · local_large none ·
+local_small a small CPU embedding/classification model. Graph backend:
+FalkorDB Lite. Routing default `hybrid` with `model.infer.external` at
+`ask`. Graph ingest on `lite` often stores raw episodes until a capable
+model is allowed; FTS5 still works. Suitable as a full appliance for
 API/hybrid use, or later as a Control Plane node with remote workers.
 
-## 183. `standard`
+## 188. `standard`
 
 Mac mini M4 / M4 Pro class, 24–64 GB unified memory.
-SANDBOX 2 · BROWSER 1 · local_large a ~30B-class quantised model. Routing
-default `local_only`. This is the reference solo appliance.
+SANDBOX 2 · BROWSER 1 · GRAPH_INGEST 1 · local_large a ~30B-class quantised
+model. Graph backend: FalkorDB Lite. Routing default `local_only`. This is
+the reference solo appliance.
 
-## 184. `pro`
+## 189. `pro`
 
 DGX Spark class, 128 GB unified memory, ~273 GB/s.
-SANDBOX 4 · BROWSER 2 · local_large up to ~200B-parameter NVFP4 MoE models.
-Routing default `local_only`. OS, page cache, weights and KV cache share one
-pool: the memory reserve is the primary admission rule, and inference
-memory utilisation is capped well below the pool size to avoid host
-instability.
+SANDBOX 4 · BROWSER 2 · GRAPH_INGEST 2 · local_large up to ~200B-parameter
+NVFP4 MoE models. Graph backend: FalkorDB Lite default; FalkorDB server
+optional. Routing default `local_only`. OS, page cache, weights, KV cache
+and the graph file share one pool: the memory reserve is the primary
+admission rule, and inference memory utilisation is capped well below the
+pool size to avoid host instability.
 
-## 185. Gondolin on every profile
+## 190. Gondolin on every profile
 
 Because Gondolin provides the same micro-VM isolation on all three profiles,
 the sandbox threat model is identical across hardware and no profile
 downgrades isolation.
 
-## 186. Worker machines later
+## 191. Worker machines later
 
 Adding a worker machine binds `Worker.run` (§62) to a remote node. The
-Control Plane, SQLite, credential store and audit stay on one machine.
-Cluster concerns (leases, node identity, placement) are deferred (Part XXII).
+Control Plane, SQLite, Graphiti store, credential store and audit stay on
+one machine. Cluster concerns (leases, node identity, placement) are
+deferred (Part XXII).
 
 ---
 
@@ -1508,10 +1664,21 @@ All MUST pass before first release.
 38. restored DISPATCHING effects become UNKNOWN and are not redispatched
 39. budgets block at the Barrier and cannot widen authority
 40. external content never becomes CONTROL without an explicit trust transition
+41. a Graphiti-extracted email, name or URL cannot become trusted CONTROL
+42. Graphiti search from project A cannot return project B nodes
+43. Graphiti construction never uses OpenAI unless a model_provider Connection and policy allow external inference
+44. `local_only` sources are never sent to Graphiti extraction or embedding that would leave the machine
+45. wiping or losing the graph file does not lose canonical Knowledge; rebuild restores the graph
+46. Dispatch Barrier does not read Graphiti
+47. Pi cannot call Cypher or a Graphiti admin client
+48. Knowledge search still returns FTS5 hits when Graphiti is unhealthy
+49. human graph correction invalidates the old edge rather than deleting history
+50. Graphiti health probes do not call an LLM
 
 Deferred with their features: widget package digest verification, worker
 lease and epoch behaviour, Member access to shared mailboxes, Admin and
-Manager role limits, form submission and upload controls.
+Manager role limits, form submission and upload controls, Neo4j as an
+optional graph backend.
 
 ---
 
@@ -1537,8 +1704,9 @@ Phase 3  Runtime
 
 Phase 4  Product
          dashboard (Home, Work, Approvals, Apps, Admin), mobile web,
-         Assistants, Knowledge with FTS5 and local embeddings, Skills,
-         Assistant memory, Inspector, onboarding
+         Assistants, Knowledge canonical store + FTS5, Graphiti with
+         FalkorDB Lite and router-bound extraction, Skills, Assistant
+         memory, Inspector, onboarding, graph rebuild
 
 Phase 5  Packs, in this order
          Gmail read/search → Gmail draft → Gmail send (reference
@@ -1571,15 +1739,13 @@ Phase 7  Second wave
 - A tighten-only risk-review model that can escalate to `ask` but never loosen policy
 - Skill lifecycle beyond `UNREVIEWED` / `REVIEWED`
 - Full trust-class lattice (`TRUSTED_CONTROL`, `TRUSTED_DATA`, `UNTRUSTED_TEXT`, `UNVERIFIED_EXTERNAL`, `DERIVED_FROM_UNTRUSTED`); V1 uses `trusted` flag plus provenance
-- Browser recipe learning beyond §108
+- Browser recipe learning beyond §111
 - Notification channels beyond dashboard and mobile web
 - Timed break-glass ceremony; V1 is `reset-owner` with the recovery key
 - Slack, Notion, CRM and Microsoft packs
-- Entity knowledge graph (Graphiti/Zep-style). V1 Knowledge is FTS5 + local
-  embeddings. A later graph, if any, is a derived SQLite index with temporal
-  invalidation, never a second database process, never a source of CONTROL.
-  See `RESEARCH-memory.md`.
-- Skill adjacency graph (Hermes-style SQLite) for Planner routing only
+- Neo4j or FalkorDB server as a non-default graph backend
+- Zep Cloud (forbidden, not deferred)
+- Community/Saga-heavy ontology customisation beyond Graphiti defaults
 
 ---
 
@@ -1594,10 +1760,10 @@ Before shipping a feature, answer:
 5. What happens after policy narrowing, connection revocation or auth epoch bump?
 6. What happens if the provider response is lost? Is retry actually safe? How is UNKNOWN reconciled?
 7. What conflict key protects the external resource?
-8. Which runtime executes this (Control Plane, Pi, Gondolin, browserd), and what can it see?
-9. Does any company data leave the machine, including inside a model prompt or embedding request?
-10. Can a Skill, memory entry, webpage or webhook make this happen without a human trust transition?
-11. Does the SQLite schema enforce the invariant, or only the code?
+8. Which runtime executes this (Control Plane, Pi, Gondolin, browserd, Graphiti ingest), and what can it see?
+9. Does any company data leave the machine, including inside a model prompt, Graphiti extraction, or embedding request?
+10. Can a Skill, memory entry, Graphiti edge, webpage or webhook make this happen without a human trust transition?
+11. Does the SQLite schema enforce the invariant, or only the code? Would losing the graph file lose it?
 12. Which Part XX test covers it?
 
 If any answer is unclear, the feature is not ready.
@@ -1611,10 +1777,11 @@ agent. Humans govern. Policy defines authority. Assistants propose.
 Approvals bind exceptional authority. The Dispatch Barrier decides whether
 an effect may leave. Adapters talk to providers. The Effect Ledger records
 what was attempted. Reconciliation determines what happened. Artifacts and
-Audit keep the evidence. Skills and memory make the system better at
-proposing without ever making it more authorised. Gondolin and browserd
-keep untrusted execution away from everything that matters, on every
-machine the product runs on.
+Audit keep the evidence. Graphiti remembers how facts changed without ever
+becoming authority. Skills and memory make the system better at proposing
+without ever making it more authorised. Gondolin and browserd keep untrusted
+execution away from everything that matters, on every machine the product
+runs on.
 
 ```
 visible ≠ authorized
@@ -1629,8 +1796,10 @@ timeout ≠ safe-to-retry
 external text ≠ CONTROL
 model output ≠ trust upgrade
 remembered ≠ trusted
+graph fact ≠ CONTROL
 learned skill ≠ granted authority
 external inference ≠ local
+graphiti ≠ kernel
 owner ≠ root
 browser ≠ universal adapter
 widget ≠ kernel
