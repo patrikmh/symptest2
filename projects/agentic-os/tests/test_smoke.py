@@ -8,11 +8,12 @@ def test_project_has_readme():
     assert (PROJECT_DIR / "README.md").is_file()
 
 
-def test_spec_is_v7_0():
+def test_spec_is_v7_1():
     spec = (PROJECT_DIR / "SPEC.md").read_text(encoding="utf-8")
-    assert "Canonical Architecture Specification v7.0" in spec
+    assert "Canonical Architecture Specification v7.1" in spec
     assert "Dispatch Barrier" in spec
-    assert "## 175. Group C" in spec
+    assert "## 182. Closing reachability law" in spec
+    assert "Tailscale is a path" in spec
 
 
 def test_spec_sections_are_contiguous():

@@ -1,7 +1,7 @@
 # Research: agentic OS memory, graph databases, and Graphiti
 
 Date: 2026-09-09 (updated same day)
-Status: survey. **Normative decision is SPEC.md v7.0 (Graphiti since v6.1): Graphiti is V1 as a derived index, bounded by three rules (derived never authority; behind `knowledge.search`; degrades to raw episodes).**
+Status: survey. **Normative decision is SPEC.md v7.1 (Graphiti since v6.1): Graphiti is V1 as a derived index, bounded by three rules (derived never authority; behind `knowledge.search`; degrades to raw episodes).**
 
 The survey below still stands as background. The v6.0 recommendation "do not put Graphiti in V1" is superseded. v6.1 uses Graphiti as a derived index with FalkorDB Lite, router-bound extraction, `group_id` = project, and graph facts as DATA.
 

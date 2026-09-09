@@ -1,6 +1,6 @@
-# Agentic OS Edge — Canonical Architecture Specification v7.0
+# Agentic OS Edge — Canonical Architecture Specification v7.1
 
-Status: production architecture baseline (supersedes v6.2, v6.1, v6.0, v5.6)
+Status: production architecture baseline (supersedes v7.0, v6.2, v6.1, v6.0, v5.6)
 Target: private, self-hosted agentic operating system for small and mid-sized organisations
 Product shape: a roster of named Assistants (Grok Bot ease), that learn in the open (Hermes), behind a kernel neither of them has
 Deployment: one appliance the company already owns — Raspberry Pi 5, Mac mini M4 / M4 Pro, NVIDIA DGX Spark
@@ -10,7 +10,7 @@ Knowledge: SQLite canonical + FTS5, with Graphiti (self-hosted, FalkorDB Lite) a
 Normative words: MUST, MUST NOT, SHOULD, MAY have their usual meaning.
 "V1" means the first release. Anything in Part XXII is roadmap and MUST NOT be built before Part XXI Phase 5.
 
-Sections are numbered 1–175 with no gaps.
+Sections are numbered 1–182 with no gaps.
 
 ## Revision note
 
@@ -55,6 +55,11 @@ Changed in v7.0:
 - **The V1 test gate is 30 tests.** Graphiti tests gate Graphiti; sandbox
   tests gate Phase 5.
 
+v7.1 records the first interview decision: humans reach the appliance
+over a Tailscale tailnet when they are away, and over loopback when they
+are at the machine. Tailscale is a path, not a principal. Funnel and
+public ingress are forbidden. Part XX.A (§176–§182) is normative.
+
 ---
 
 # Part I — Law
@@ -83,7 +88,7 @@ evidence of what left the machine. It is not a chat window with plugins.
 
 ```
 Humans
-  ↓
+  ↓  loopback (desk) or Tailscale tailnet (away)   — not the public internet
 Presentation      dashboard, mobile web, one notification channel
   ↓
 Control Plane     authority, Effect Ledger, audit, canonical Knowledge, Graphiti ingest queue, scheduling, approvals
@@ -134,7 +139,9 @@ worker machines.
 The appliance MUST be fully functional with no vendor cloud reachable.
 Company data leaves the machine only through a configured provider and a
 governed effect. Sending a prompt to an external model is such an effect
-(Part XI).
+(Part XI). Opening Home from another building uses the organisation's
+Tailscale tailnet (Part XX.A), not a public URL. The overlay is a path.
+It is not a vendor root and not an Edge principal.
 
 ## 9. Least authority
 
@@ -982,7 +989,8 @@ Inspector and Admin.
 ## 126. Surfaces
 
 - **Home**: Assistant roster with presence; "needs you" (approvals,
-  blocked, UNKNOWN); recent evidence ("Sent to Sarah 10:41"); health.
+  blocked, UNKNOWN); recent evidence ("Sent to Sarah 10:41"); health,
+  including whether the tailnet is up.
 - **Chat**: heterogeneous transcript — prose, approval cards, artifacts,
   inline widgets (draft mail, table), system events ("saved Skill *Weekly
   vendor scan*").
@@ -1016,7 +1024,9 @@ Notifications contain no message bodies. More channels are deferred.
 ## 130. Mobile
 
 Approve, deny, read a Run, message an Assistant — all MUST work from a
-phone through the web UI.
+phone through the web UI, reached over the tailnet (§178). The phone
+runs a Tailscale client; there is no public mobile app store listing in
+V1 and no APNs/FCM push path.
 
 ## 131. Inspector
 
@@ -1035,7 +1045,9 @@ policy version, connection epoch, Barrier decision, evidence, AuditEvents.
 7. Open Admin → Audit and see the row.
 
 The wizard ends when the Owner has seen connect → read → approve → send →
-audit once. Hardware profile is detected silently (§163).
+audit once. Hardware profile is detected silently (§163). Joining the
+tailnet is offered after that loop and MUST NOT block the first send:
+the desk UI is loopback (§178).
 
 ---
 
@@ -1275,8 +1287,9 @@ database.
 
 ## 162. Admin Overview
 
-Health, orphaned connections, expired grants, failed backups, `UNKNOWN`
-effects awaiting a human, recent high-impact audit events.
+Health, tailnet up/down, orphaned connections, expired grants, failed
+backups, `UNKNOWN` effects awaiting a human, recent high-impact audit
+events.
 
 ---
 
@@ -1398,28 +1411,96 @@ graph file, credential store and audit stay on one machine.
 31. takeover 2FA or password is not stored as memory or episode; workspace leftovers cannot be used by a later Task
 32. memory the product cannot show to a human is not included in a prompt
 33. first-run to governed send completes in the onboarding wizard without opening Admin (except the audit step)
+34. Member UI is not reachable on a physical NIC address (only loopback and the tailnet interface / `tailscale serve`)
+35. presence on the tailnet without an Edge session cannot read, approve or dispatch
+36. Tailscale Funnel and any public ingress cannot be enabled from Admin
+37. the desk UI still serves when Tailscale is stopped; in-flight effects are unaffected
 
 ## 174. Group B — Graphiti gate (MUST pass before Graphiti extraction is enabled)
 
-34. a Graphiti-extracted email, name or URL cannot become trusted CONTROL
-35. search from project A cannot return project B nodes
-36. Graphiti never uses OpenAI unless a `model_provider` Connection and policy allow
-37. `local_only` sources never reach an extractor or embedder that leaves the machine
-38. losing the graph file loses no canonical Knowledge; rebuild restores it
-39. the Dispatch Barrier does not read Graphiti
-40. Pi cannot call Cypher or an admin client
-41. Knowledge search still returns FTS5 hits when Graphiti is unhealthy
-42. human correction invalidates the old edge rather than deleting history
-43. graph health probes do not call a model
+38. a Graphiti-extracted email, name or URL cannot become trusted CONTROL
+39. search from project A cannot return project B nodes
+40. Graphiti never uses OpenAI unless a `model_provider` Connection and policy allow
+41. `local_only` sources never reach an extractor or embedder that leaves the machine
+42. losing the graph file loses no canonical Knowledge; rebuild restores it
+43. the Dispatch Barrier does not read Graphiti
+44. Pi cannot call Cypher or an admin client
+45. Knowledge search still returns FTS5 hits when Graphiti is unhealthy
+46. human correction invalidates the old edge rather than deleting history
+47. graph health probes do not call a model
 
 ## 175. Group C — sandbox gate (Phase 5)
 
-44. guest never observes secret bytes; placeholders substitute only on allowed hosts
-45. sandbox cannot reach hosts outside its Task allowlist
-46. Gondolin Playwright cannot access browserd profiles
-47. untrusted issue text cannot change target repository or branch
-48. signed webhook payload instructions are not trusted; duplicate deliveries do not duplicate Runs
-49. clone credentials do not persist beyond the Task
+48. guest never observes secret bytes; placeholders substitute only on allowed hosts
+49. sandbox cannot reach hosts outside its Task allowlist
+50. Gondolin Playwright cannot access browserd profiles
+51. untrusted issue text cannot change target repository or branch
+52. signed webhook payload instructions are not trusted; duplicate deliveries do not duplicate Runs
+53. clone credentials do not persist beyond the Task
+
+---
+
+# Part XX.A — Reachability (Tailscale)
+
+These sections are V1. They do not create a second authority path.
+
+## 176. Path, not principal
+
+Humans reach the Presentation layer over a Tailscale tailnet when they
+are away from the appliance, and over loopback when they sit at it.
+Joining the tailnet, knowing the MagicDNS name, or holding a tailnet IP
+MUST NOT create an Edge principal, session, role, grant or approval.
+Tailscale is a path. An Edge login is still required (§145).
+
+## 177. Listeners
+
+`agent-osd` binds the Member UI to `127.0.0.1` and to the appliance's
+Tailscale interface (or exposes that same local port with
+`tailscale serve`). It MUST NOT bind the Member UI to `0.0.0.0` on
+physical NICs. Cafe Wi-Fi and the office LAN are not an access path.
+
+It MUST NOT enable Tailscale Funnel, a public A record, ngrok, or a
+reverse proxy on the open internet.
+
+`agent-os reset-owner` remains a host-console command and MUST work when
+the tailnet is down.
+
+## 178. Desk and phone
+
+At the appliance the Owner opens the loopback URL. No Tailscale client
+is required. That is how the ten-minute first send stays true.
+
+Away from the appliance, Home and approvals are the MagicDNS name over
+the tailnet. A phone MUST run a Tailscale client before the mobile web
+UI will load. Notification mail (§129) links to that MagicDNS URL and
+contains no message bodies.
+
+## 179. Overlay vs vendor root
+
+Tailscale is an overlay the organisation chooses. It is not a vendor
+principal, not a support backdoor, and not a path for the Edge vendor to
+SSH. Auth keys, tags and ACLs live in the organisation's Tailscale
+account. The appliance stores a machine identity sufficient to stay
+joined; rotation is an Owner action and an AuditEvent.
+
+## 180. Failure
+
+If the tailnet is down: the desk UI still works; away clients see "can't
+reach the appliance"; Automations, Gmail effects and local models
+continue; Home shows the tailnet as unhealthy. A tailnet outage MUST NOT
+fail in-flight effects or invent `UNKNOWN`.
+
+## 181. What is not a path
+
+Forbidden in V1 as a Member path: Tailscale Funnel, Cloudflare Tunnel,
+ngrok, a public load balancer, raw WAN port-forwarding. Other overlays
+(plain WireGuard, ZeroTier, Headscale) are deferred (Part XXII) and MUST
+NOT relax §177.
+
+## 182. Closing reachability law
+
+Path ≠ login ≠ grant. The phone uses Tailscale to see Kenny. The Barrier
+still decides whether mail leaves.
 
 ---
 
@@ -1439,7 +1520,8 @@ Phase 2  Effect law
 Phase 3  Runtime
          agent-osd modules, Worker interface, semaphores, detected profiles,
          Pi with generated tools, browserd with research profile, model
-         router with local_small and one external provider
+         router with local_small and one external provider, UI listeners
+         on loopback + Tailscale only (§177)
 
 Phase 4  Product
          Home roster + presence, chat transcript with cards and widgets,
@@ -1487,6 +1569,9 @@ Phase 7  Second wave from Part XXII by customer evidence
 - Timed break-glass ceremony; V1 is `reset-owner`
 - Neo4j / FalkorDB server backends; Zep Cloud (forbidden, not deferred)
 - Slack, Notion, CRM, Microsoft packs
+- Other overlays as a Member path: Cloudflare Tunnel, Funnel, ngrok,
+  plain WireGuard, ZeroTier, Headscale; public A records; WAN
+  port-forwards. Tailscale remains the V1 path (§176).
 
 ---
 
@@ -1507,6 +1592,7 @@ Phase 7  Second wave from Part XXII by customer evidence
 13. Did a workspace, cookie or Skill become reach or authority?
 14. Can a Member finish this from Home without opening Admin?
 15. Does this add a concept to the Member UI? Which of the five objects is it?
+16. Is this reachability, a login, or a grant? (Tailscale is only the first.)
 
 If any answer is unclear, the feature is not ready.
 
@@ -1549,6 +1635,8 @@ graphiti ≠ kernel
 owner ≠ root
 browser ≠ universal adapter
 widget ≠ kernel
+tailnet ≠ login
+path ≠ grant
 ```
 
 Everything may propose. Only explicit authority may decide. Only the
