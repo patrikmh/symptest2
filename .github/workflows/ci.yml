@@ -17,6 +17,6 @@ jobs:
           cache: pip
           cache-dependency-path: requirements-dev.txt
 
-      - run: pip install -r requirements-dev.txt
+      - run: pip install -r requirements-dev.txt -r projects/grokcall/requirements.txt
 
       - run: pytest

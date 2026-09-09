@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  phone-gateway:
+    build: .
+    container_name: grokcall-gateway
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - grokcall-data:/app/data
+    environment:
+      - SQLITE_DB_PATH=/app/data/grokcall.db
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: grokcall-tunnel
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - phone-gateway
+
+volumes:
+  grokcall-data:
