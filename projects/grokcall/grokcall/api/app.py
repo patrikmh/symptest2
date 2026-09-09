@@ -202,6 +202,11 @@ def build_speech_providers() -> Tuple[SpeechToTextPort, TextToSpeechPort]:
         voice_id=settings.elevenlabs_voice_id,
         model_id=settings.elevenlabs_tts_model_id,
         base_url=settings.elevenlabs_tts_url,
+        stability=settings.elevenlabs_tts_stability,
+        similarity_boost=settings.elevenlabs_tts_similarity_boost,
+        style=settings.elevenlabs_tts_style,
+        use_speaker_boost=settings.elevenlabs_tts_use_speaker_boost,
+        speed=settings.elevenlabs_tts_speed,
     )
     return stt, tts
 

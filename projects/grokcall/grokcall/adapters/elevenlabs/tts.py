@@ -23,20 +23,42 @@ class ElevenLabsFlashTTS(TextToSpeechPort):
         model_id: str = "eleven_flash_v2_5",
         base_url: str = "https://api.elevenlabs.io/v1/text-to-speech",
         client: Optional[httpx.AsyncClient] = None,
+        stability: float = 0.4,
+        similarity_boost: float = 0.85,
+        style: float = 0.2,
+        use_speaker_boost: bool = True,
+        speed: float = 0.95,
     ):
         self.api_key = api_key
         self.voice_id = voice_id
         self.model_id = model_id
         self.base_url = base_url
         self._client = client or httpx.AsyncClient(timeout=httpx.Timeout(30.0, connect=5.0))
+        self.stability = stability
+        self.similarity_boost = similarity_boost
+        self.style = style
+        self.use_speaker_boost = use_speaker_boost
+        self.speed = speed
 
-    async def synthesize_stream(self, text: str, language: Optional[str] = None) -> AsyncIterator[bytes]:
-        url = f"{self.base_url}/{self.voice_id}/stream"
+    def build_payload(self, text: str, language: Optional[str] = None) -> dict:
         payload = {
             "text": text,
             "model_id": self.model_id,
-            "voice_settings": {"stability": 0.5, "similarity_boost": 0.75},
+            "voice_settings": {
+                "stability": self.stability,
+                "similarity_boost": self.similarity_boost,
+                "style": self.style,
+                "use_speaker_boost": self.use_speaker_boost,
+                "speed": self.speed,
+            },
         }
+        if language in ("sv", "en"):
+            payload["language_code"] = language
+        return payload
+
+    async def synthesize_stream(self, text: str, language: Optional[str] = None) -> AsyncIterator[bytes]:
+        url = f"{self.base_url}/{self.voice_id}/stream"
+        payload = self.build_payload(text, language=language)
         if language in ("sv", "en"):
             payload["language_code"] = language
 
