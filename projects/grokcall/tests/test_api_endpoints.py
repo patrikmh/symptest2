@@ -21,13 +21,16 @@ async def test_health(client):
 
 
 @pytest.mark.asyncio
-async def test_incoming_connects_directly_when_no_clip_configured(client):
+async def test_incoming_connects_directly_when_no_clip_configured(client, test_settings):
     res = await client.post(
         "/46elks/incoming",
         data={"callid": "c_webhook_1", "direction": "incoming", "from": "+46701234567", "to": "+46766861234"},
     )
     assert res.status_code == 200
-    assert res.json() == {"connect": "+46766860099"}
+    assert res.json() == {
+        "connect": "+46766860099",
+        "whenhangup": f"{test_settings.base_url}/46elks/hangup",
+    }
 
     session = await registry.get_by_provider_id("c_webhook_1")
     assert session is not None and session.caller == "+46701234567"
@@ -40,7 +43,11 @@ async def test_incoming_plays_clip_then_connects(client, test_settings):
     res = await client.post("/46elks/incoming", data={"callid": "c_clip", "from": "+4670", "to": "+4676"})
     assert res.json() == {
         "play": "https://phone.example.com/static/connecting.mp3",
-        "next": {"connect": "+46766860099"},
+        "whenhangup": f"{test_settings.base_url}/46elks/hangup",
+        "next": {
+            "connect": "+46766860099",
+            "whenhangup": f"{test_settings.base_url}/46elks/hangup",
+        },
     }
 
 

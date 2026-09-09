@@ -146,12 +146,17 @@ async def fortysixelks_incoming(request: Request):
     )
     _spawn(_wake_agent(session))
 
+    hangup_url = f"{settings.base_url.rstrip('/')}/46elks/hangup"
     if settings.connecting_audio_url:
         actions = FortySixElksActionBuilder.play_then_connect(
-            settings.connecting_audio_url, settings.fortysixelks_realtime_number
+            settings.connecting_audio_url,
+            settings.fortysixelks_realtime_number,
+            whenhangup=hangup_url,
         )
     else:
-        actions = FortySixElksActionBuilder.connect(settings.fortysixelks_realtime_number)
+        actions = FortySixElksActionBuilder.connect(
+            settings.fortysixelks_realtime_number, whenhangup=hangup_url
+        )
     return JSONResponse(actions)
 
 

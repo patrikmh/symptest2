@@ -27,7 +27,18 @@ def test_action_builders():
         "play": "https://x/c.mp3",
         "next": {"connect": "+46766860000"},
     }
+    assert FortySixElksActionBuilder.play_then_connect(
+        "https://x/c.mp3", "+46766860000", whenhangup="https://x/hangup"
+    ) == {
+        "play": "https://x/c.mp3",
+        "whenhangup": "https://x/hangup",
+        "next": {"connect": "+46766860000", "whenhangup": "https://x/hangup"},
+    }
     assert FortySixElksActionBuilder.connect("+46766860000") == {"connect": "+46766860000"}
+    assert FortySixElksActionBuilder.connect("+46766860000", whenhangup="https://x/hangup") == {
+        "connect": "+46766860000",
+        "whenhangup": "https://x/hangup",
+    }
     assert FortySixElksActionBuilder.hangup() == {"hangup": "busy"}
 
 
