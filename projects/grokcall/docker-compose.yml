@@ -1,0 +1,35 @@
+services:
+  phone-gateway:
+    build: .
+    container_name: grokcall-gateway
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - SQLITE_DB_PATH=/app/data/grokcall.db
+    volumes:
+      - grokcall-data:/app/data
+    # Only cloudflared (same compose network) needs to reach the gateway. Bind to
+    # loopback for local debugging instead of exposing the port on the LAN.
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: grokcall-tunnel
+    restart: unless-stopped
+    # Configure the tunnel's public hostname in the Cloudflare dashboard to point
+    # at http://phone-gateway:8000 (the service name on the compose network).
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - phone-gateway
+
+volumes:
+  grokcall-data:

@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Agent orchestrator workspaces (see WORKFLOW.md)
+.pi/
+
+# Local SQLite databases (GrokCall call log etc.)
+*.db
+*.sqlite3
