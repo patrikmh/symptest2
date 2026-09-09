@@ -238,14 +238,14 @@ Skills are canonical SQLite rows that are also ingested as Graphiti
 episodes so the Planner can retrieve them by relationship as well as by
 search.
 
-## 27a. Graphiti
+## 28. Graphiti
 
 Graphiti is the temporal knowledge graph engine. It stores episodes,
 entities and bi-temporal facts derived from canonical sources. It is not
 an authority store, not a policy store, and not an effect ledger. See
 Part X.
 
-## 28. Widget
+## 29. Widget
 
 A pack that brings a provider into the system: capability descriptors, one
 adapter, connection kinds, a UI card, health check, risk text and resource
@@ -255,14 +255,14 @@ needs (Part XV).
 
 # Part III — Trust
 
-## 29. CONTROL vs DATA
+## 30. CONTROL vs DATA
 
 CONTROL determines what an action targets: recipient, sender, calendar,
 attendee, event ID, repository, branch, installation, URL, destination
 domain, model provider. DATA is the content the action carries: body,
 subject, title, description, issue text, code, summary.
 
-## 30. Trusted CONTROL
+## 31. Trusted CONTROL
 
 Every CONTROL field on an effect carries `trusted: boolean` and a provenance
 reference. A CONTROL value becomes trusted only through an explicit
@@ -274,41 +274,41 @@ transition:
 
 The Dispatch Barrier MUST reject any effect with an untrusted CONTROL value.
 
-## 31. External content is adversarial
+## 32. External content is adversarial
 
 Email, issues, PR text, webpages, documents, webhook bodies, calendar
 descriptions and anything a model derived from them are untrusted. Prompt
 injection is an expected property of such content. An instruction inside
 untrusted content grants nothing and targets nothing.
 
-## 32. No trust upgrade by transformation
+## 33. No trust upgrade by transformation
 
 Parsing into JSON, extraction by a model, summarisation, translation, or a
 valid webhook signature does not make content trusted. Tool schemas constrain
 syntax, not authority.
 
-## 33. Memory, Skills and graph facts are DATA
+## 34. Memory, Skills and graph facts are DATA
 
 Remembered facts, learned procedures, Graphiti entities and Graphiti edges
 are untrusted for CONTROL purposes. "Last time we sent this to alice@…"
 and a graph edge `alice --[email]--> alice@example.com` do not make that
 address a trusted recipient. Graphiti extraction is model output and
-MUST NOT raise trust (§6, §32).
+MUST NOT raise trust (§6, §33).
 
-## 34. Provenance
+## 35. Provenance
 
 Artifacts and Knowledge chunks MUST retain: source identity and location,
 retrieval time, producing Run and Task, producing model or tool, and the
 transformation chain. Derived content inherits the lowest trust of its
 inputs.
 
-## 35. Webhooks
+## 36. Webhooks
 
 Signature verification proves the sender, not the safety of the payload.
 Payloads are normalised into internal event records, deduplicated by provider
 event ID, and treated as untrusted text.
 
-## 36. Downloads
+## 37. Downloads
 
 Files fetched by the browser or a sandbox are quarantined artifacts. They are
 never executed on the host and are opened inside a sandbox only when a Task
@@ -318,7 +318,7 @@ requires it.
 
 # Part IV — Capabilities and policy
 
-## 37. Capability descriptor
+## 38. Capability descriptor
 
 Each capability declares:
 
@@ -339,7 +339,7 @@ leaves_company        boolean, for disclosure
 A capability with `EXTERNAL_IRREVERSIBLE` MUST be `RECONCILIABLE` or
 `UNSAFE_TO_REPEAT` and MUST define `reconcile`.
 
-## 38. Policy is a table
+## 39. Policy is a table
 
 ```
 policy_rules(project_id, capability, mode, updated_by, updated_at)
@@ -359,19 +359,19 @@ A grant narrows `ask` to `automatic` for effects whose CONTROL values satisfy
 `control_constraints_json`. Every change to either table is an AuditEvent.
 There is no separate draft/publish engine in V1.
 
-## 39. Defaults on enablement and update
+## 40. Defaults on enablement and update
 
 When a widget is enabled or a release adds a capability, the capability
 appears in every project as `off`. Nothing gains authority by appearing.
 
-## 40. Policy bundles
+## 41. Policy bundles
 
 Onboarding offers three bundles that fill `policy_rules` for the default
-project: `Cautious`, `Standard`, `Trusting`. `Standard` is defined in §132.
+project: `Cautious`, `Standard`, `Trusting`. `Standard` is defined in §133.
 Owners edit rows afterwards from Admin → Policies, one row at a time, with a
 plain-language description of what changes.
 
-## 41. Grant-from-approval
+## 42. Grant-from-approval
 
 When a human approves an `ask` effect, the card offers: "Allow this
 automatically when [narrowed CONTROL] for [7 / 30 / 90 days]". The
@@ -380,31 +380,31 @@ this repository, this calendar). Accepting creates a grant through the normal
 path with an AuditEvent. This is the mechanism that keeps approval volume
 tolerable without loosening policy globally.
 
-## 42. Current policy wins
+## 43. Current policy wins
 
 Authority is evaluated at dispatch, not at proposal. Policy narrowing blocks
 stale effects. Policy widening never retroactively authorises an effect that
 was denied.
 
-## 43. Roles are not agent capabilities
+## 44. Roles are not agent capabilities
 
 A human role (Part XIV) governs what the human may see and administer. It
 grants nothing to agents.
 
-## 44. Project isolation
+## 45. Project isolation
 
 Policy rows, grants, connections exposed to a project, Knowledge and
 Assistant memory are project-scoped. Nothing from Project A is available in
 Project B without an explicit sharing action by an Owner.
 
-## 45. Budgets
+## 46. Budgets
 
 Per project and per automation: external model tokens, external API calls,
 browser minutes, sandbox minutes, per day and per month. Budgets are checked
 at admission and at the Dispatch Barrier. Exceeding a budget queues or blocks
 and is visible on Home. Budgets never widen authority.
 
-## 46. Capability registry
+## 47. Capability registry
 
 The set of capabilities available to an agent in a Run is derived from:
 enabled widgets → project policy rows not `off` → connections exposed to the
@@ -415,7 +415,7 @@ and nothing else.
 
 # Part V — Effect lifecycle
 
-## 47. Effect Ledger
+## 48. Effect Ledger
 
 Every externally meaningful effect is a row:
 
@@ -427,7 +427,7 @@ effects(id, run_id, task_id, capability, project_id, principal_id,
         created_at, updated_at, attempt_count, last_error_class)
 ```
 
-## 48. States
+## 49. States
 
 ```
 PROPOSED           created by the Planner; no authority checked
@@ -440,7 +440,7 @@ FAILED             provider evidence shows it did not; retry policy known
 UNKNOWN            outcome cannot be determined; awaiting reconciliation
 ```
 
-## 49. UNKNOWN is first class
+## 50. UNKNOWN is first class
 
 `UNKNOWN` means the system cannot determine whether the provider accepted the
 effect. A client timeout, a lost response or a crash during `DISPATCHING`
@@ -451,20 +451,20 @@ the row to `SUCCEEDED` or `FAILED` with evidence. If reconciliation cannot
 decide, the row stays `UNKNOWN`, is shown to a human, and holds its conflict
 key.
 
-## 50. Effect digest
+## 51. Effect digest
 
 Approval-bound effects have a normalised digest over all CONTROL fields and
 all content-relevant DATA fields as defined by the capability. The digest is
 recomputed at the Barrier; mismatch with the approval's digest is a block.
 
-## 51. Approval binding
+## 52. Approval binding
 
 An approval references one effect ID and one digest. It is single-use and
 expires (default 24 hours, per-capability override). Changing any bound field
 after approval invalidates the approval and returns the effect to
 `WAITING_APPROVAL`.
 
-## 52. Dispatch Barrier
+## 53. Dispatch Barrier
 
 One function through which every external write passes immediately before
 the provider call. It evaluates, in order, and blocks on the first failure:
@@ -483,7 +483,7 @@ the provider call. It evaluates, in order, and blocks on the first failure:
 The Barrier records the policy version and connection epoch it evaluated on
 the effect. There is no bypass, including for Owners acting from the UI.
 
-## 53. In-flight conflict
+## 54. In-flight conflict
 
 A unique index on `(connection_id, external_resource_key)` over rows in
 `DISPATCHING` or `UNKNOWN` prevents two effects racing on one external
@@ -491,41 +491,41 @@ resource. The key is as narrow as correctness allows (a thread, an event, a
 PR), never "the mailbox". `UNKNOWN` holds the key until reconciliation
 releases it.
 
-## 54. Single retry owner
+## 55. Single retry owner
 
 The ledger owns retry per capability. `PURE` and `IDEMPOTENT` capabilities
 may retry with backoff. `RECONCILIABLE` capabilities reconcile before any
 retry. `UNSAFE_TO_REPEAT` capabilities never retry automatically. Adapters,
 agents and workers MUST NOT retry on their own.
 
-## 55. Evidence
+## 56. Evidence
 
 Provider IDs, timestamps, response metadata and artifacts are persisted with
 the effect. Evidence is what the UI shows as "done".
 
-## 56. Compensation
+## 57. Compensation
 
 Where a capability defines compensation, it applies only to state this
 system created (e.g. delete an event this system created). Compensation is a
 new effect that crosses the Barrier; it is never implicit.
 
-## 57. Restore safety
+## 58. Restore safety
 
 After a backup restore, effects in `DISPATCHING` become `UNKNOWN` and are
 reconciled, never redispatched.
 
-## 58. Disable safety
+## 59. Disable safety
 
 Disabling a widget blocks new dispatch for its capabilities immediately,
 leaves existing external objects untouched, and leaves `UNKNOWN` rows for
 reconciliation only.
 
-## 59. Effect timeline
+## 60. Effect timeline
 
 Each state transition, Barrier decision and reconciliation result is a
 timeline entry on the Run, visible in Work and, in detail, in the Inspector.
 
-## 60. Reference implementation
+## 61. Reference implementation
 
 `mail.send` is the reference `EXTERNAL_IRREVERSIBLE` / `UNSAFE_TO_REPEAT`
 capability. Every later irreversible capability copies its ledger handling.
@@ -534,7 +534,7 @@ capability. Every later irreversible capability copies its ledger handling.
 
 # Part VI — Control Plane and Worker Plane
 
-## 61. Two planes
+## 62. Two planes
 
 The Control Plane owns authority, the Effect Ledger, audit, canonical
 Knowledge sources, the Graphiti ingest queue, scheduling, approvals and the
@@ -544,7 +544,7 @@ embedding computation. Graphiti's graph store is a derived index owned by
 the Control Plane as the single writer; workers only produce extraction
 results that the Control Plane commits.
 
-## 62. One interface
+## 63. One interface
 
 ```
 Worker.run(job: JobEnvelope) → JobResult
@@ -561,14 +561,14 @@ In V1 both planes run in one process on one machine. Running a worker on
 another machine is a later implementation of this interface, not a change to
 the architecture.
 
-## 63. Workers hold no authority
+## 64. Workers hold no authority
 
 Worker output is evidence input. Workers never write the authority database,
-never hold provider secrets (only placeholders, §86), and never call the
+never hold provider secrets (only placeholders, §87), and never call the
 Dispatch Barrier. Tool calls proposed by an agent inside a worker return to
 the Control Plane as proposals.
 
-## 64. Two stores, one authority
+## 65. Two stores, one authority
 
 SQLite in WAL mode, written only by the Control Plane, is the authoritative
 store for principals, policy, grants, effects, audit, canonical Knowledge
@@ -583,7 +583,7 @@ Schema constraints on SQLite enforce invariants where SQLite can
 (uniqueness, foreign keys, check constraints); application code enforces
 the rest and tests cover both.
 
-## 65. Resource admission
+## 66. Resource admission
 
 A semaphore per resource class (`MODEL`, `BROWSER`, `SANDBOX`, `EMBEDDING`,
 `GRAPH_INGEST`) with limits from the deployment profile (Part XIX).
@@ -593,7 +593,7 @@ database and UI is checked before admitting `MODEL` or `SANDBOX` work. Work
 beyond capacity queues with a visible reason; the appliance is never
 destabilised to run one more task.
 
-## 66. Orchestration modules
+## 67. Orchestration modules
 
 Inside `agent-osd`:
 
@@ -606,25 +606,25 @@ Inside `agent-osd`:
 - Event intake: normalises and deduplicates inbound events.
 - Graph ingest: dequeues canonical writes, runs Graphiti `add_episode` via a worker, commits as the single graph writer.
 
-## 67. Automations
+## 68. Automations
 
 An Automation is a schedule or event trigger that creates Runs under an
 `AUTOMATION` principal with grants. Automations never bypass policy. Users
 see every Automation's standing grants in Automate and on Home.
 
-## 68. No free-running agents
+## 69. No free-running agents
 
 There is no agent process that persists outside a Run. Long-lived behaviour
 exists only through Automations and Assistants (whose memory persists but
 whose execution does not).
 
-## 69. Cancellation
+## 70. Cancellation
 
 The Control Plane can cancel or suspend any Task; cancellation destroys the
 sandbox or browser session after artifact collection and leaves in-flight
 effects to the ledger.
 
-## 70. Health
+## 71. Health
 
 The Control Plane exposes local health for itself, SQLite, the Graphiti
 backend, each worker class and each connection. Health probes MUST NOT
@@ -635,13 +635,13 @@ node"; it MUST NOT call an LLM.
 
 # Part VII — Agent runtime and Assistants
 
-## 71. Pi
+## 72. Pi
 
 Pi is the general agent runtime. It receives typed tool interfaces derived
-from the capability registry (§46) for the current Run, never provider
+from the capability registry (§47) for the current Run, never provider
 secrets or generic provider clients.
 
-## 72. Agent context
+## 73. Agent context
 
 MAY contain: the goal, Assistant persona, relevant Knowledge, Graphiti
 search hits (tagged DATA, `trusted: false`), Skills, Assistant memory, prior
@@ -649,39 +649,39 @@ Step state, tool results, capability descriptions. MUST NOT contain
 long-lived credentials, another project's data, Graphiti admin handles, or
 content marked `local_only` when an external model is the target (Part XI).
 
-## 73. Tool calls are proposals
+## 74. Tool calls are proposals
 
 A tool call that would produce an external effect creates a `PROPOSED`
 effect. The agent receives the ledger outcome (including `WAITING_APPROVAL`
 and `UNKNOWN`) as a structured result and must plan around it. Read
 capabilities return data with provenance tags.
 
-## 74. Lifecycle
+## 75. Lifecycle
 
 Agent execution belongs to a Run or Task, is admitted through resource
 semaphores, and can be cancelled or suspended. Output is proposal or content
 until the relevant subsystem validates it.
 
-## 75. Reviewer agents
+## 76. Reviewer agents
 
 A Task MAY include a reviewer agent that inspects another agent's work. A
 reviewer may only tighten: it can flag, block or request approval; it can
 never authorise. (A dedicated risk model is deferred, Part XXII.)
 
-## 76. Concurrency
+## 77. Concurrency
 
 Multiple agents run concurrently when their effect resource keys and
 sandboxes do not conflict. Conflicts are resolved by the ledger index, not by
 agents negotiating.
 
-## 77. Assistants in practice
+## 78. Assistants in practice
 
 Creating an Assistant is one step: name, home project, optional
 instructions. It appears on Home, is reachable from the dashboard and mobile
 web, shows its standing grants and recent Runs on its card, and can be paused
 or deleted. Deleting an Assistant revokes its grants and archives its memory.
 
-## 78. Assistant authority
+## 79. Assistant authority
 
 An Assistant's effective authority in a Run is: project policy rows ∩
 (initiating human's membership ∪ Assistant grants) ∩ connection exposure ∩
@@ -689,13 +689,13 @@ budgets, evaluated at dispatch. Talking to an Assistant with more grants does
 not give the human more UI rights; a human with more rights does not give the
 Assistant more grants.
 
-## 79. Model routing from Pi
+## 80. Model routing from Pi
 
 Pi calls models only through the router (Part XI). It cannot select a
 provider directly; it may request a tier ("needs strong reasoning") and the
 router applies project policy.
 
-## 80. Failure legibility
+## 81. Failure legibility
 
 When a Task fails because the model could not follow a tool schema or
 produced an unusable plan, the Run shows that plainly ("the local model could
@@ -706,7 +706,7 @@ instead of a generic error.
 
 # Part VIII — Gondolin sandbox
 
-## 81. One sandbox implementation
+## 82. One sandbox implementation
 
 Gondolin runs coding Tasks and any risky local workload inside a Linux
 micro-VM (QEMU by default; libkrun where available) on every supported host:
@@ -714,33 +714,33 @@ Raspberry Pi 5, Mac mini, DGX Spark and other ARM64 or x86_64 Linux/macOS
 machines. Isolation class is therefore uniform across the hardware range. A
 deployment profile changes sandbox count and memory, not sandbox kind.
 
-## 82. Host is the enforcement point
+## 83. Host is the enforcement point
 
 The guest sees `eth0` and a filesystem, but egress is mediated by Gondolin's
 host-side HTTP/TLS policy hooks and files under mounted paths are served by
 host VFS providers. There is no generic NAT and no host filesystem
 passthrough.
 
-## 83. Per-Task network policy
+## 84. Per-Task network policy
 
 Each sandbox Task carries a network allowlist derived from its capability
 references (e.g. the GitHub host for a clone, a package registry for a
 build). Everything else is denied and logged as evidence.
 
-## 84. Per-Task filesystem
+## 85. Per-Task filesystem
 
 Mounts are explicit: the Task's repository clone or worktree, a scratch
 directory, and read-only inputs. Host paths, other projects' data and the
 credential store are never mounted.
 
-## 85. Repository and branch isolation
+## 86. Repository and branch isolation
 
 Each coding Task works on its own clone or worktree and its own branch. The
 default branch is protected on the provider side and never targeted by a
 sandbox push. Pushing to the Task branch is `EXTERNAL_REVERSIBLE`; opening a
-PR is a separate capability (§166).
+PR is a separate capability (§167).
 
-## 86. Secrets by placeholder
+## 87. Secrets by placeholder
 
 Credentials a sandbox needs (a short-lived clone token, a registry token) are
 injected as Gondolin placeholders and substituted by the host only on allowed
@@ -748,23 +748,23 @@ destinations. Secret bytes MUST NOT appear in the guest filesystem,
 environment, `.netrc`, `.npmrc`, `.git-credentials` or process memory. Tokens
 are scoped to one Task and expire with it.
 
-## 87. Artifacts
+## 88. Artifacts
 
 Diffs, test results, build logs and files leave only through the artifact
 collection interface and are persisted with provenance before the sandbox is
 destroyed.
 
-## 88. Snapshots
+## 89. Snapshots
 
 A sandbox MAY be snapshotted for recovery or debugging. Snapshots are
-artifacts with retention and never contain secret bytes (by §86).
+artifacts with retention and never contain secret bytes (by §87).
 
-## 89. Destruction
+## 90. Destruction
 
 Ephemeral sandboxes are destroyed after artifact collection. A crashed
 sandbox fails its Step; the Control Plane is unaffected.
 
-## 90. Coding browser
+## 91. Coding browser
 
 Playwright inside Gondolin is available to coding Tasks (e.g. testing a web
 app). It shares no profile, cookie, credential or network policy with
@@ -776,24 +776,24 @@ server inside the sandbox.
 
 # Part IX — Browser
 
-## 91. browserd
+## 92. browserd
 
 `browserd` owns product web-research browser execution. It runs an isolated,
 unauthenticated research profile. It is never signed in to Gmail, Calendar,
 GitHub or any widget account, and it never receives provider OAuth material.
 
-## 92. Separate resource class
+## 93. Separate resource class
 
 Browser work is admitted through the `BROWSER` semaphore. Under memory
 pressure browser Tasks queue.
 
-## 93. Read-only research
+## 94. Read-only research
 
 `web.page.fetch`, `web.page.extract` and `web.search` are read-only.
 Navigation, scrolling, and reading are allowed. Form submission that changes
 state, uploads, logins and payments are not capabilities in V1.
 
-## 94. Network policy
+## 95. Network policy
 
 - Named domains from policy or grants: `automatic`.
 - Open web: an Owner setting per project (`web.open_read`).
@@ -802,34 +802,34 @@ state, uploads, logins and payments are not capabilities in V1.
 - Redirect targets are re-evaluated against the same policy.
 - DNS answers resolving to private addresses are rejected (rebinding).
 
-## 95. Downloads
+## 96. Downloads
 
-Downloads are quarantined artifacts (§36). They are never executed and are
+Downloads are quarantined artifacts (§37). They are never executed and are
 opened only inside a Gondolin sandbox when a Task requires it.
 
-## 96. Recipes
+## 97. Recipes
 
 `web.recipe.run` executes a checkpointed sequence of read-only navigation and
-extraction steps saved as a Skill (§110). Recipes obey the same network
+extraction steps saved as a Skill (§111). Recipes obey the same network
 policy as ad-hoc browsing.
 
-## 97. Not a universal adapter
+## 98. Not a universal adapter
 
 The browser MUST NOT be used to reach a provider that has a governed adapter.
 There is no Gmail, Calendar or GitHub scraping.
 
-## 98. Evidence
+## 99. Evidence
 
 Navigation, extraction and downloads produce timeline entries and, where
 useful, screenshots as artifacts. Extracted content is
 `UNVERIFIED_EXTERNAL` with provenance.
 
-## 99. Failure
+## 100. Failure
 
 A browser crash fails the current Step and destroys the session. Control
 Plane state is unaffected.
 
-## 100. Profiles for future authenticated widgets
+## 101. Profiles for future authenticated widgets
 
 If a future widget needs an authenticated browser profile, it gets its own
 profile, its own capability namespace and its own policy rows. It never
@@ -839,7 +839,7 @@ shares a profile with research or with any other widget.
 
 # Part X — Knowledge, Graphiti, memory and learning
 
-## 101. Two layers
+## 102. Two layers
 
 Knowledge has a canonical layer and a derived layer.
 
@@ -856,7 +856,7 @@ FTS5 over canonical SQLite remains the fallback search path. Home and
 Knowledge MUST still answer from FTS5 if Graphiti is rebuilding or
 unhealthy.
 
-## 102. Graphiti is the graph engine
+## 103. Graphiti is the graph engine
 
 V1 uses the Graphiti library (`graphiti-core`) in-process. It MUST NOT
 call Zep Cloud, MUST NOT default to OpenAI, and MUST NOT be given a
@@ -869,7 +869,7 @@ Forbidden V1 backends: Amazon Neptune (data leaves the appliance), Kuzu
 override later, not the default). FalkorDB server MAY be used on `pro` if
 Lite is insufficient; it is still local.
 
-## 103. Partitioning
+## 104. Partitioning
 
 ```
 group_id = project_id          for project Knowledge, Skills, Assistant memory, Run episodes
@@ -881,7 +881,7 @@ from Project A MUST NOT return nodes from Project B. Sharing copies
 canonical sources into the destination project and re-ingests; it does
 not union `group_id`s at query time.
 
-## 104. Episode ingest
+## 105. Episode ingest
 
 Canonical writes enqueue an ingest job. The Control Plane calls
 `add_episode` with:
@@ -892,7 +892,7 @@ episode_body      canonical text (or a bounded excerpt)
 source            text | json | message
 reference_time    when the fact occurred (email date, Run time, document date)
                   never "now" for historical material
-group_id          as §103
+group_id          as §104
 source_description  SQLite source id, Run id, producing model tier
 ```
 
@@ -908,7 +908,7 @@ is no code path that reads `OPENAI_API_KEY` for Graphiti unless that key
 belongs to a configured `model_provider` Connection and policy permits
 external inference.
 
-## 105. Bi-temporal facts
+## 106. Bi-temporal facts
 
 Edges use Graphiti's timestamps:
 
@@ -924,7 +924,7 @@ Contradictions invalidate; they do not delete. Point-in-time search
 supported and remains DATA. The Effect Ledger, not the graph, is
 authoritative for whether an effect dispatched.
 
-## 106. Retrieval
+## 107. Retrieval
 
 The Planner and Pi `knowledge.search` tool run Graphiti hybrid search
 (semantic + BM25 + graph-distance rerank) inside the Run's `group_id`,
@@ -936,20 +936,20 @@ Pi MUST NOT receive a Cypher endpoint or a generic Graphiti admin client.
 Tools are `knowledge.search`, `knowledge.get_source`, and
 `knowledge.suggest_correction`.
 
-## 107. Local embeddings by default
+## 108. Local embeddings by default
 
 Graphiti embeddings use `local_small` on every profile. An external
 embedding Connection is an Owner-enabled exception, subject to Part XI and
 `local_only`. `local_only` sources MUST NOT be sent to an external
 embedder or to Graphiti extraction that would call `model.infer.external`.
 
-## 108. `local_only`
+## 109. `local_only`
 
 Any canonical source can be marked `local_only`. Ingest of that source
 MUST use a local model tier. If no local extractor can run, ingest stops
 at the raw episode and the UI shows "indexed for search, not graphed".
 
-## 109. Correction and deletion
+## 110. Correction and deletion
 
 Users correct graph facts from Knowledge UI. A correction is a new
 canonical row plus a new episode; Graphiti's invalidation updates the
@@ -961,7 +961,7 @@ Agents MAY propose a correction (`knowledge.suggest_correction`); applying
 it is a human or `automatic` Knowledge-write according to policy. Agent
 proposals never write the graph directly.
 
-## 110. Skills
+## 111. Skills
 
 A Skill is a tagged canonical document (§27). Ingest creates a Skill
 entity and `used_in` / `depends_on` edges when the episode text declares
@@ -970,23 +970,23 @@ never widens authority. Agents MAY write a Skill after a Run without
 approval because a Skill is DATA. Humans can edit, delete, or mark
 `REVIEWED`.
 
-## 111. Routines from demonstration
+## 112. Routines from demonstration
 
 A user can ask an Assistant to watch one execution and save it as a Skill,
 optionally with an Automation. The Automation runs under grants; the Skill
 guides the plan. The demonstration is an episode with `reference_time` =
 the Run's time.
 
-## 112. Assistant memory
+## 113. Assistant memory
 
 Each Assistant has observational memory (rolling summaries) and episodic
 memory (index of prior Runs). Both are canonical SQLite rows in the
 Assistant's home project, ingested into that project's `group_id`.
-Memory is DATA (§33). Users view, correct and delete entries. Deleting an
+Memory is DATA (§34). Users view, correct and delete entries. Deleting an
 Assistant archives canonical rows and deletes that Assistant's episodes
 from the graph.
 
-## 113. Consolidation
+## 114. Consolidation
 
 After a Run completes, a low-priority `GRAPH_INGEST` job writes the Run
 summary, important tool results (as DATA, redacted) and any new Skill as
@@ -994,7 +994,7 @@ episodes. It never calls an external model unless the project's routing
 permits and no `local_only` content is involved. Consolidation failure
 leaves the Run complete; the graph catches up later.
 
-## 114. Retention
+## 115. Retention
 
 Knowledge, memory, graph edges and artifacts are configurable.
 Defaults: Knowledge indefinite, memory 365 days, artifacts 180 days, audit
@@ -1003,19 +1003,19 @@ removed from Graphiti. Invalidated edges older than retention MAY be
 pruned; live history needed for point-in-time audit SHOULD be kept as long
 as the corresponding AuditEvents.
 
-## 115. Search evidence
+## 116. Search evidence
 
 Knowledge answers show the episodes, edges and canonical sources used, with
 validity windows, so a human can see "this fact was true from … to …" and
 "the system learned it on …".
 
-## 116. Rebuild
+## 117. Rebuild
 
 Admin → System offers "rebuild graph". It wipes the Graphiti store for a
 `group_id` (or all) and re-enqueues canonical sources. Rebuild is
 recoverable: SQLite is untouched. During rebuild, FTS5 serves search.
 
-## 117. What Graphiti is not
+## 118. What Graphiti is not
 
 Graphiti MUST NOT store policy, grants, credentials, effect state, or
 approvals. It MUST NOT be consulted by the Dispatch Barrier. It MUST NOT
@@ -1026,7 +1026,7 @@ the browser. It is not a back door to Gmail or GitHub.
 
 # Part XI — Models: local, hybrid, API
 
-## 118. Tiers
+## 119. Tiers
 
 ```
 local_small    always present: embeddings, classification, summarisation, cheap drafting
@@ -1034,26 +1034,26 @@ local_large    present on standard and pro profiles: agent reasoning and tool us
 external       API providers, if an Owner has connected one
 ```
 
-## 119. External inference is data egress
+## 120. External inference is data egress
 
 Sending a prompt to an external provider sends company data off the machine.
 It is a capability, `model.infer.external`, with `leaves_company = true`.
 It is evaluated per project like any capability: `off`, `ask` (approval per
 Run, with grant-from-approval), or `automatic`.
 
-## 120. Providers are Connections
+## 121. Providers are Connections
 
 External model providers are a widget kind (`model_provider`) with
 Connections, health checks and epochs. Keys live in the credential store and
 never enter agent context, sandboxes or browsers. Local model servers are
 also Connections so routing and health are uniform.
 
-## 121. Router rules
+## 122. Router rules
 
 Per project, `model.routing`:
 
 - `local_only`: never use `external`
-- `hybrid`: prefer local; use `external` for tasks the local tier reports it cannot handle, subject to §119 and §108
+- `hybrid`: prefer local; use `external` for tasks the local tier reports it cannot handle, subject to §120 and §109
 - `external_preferred`: use `external` when permitted, fall back to local
 
 Graphiti extraction and Graphiti embeddings are router calls. They MUST NOT
@@ -1061,33 +1061,33 @@ bypass `model.routing` or `local_only`. A `GRAPH_INGEST` job that would
 need `model.infer.external` when that capability is `off` stores a raw
 episode without edges instead of calling out.
 
-## 122. Profile defaults
+## 123. Profile defaults
 
 `lite` defaults to `hybrid` with `model.infer.external` set to `ask` because
 it has no useful local agent model. `standard` and `pro` default to
 `local_only`.
 
-## 123. Weaker models raise friction, not risk
+## 124. Weaker models raise friction, not risk
 
 Small local models follow tool schemas less reliably and produce more
 `FAILED` outcomes and more stop-and-explain. The kernel makes this safe; the
-UI makes it legible (§80).
+UI makes it legible (§81).
 
-## 124. Model evidence
+## 125. Model evidence
 
 Each Run records which model tier and Connection served each Step, so audit
 can answer "did any of this leave the machine".
 
-## 125. Budgets
+## 126. Budgets
 
-External tokens are budgeted per project and per Automation (§45). Local
+External tokens are budgeted per project and per Automation (§46). Local
 inference is budgeted in minutes on `lite` only.
 
 ---
 
 # Part XII — User interface
 
-## 126. Surfaces
+## 127. Surfaces
 
 - Home: attention items, approvals, recent Runs, Assistants, budget and health tiles.
 - Work: Projects, Runs, Tasks, timeline, artifacts, Inspector.
@@ -1097,36 +1097,36 @@ inference is budgeted in minutes on `lite` only.
 - Approvals: pending and past decisions.
 - Admin: Overview, People, Widgets, Policies, Budgets, Audit, Backup, Updates, System.
 
-## 127. First paint is local
+## 128. First paint is local
 
 Home renders from SQLite-backed summaries before any provider is contacted.
 Provider refresh is asynchronous; externally sourced tiles show when they
 were last refreshed. A provider outage degrades that widget's tile, not the
 page.
 
-## 128. Honest state
+## 129. Honest state
 
 The UI always distinguishes proposed, running, waiting for approval,
 dispatching, unknown, completed and failed. "Done" appears only with
 evidence attached.
 
-## 129. Progressive disclosure
+## 130. Progressive disclosure
 
 Members see product language ("Sent", "Waiting for you", "Couldn't confirm").
 Effect states, digests, policy versions and connection epochs are in the
 Inspector and Admin views.
 
-## 130. Timeline
+## 131. Timeline
 
 A Run's timeline shows request → plan → approvals → execution → evidence,
 with each effect's state transitions and Barrier decisions.
 
-## 131. Mobile
+## 132. Mobile
 
 Approving, denying, reading a Run and messaging an Assistant MUST work from a
 phone through the web UI.
 
-## 132. `Standard` bundle
+## 133. `Standard` bundle
 
 ```
 Gmail       search, read automatic · draft automatic · send ask · label apply ask
@@ -1141,18 +1141,18 @@ Knowledge   read automatic · write automatic (project) · share off · graph in
 `Trusting` sets reversible external writes to `automatic` and leaves
 irreversible ones (`mail.send`, `calendar.delete`) at `ask`.
 
-## 133. Plain-language risk
+## 134. Plain-language risk
 
 Every capability has a one-line human description of what it can cause,
 shown wherever it can be enabled or approved.
 
-## 134. Inspector
+## 135. Inspector
 
 For any Run, Task or Effect: full CONTROL and DATA, trust flags, provenance,
 policy version, connection epoch, Barrier decision, evidence, and links to
 AuditEvents.
 
-## 135. Onboarding
+## 136. Onboarding
 
 Onboarding walks the first Owner through: set up account → choose bundle →
 connect one provider (Gmail suggested) → create an Assistant → run one
@@ -1164,49 +1164,49 @@ once.
 
 # Part XIII — Approvals
 
-## 136. Purpose
+## 137. Purpose
 
 Approvals exist for authority transitions policy does not allow
 automatically, and for creating grants. They are not a general confirmation
 dialog.
 
-## 137. Card content
+## 138. Card content
 
 An approval card shows the fields that determine what will happen: every
 CONTROL value, the content-relevant DATA (body, title) or a faithful
 rendering of it, the connection identity acting, the project, an expiry, a
 "this sends company data outside the company" line where
-`leaves_company`, and the grant-from-approval option (§41).
+`leaves_company`, and the grant-from-approval option (§42).
 
-## 138. Digest binding
+## 139. Digest binding
 
 Approving binds the approval to the effect digest. If the effect changes,
 the card is withdrawn and re-presented; the old approval is void.
 
-## 139. Eligibility
+## 140. Eligibility
 
 Eligible approvers are Owners and project Members with an approver flag for
 that project. Eligibility is evaluated at decision time. Auditors cannot
 approve. A revoked or suspended principal cannot approve queued effects.
 
-## 140. Absence
+## 141. Absence
 
 Members can mark themselves absent with a date range. Routing skips absent
 approvers. If no eligible approver exists, the effect stays
 `WAITING_APPROVAL` with a visible "no one can approve this" state; it is
 never bypassed.
 
-## 141. Expiry
+## 142. Expiry
 
 Approvals expire (default 24 hours). Expired approvals return the effect to
 `WAITING_APPROVAL` with a note.
 
-## 142. Batch review
+## 143. Batch review
 
 Multiple pending effects from one Run MAY be shown together, but each is
 approved individually and bound to its own digest.
 
-## 143. Audit
+## 144. Audit
 
 Every approval, denial, expiry and grant-from-approval is an AuditEvent
 correlated to the effect.
@@ -1215,7 +1215,7 @@ correlated to the effect.
 
 # Part XIV — People and roles
 
-## 144. Roles
+## 145. Roles
 
 ```
 Owner     organisation   governance: policy, widgets, connections, people, budgets, backup, updates
@@ -1228,7 +1228,7 @@ Auditor and Owner are mutually exclusive. There is always at least one Owner.
 The last Owner cannot be revoked, suspended or demoted. Manager and Admin
 roles are deferred (Part XXII).
 
-## 145. Schema
+## 146. Schema
 
 ```
 principals(id, organisation_id, kind, email, display_name, status,
@@ -1244,31 +1244,31 @@ project_memberships(project_id, principal_id, approver, added_by, added_at,
 A trigger or transactional check enforces the last-Owner invariant in the
 database, not only in application code.
 
-## 146. Auth epochs
+## 147. Auth epochs
 
 Revoking a user, resetting their authentication or a sensitive security
 change increments `auth_epoch`. Sessions, in-flight Runs and effects carrying
 an older epoch fail at the Barrier and at the API. Revocation takes effect
 on the next request.
 
-## 147. Bootstrap
+## 148. Bootstrap
 
 Create organisation → first `HUMAN` principal → Owner binding → default
 project with membership → recovery key generated and shown once → commit
 atomically. No vendor password or default account remains.
 
-## 148. Invitations
+## 149. Invitations
 
 Owners invite by email. An invitation creates a pending principal; it becomes
 active on first login. Invitations expire.
 
-## 149. Departure
+## 150. Departure
 
 Revoking a person disables their `USER_OAUTH` connections, removes their
 memberships, voids their pending approvals, and marks any shared connection
-they owned as needing reassignment (§160).
+they owned as needing reassignment (§161).
 
-## 150. Break-glass
+## 151. Break-glass
 
 For total Owner authentication loss. Requires host access (physical console
 or already-authorised SSH) and the recovery key shown at bootstrap or
@@ -1276,18 +1276,18 @@ rotated since. `agent-os reset-owner` restores or replaces Owner
 authentication, rotates the recovery key, writes an AuditEvent and
 authorises nothing else. There is no vendor-side path.
 
-## 151. Local administration
+## 152. Local administration
 
 Host administration (updates, disk, network) is organisation-controlled host
 access. It is separate from product roles and cannot approve effects or read
 the credential store without the recovery key.
 
-## 152. Client distrust
+## 153. Client distrust
 
 The browser client never decides authority or roles. All checks are server
 side.
 
-## 153. Sessions
+## 154. Sessions
 
 Sessions are bound to principal and auth epoch, expire, and can be revoked
 individually from People.
@@ -1296,26 +1296,26 @@ individually from People.
 
 # Part XV — Widgets and connections
 
-## 154. Widget contents
+## 155. Widget contents
 
 A widget pack contains: an immutable version tied to the appliance release;
-capability descriptors (§37); one adapter implementing narrow methods per
+capability descriptors (§38); one adapter implementing narrow methods per
 capability; connection kinds; a UI card; a health check with no side
 effects; plain-language risk text; resource requirements.
 
-## 155. In-repo, versioned with the appliance
+## 156. In-repo, versioned with the appliance
 
 V1 widgets live in the appliance repository and ship with the appliance
 release. There is no runtime installation of widgets by anyone, and no
 independent widget packaging (deferred, Part XXII).
 
-## 156. Enablement grants nothing
+## 157. Enablement grants nothing
 
 Enabling a widget for the organisation exposes its capabilities to project
 policy tables as `off`. Enabling it for a project makes its connections
 selectable there. Neither creates authority.
 
-## 157. Connections grant nothing
+## 158. Connections grant nothing
 
 ```
 connections(id, widget, kind, subject_identity, owner_principal_id,
@@ -1326,39 +1326,39 @@ connection_projects(connection_id, project_id, exposed_by, exposed_at)
 `status ∈ { DRAFT, CONNECTED, DISABLED, ORPHANED, REVOKED }`. A `CONNECTED`
 connection is reach, not permission.
 
-## 158. Connection protocol
+## 159. Connection protocol
 
 Connect → `DRAFT` → provider OAuth or app install → verify identity server
 side → store credential in the credential store → `CONNECTED` → health
-loop. Tokens never leave the credential store except as placeholders (§86)
+loop. Tokens never leave the credential store except as placeholders (§87)
 or inside adapter calls in the Control Plane.
 
-## 159. Who may connect
+## 160. Who may connect
 
 Members connect only their own `USER_OAUTH` identity. Shared accounts,
 GitHub App installations and model provider keys require an Owner.
 
-## 160. Orphaning
+## 161. Orphaning
 
 A shared connection whose owning Owner is revoked becomes `ORPHANED`. It
 cannot dispatch until another Owner takes ownership. Home shows orphaned
 connections as attention items.
 
-## 161. Epochs
+## 162. Epochs
 
 Reauthorisation, scope change, or credential rotation increments the
 connection epoch. Effects prepared under an older epoch are blocked at the
 Barrier and must be re-prepared.
 
-## 162. Adapter contract
+## 163. Adapter contract
 
 Adapters expose one method per capability with typed CONTROL and DATA
 inputs, return structured evidence, map provider errors to stable internal
 classes (`AUTH`, `RATE_LIMIT`, `NOT_FOUND`, `CONFLICT`, `TRANSIENT`,
-`UNKNOWN_OUTCOME`), and never retry irreversible calls (§54). No adapter
+`UNKNOWN_OUTCOME`), and never retry irreversible calls (§55). No adapter
 exposes a generic "request" method to agents.
 
-## 163. Provider ceiling
+## 164. Provider ceiling
 
 Provider scope may reduce what a capability can do. It never increases
 authority. A broad OAuth scope changes nothing in policy.
@@ -1367,7 +1367,7 @@ authority. A broad OAuth scope changes nothing in policy.
 
 # Part XVI — V1 packs
 
-## 164. Catalog
+## 165. Catalog
 
 ```
 gmail            mail.*
@@ -1379,7 +1379,7 @@ model_provider   model.*
 
 Slack, Notion, CRM and Microsoft integrations are not in V1.
 
-## 165. Gmail
+## 166. Gmail
 
 Connections: `USER_OAUTH`, `SHARED_ACCOUNT` (Owner only).
 Capabilities:
@@ -1402,7 +1402,7 @@ Reconciliation of an `UNKNOWN` send searches the Sent folder by an
 idempotency header this system adds to every outgoing message. No browser
 scraping.
 
-## 166. GitHub
+## 167. GitHub
 
 Connection: GitHub App installation (Owner). A PAT is break-glass fallback
 only and expires.
@@ -1423,7 +1423,7 @@ and PR text are DATA. Merging to the default branch is not a V1 capability.
 Webhook payloads remain untrusted text after signature verification and are
 deduplicated by delivery ID.
 
-## 167. Google Calendar
+## 168. Google Calendar
 
 Capabilities:
 
@@ -1441,7 +1441,7 @@ description are DATA. Updates bind the provider ETag; a mismatch fails
 rather than overwrites. Compensation for a system-created event deletes only
 that event; `calendar.delete` on arbitrary events is `off` by default.
 
-## 168. Web Research
+## 169. Web Research
 
 Capabilities: `web.page.fetch`, `web.page.extract`, `web.search`,
 `web.recipe.run`, all `READ`. Rules in Part IX apply. Extracted content and
@@ -1451,7 +1451,7 @@ summaries are untrusted with retained provenance.
 
 # Part XVII — Audit, credentials, secrets
 
-## 169. AuditEvent
+## 170. AuditEvent
 
 Append-only rows for: policy changes, grants, role and membership changes,
 connection lifecycle, approvals and denials, Barrier decisions and dispatch
@@ -1459,47 +1459,47 @@ outcomes, reconciliation results, Knowledge sharing, break-glass, backups,
 updates. Each carries actor principal, Run/Task/Effect correlation where
 applicable, before/after for configuration changes, and a timestamp.
 
-## 170. Immutability
+## 171. Immutability
 
 Ordinary users and agents cannot mutate history. Owners cannot delete audit
 rows; retention is by policy and is itself audited.
 
-## 171. Sensitive logging
+## 172. Sensitive logging
 
 Secrets, message bodies beyond what the digest requires, and unnecessary
 personal data are excluded from audit payloads. Evidence is stored in the
 artifact store and referenced.
 
-## 172. Credential store
+## 173. Credential store
 
 One encrypted store on the appliance, readable only by the Control Plane
 process, keyed by a key derived at boot from local material plus the
 organisation recovery material for backup encryption. Agents, sandboxes and
 browsers see logical connection references and placeholders only.
 
-## 173. Rotation and revocation
+## 174. Rotation and revocation
 
 Credentials support replacement and revocation. Both increment the
-connection epoch (§161). Revocation blocks stale dispatch on the next Barrier
+connection epoch (§162). Revocation blocks stale dispatch on the next Barrier
 evaluation.
 
-## 174. Redaction
+## 175. Redaction
 
 Credentials are redacted from logs, artifacts, timeline entries and error
 messages by pattern and by known-value matching.
 
-## 175. Minimum scope
+## 176. Minimum scope
 
 Provider scopes requested are the minimum for the enabled capabilities.
 Enabling a new capability that needs a wider scope triggers reauthorisation
 and a new connection epoch.
 
-## 176. Host separation
+## 177. Host separation
 
 Worker processes run as a separate OS user from the Control Plane with no
 read access to the credential store or the authority database.
 
-## 177. Admin Overview
+## 178. Admin Overview
 
 Admin Overview shows operational health, pending governance issues (orphaned
 connections, expired grants, failed backups, `UNKNOWN` effects awaiting a
@@ -1509,60 +1509,60 @@ human), and recent high-impact audit events.
 
 # Part XVIII — Backup, release, updates
 
-## 178. Backup contents
+## 179. Backup contents
 
 The SQLite database, the Graphiti/FalkorDB Lite graph file, configuration,
 Knowledge canonical sources, artifacts, and the encrypted credential blob
 with its recovery metadata. Backups are encrypted with organisation recovery
 material. The graph file is included so restore is fast; if it is missing or
-corrupt, restore still succeeds and Admin offers rebuild (§116).
+corrupt, restore still succeeds and Admin offers rebuild (§117).
 
-## 179. Backup targets
+## 180. Backup targets
 
 Local disk, an attached drive, or an organisation-controlled object store.
 The vendor never receives backups.
 
-## 180. Restore
+## 181. Restore
 
 Restore preserves logical IDs so audit and effect correlation remain valid.
-Effects in `DISPATCHING` become `UNKNOWN` (§57). Connections are restored as
+Effects in `DISPATCHING` become `UNKNOWN` (§58). Connections are restored as
 `CONNECTED` only if their credentials decrypt and a health probe succeeds;
 otherwise `DISABLED` pending reauthorisation. If the graph file is absent or
 fails to open, canonical data is still live and a rebuild is queued.
 
-## 181. Test restore
+## 182. Test restore
 
 Admin → Backup has a "test restore" action that restores the latest backup
 into a scratch database and reports integrity. A backup strategy without a
 passed test restore is shown as incomplete.
 
-## 182. Retention
+## 183. Retention
 
 Backup retention is configurable; default keeps daily for 14 days, weekly
 for 8 weeks.
 
-## 183. Appliance image and channels
+## 184. Appliance image and channels
 
 The appliance ships as a signed image. Organisations choose a channel
 (`stable`, `early`). The Control Plane verifies signatures before staging.
 
-## 184. Staged updates and rollback
+## 185. Staged updates and rollback
 
 Updates are downloaded, verified and staged; activation is an Owner action
 or a scheduled window. Rollback to the previous release is supported where
 migrations permit. Migrations are explicit and versioned; a high-risk
 migration takes a pre-migration backup automatically.
 
-## 185. Capabilities in updates
+## 186. Capabilities in updates
 
-New capabilities arrive as `off` in every project (§39). Critical security
+New capabilities arrive as `off` in every project (§40). Critical security
 updates raise a Home attention item for Owners.
 
 ---
 
 # Part XIX — Deployment profiles
 
-## 186. Profiles are configuration
+## 187. Profiles are configuration
 
 A profile is a small file:
 
@@ -1578,7 +1578,7 @@ routing_default: local_only | hybrid | external_preferred
 The logical architecture and the safety tests are identical across
 profiles.
 
-## 187. `lite`
+## 188. `lite`
 
 Raspberry Pi 5 class, 8–16 GB, no accelerator.
 SANDBOX 1 · BROWSER 1 · EMBEDDING 1 · GRAPH_INGEST 1 · local_large none ·
@@ -1588,14 +1588,14 @@ FalkorDB Lite. Routing default `hybrid` with `model.infer.external` at
 model is allowed; FTS5 still works. Suitable as a full appliance for
 API/hybrid use, or later as a Control Plane node with remote workers.
 
-## 188. `standard`
+## 189. `standard`
 
 Mac mini M4 / M4 Pro class, 24–64 GB unified memory.
 SANDBOX 2 · BROWSER 1 · GRAPH_INGEST 1 · local_large a ~30B-class quantised
 model. Graph backend: FalkorDB Lite. Routing default `local_only`. This is
 the reference solo appliance.
 
-## 189. `pro`
+## 190. `pro`
 
 DGX Spark class, 128 GB unified memory, ~273 GB/s.
 SANDBOX 4 · BROWSER 2 · GRAPH_INGEST 2 · local_large up to ~200B-parameter
@@ -1605,15 +1605,15 @@ and the graph file share one pool: the memory reserve is the primary
 admission rule, and inference memory utilisation is capped well below the
 pool size to avoid host instability.
 
-## 190. Gondolin on every profile
+## 191. Gondolin on every profile
 
 Because Gondolin provides the same micro-VM isolation on all three profiles,
 the sandbox threat model is identical across hardware and no profile
 downgrades isolation.
 
-## 191. Worker machines later
+## 192. Worker machines later
 
-Adding a worker machine binds `Worker.run` (§62) to a remote node. The
+Adding a worker machine binds `Worker.run` (§63) to a remote node. The
 Control Plane, SQLite, Graphiti store, credential store and audit stay on
 one machine. Cluster concerns (leases, node identity, placement) are
 deferred (Part XXII).
@@ -1739,7 +1739,7 @@ Phase 7  Second wave
 - A tighten-only risk-review model that can escalate to `ask` but never loosen policy
 - Skill lifecycle beyond `UNREVIEWED` / `REVIEWED`
 - Full trust-class lattice (`TRUSTED_CONTROL`, `TRUSTED_DATA`, `UNTRUSTED_TEXT`, `UNVERIFIED_EXTERNAL`, `DERIVED_FROM_UNTRUSTED`); V1 uses `trusted` flag plus provenance
-- Browser recipe learning beyond §111
+- Browser recipe learning beyond §112
 - Notification channels beyond dashboard and mobile web
 - Timed break-glass ceremony; V1 is `reset-owner` with the recovery key
 - Slack, Notion, CRM and Microsoft packs
