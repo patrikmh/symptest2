@@ -92,3 +92,11 @@ async def test_mcp_requires_bearer_token(client):
     assert (await client.post("/mcp", json={}, headers={"Authorization": "Basic dGVzdC10b2tlbg=="})).status_code == 401
     # the health endpoint is not behind the token
     assert (await client.get("/health")).status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_mcp_fails_closed_without_token(client, test_settings):
+    test_settings.mcp_bearer_token = ""
+    res = await client.post("/mcp", json={})
+    assert res.status_code == 503
+    assert res.json() == {"error": "mcp_auth_not_configured"}

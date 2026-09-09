@@ -77,6 +77,8 @@ async def lifespan(app: FastAPI):
         logger.error("FORTYSIXELKS_REALTIME_NUMBER is not set; incoming calls will be rejected")
     if not settings.elevenlabs_api_key:
         logger.warning("ELEVENLABS_API_KEY not set; using fake STT/TTS (development only)")
+    if settings.app_env == "production" and settings.mcp_bearer_token == "dev-secret-token":
+        logger.error("MCP_BEARER_TOKEN is still the dev default; set a real token before exposing this")
     database = Database(settings.sqlite_db_path)
     sweeper = asyncio.create_task(sweep_stale_sessions())
     # The MCP streamable-HTTP transport needs its session manager running for the
@@ -94,7 +96,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="GrokCall Phone Gateway", version="1.0.0", lifespan=lifespan)
 
-wake_notifier = SlackWakeNotifier(webhook_url=settings.slack_webhook_url)
 _background_tasks: set = set()
 
 
@@ -114,7 +115,9 @@ async def health():
 # ------------------------------------------------------------ 46elks webhooks
 
 async def _wake_agent(session: CallSession) -> None:
-    ok = await wake_notifier.notify_call_started(session.call_id, session.caller, session.called)
+    # Built per call so the configured webhook URL is always current.
+    notifier = SlackWakeNotifier(webhook_url=settings.slack_webhook_url)
+    ok = await notifier.notify_call_started(session.call_id, session.caller, session.called)
     if ok:
         session.timings.slack_event_sent_at = datetime.now(timezone.utc)
         # The realtime leg may already have moved the call on; never step back.
@@ -307,7 +310,12 @@ class BearerAuthMiddleware:
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         token = settings.mcp_bearer_token
-        if scope["type"] == "http" and scope["path"].startswith(self.protected_prefix) and token:
+        if scope["type"] == "http" and scope["path"].startswith(self.protected_prefix):
+            if not token:
+                # Fail closed: a missing token must never mean "no auth".
+                response = JSONResponse(status_code=503, content={"error": "mcp_auth_not_configured"})
+                await response(scope, receive, send)
+                return
             header = next(
                 (v.decode("latin-1") for k, v in scope["headers"] if k == b"authorization"), ""
             )
