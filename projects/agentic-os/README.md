@@ -6,6 +6,7 @@ Gmail, Calendar, GitHub and the web, with company data kept on company
 hardware and every external effect gated by explicit authority.
 
 - [SPEC.md](SPEC.md) — canonical architecture specification (v6.0)
+- [RESEARCH-memory.md](RESEARCH-memory.md) — survey of Graphiti, Letta, Hermes, Mem0, Cognee and others vs this spec
 
 ## Run
 

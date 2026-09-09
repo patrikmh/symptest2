@@ -1575,6 +1575,11 @@ Phase 7  Second wave
 - Notification channels beyond dashboard and mobile web
 - Timed break-glass ceremony; V1 is `reset-owner` with the recovery key
 - Slack, Notion, CRM and Microsoft packs
+- Entity knowledge graph (Graphiti/Zep-style). V1 Knowledge is FTS5 + local
+  embeddings. A later graph, if any, is a derived SQLite index with temporal
+  invalidation, never a second database process, never a source of CONTROL.
+  See `RESEARCH-memory.md`.
+- Skill adjacency graph (Hermes-style SQLite) for Planner routing only
 
 ---
 
