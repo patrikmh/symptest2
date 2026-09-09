@@ -30,7 +30,7 @@ not depend on any other project.
 | ------- | ----------- |
 | [snake-game](projects/snake-game/) | Single-file HTML5 canvas Snake with power-ups, levels and sound. |
 | [grokcall](projects/grokcall/) | AI phone assistant replacing voicemail via Grok Bot, 46elks & ElevenLabs. |
-| [agentic-os](projects/agentic-os/) | Agentic OS project scaffold. |
+| [agentic-os](projects/agentic-os/) | Private, self-hosted agentic OS for small companies — architecture spec v6.0. |
 
 ## Adding a project
 
