@@ -5,6 +5,7 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 
 from grokcall.adapters.elevenlabs.stt import ElevenLabsScribeSTT
+from grokcall.adapters.elevenlabs.tts import ElevenLabsFlashTTS
 from grokcall.adapters.fakes import FakeSTT, FakeTelephonyLeg, FakeTTS, FakeWakeNotifier
 from grokcall.adapters.fortysixelks.telephony import (
     FortySixElksActionBuilder,
@@ -20,6 +21,26 @@ class RecordingSocket:
 
     async def send_text(self, data: str) -> None:
         self.sent.append(json.loads(data))
+
+
+def test_tts_payload_carries_voice_settings_and_language():
+    tts = ElevenLabsFlashTTS(api_key="k", voice_id="v123")
+    payload = tts.build_payload("Hej, hur kan jag hjälpa dig?", language="sv")
+    assert payload["model_id"] == "eleven_flash_v2_5"
+    assert payload["language_code"] == "sv"
+    assert payload["voice_settings"] == {
+        "stability": 0.4,
+        "similarity_boost": 0.85,
+        "style": 0.2,
+        "use_speaker_boost": True,
+        "speed": 0.95,
+    }
+    assert tts.build_payload("Hi", language="en")["language_code"] == "en"
+    assert "language_code" not in tts.build_payload("Hej")
+
+    custom = ElevenLabsFlashTTS(api_key="k", voice_id="v", stability=0.7, style=0.0, speed=1.0)
+    assert custom.build_payload("x")["voice_settings"]["stability"] == 0.7
+    assert custom.build_payload("x")["voice_settings"]["style"] == 0.0
 
 
 def test_action_builders():

@@ -41,8 +41,22 @@ class Settings(BaseSettings):
 
     # ElevenLabs
     elevenlabs_api_key: Optional[str] = None
+    # Voice that speaks. The default is an English voice; for Swedish callers pick
+    # a native Swedish voice in the ElevenLabs dashboard (Voices -> filter Swedish
+    # -> preview) and put its ID here. This is the single biggest naturalness win.
     elevenlabs_voice_id: str = "21m00Tcm4TlvDq8ikWAM"
+    # eleven_flash_v2_5: realtime (~75ms). eleven_multilingual_v2: more lifelike
+    # Swedish prosody but ~1-2s slower per sentence. Try it with one .env change
+    # if the Flash voice still feels stiff.
     elevenlabs_tts_model_id: str = "eleven_flash_v2_5"
+    # Voice shaping. Lower stability = more expressive, higher = flatter.
+    # style > 0 and use_speaker_boost add a little latency; speed < 1 calms
+    # the delivery down slightly.
+    elevenlabs_tts_stability: float = 0.4
+    elevenlabs_tts_similarity_boost: float = 0.85
+    elevenlabs_tts_style: float = 0.2
+    elevenlabs_tts_use_speaker_boost: bool = True
+    elevenlabs_tts_speed: float = 0.95
     elevenlabs_stt_model_id: str = "scribe_v2_realtime"
     elevenlabs_stt_url: str = "wss://api.elevenlabs.io/v1/speech-to-text/realtime"
     elevenlabs_tts_url: str = "https://api.elevenlabs.io/v1/text-to-speech"
