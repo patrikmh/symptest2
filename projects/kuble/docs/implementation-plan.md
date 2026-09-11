@@ -45,33 +45,34 @@ cards, and chat works unchanged on the Rakazo runtime.
 
 ### Slice 1.1 — Branding
 
-- [x] Product name "LOTS" in `apps/web/index.html` (title, PWA title, description) and the `Wordmark`.
+- [x] Product name "LOTS" in `apps/web/index.html` (title, PWA title, description), `site.webmanifest`, the `Wordmark`, the Welcome page and the sign-in/sign-up headings.
 - [x] Pastel agent palette replaces `BOT_COLORS` (`packages/contracts/src/ids.ts`) and `botColors` (`packages/ui-tokens`).
-- [x] New avatar style `"lots"` in `packages/ui-web` (rounded square, pastel fill, two dark eyes) used as the web default; upstream `robot`/`organic` styles are kept.
-- [x] Light appearance is the default for new visitors (calm, whitespace, black type).
+- [x] New avatar style `"lots"` in `packages/ui-web` (rounded square, pastel fill, two dark eyes, smile variant by identity). New users default to it (Prisma default + migration `20260911000000_lots_avatar_style`); upstream `robot`/`organic` styles remain selectable.
+- [ ] Re-extract Lingui catalogs (`pnpm --filter @rakazo/web intl:extract`) once LOTS copy settles; until then new strings fall back to English.
 
-Upstream edit points: `index.html`, `bot-avatar.tsx` (`Wordmark` text + new branch), `avatar-style.tsx` (type union + default), `ids.ts`, `ui-tokens/src/index.ts`, `ui-appearance.ts`.
+Upstream edit points: `apps/web/index.html`, `apps/web/public/site.webmanifest`, `packages/ui-web/src/bot-avatar.tsx` (`LotsAvatar` branch, `Wordmark`), `packages/ui-web/src/avatar-style.tsx` (type union), `packages/contracts/src/{ids,domain}.ts`, `packages/ui-tokens/src/index.ts`, `packages/db/prisma/schema.prisma`, `apps/api/src/router.ts` (avatar style normalisation), `apps/web/src/pages/{Shell,AccountSettingsOverlay,Welcome,Auth}.tsx`.
 
-Acceptance (unit): `bot-avatar.test.tsx` renders the `lots` style with the bot colour; palette test asserts 7 pastel values.
+Acceptance (unit): `bot-avatar.test.tsx` renders the `lots` style with the bot colour and no visor/ring; mobile `theme.test.ts` pins the first palette entry.
 
 ### Slice 1.2 — Navigation frame
 
 - [x] `apps/web/src/lots/LotsFrame.tsx`: persistent left rail with Inbox, Agents, Fyrar, Approvals, Packs, Activity · Computers, Admin, Settings; mobile bottom bar with Inbox, Agents, Fyrar, More.
-- [x] Routes under `/app/*` wrapped in the frame; `/app` lands on Agents. `/app/:botId` and `/app/g/:groupId` keep rendering the upstream `ShellPage` (chat).
-- [x] Pages not yet implemented render a calm empty state that says so, with a link to the relevant phase in this plan.
+- [x] Routes under `/app/*` wrapped in the frame; `/app` lands on Agents. `/app/:botId` and `/app/g/:groupId` keep rendering the upstream `ShellPage` (chat) inside the frame.
+- [x] Settings opens the upstream settings overlay through `?settings=<section>`.
+- [x] Pages not yet implemented (`PlannedPage`) render a calm empty state naming the phase that delivers them.
 
-Upstream edit points: `apps/web/src/App.tsx` (routes only).
+Upstream edit points: `apps/web/src/App.tsx` (route table), `apps/web/src/pages/Shell.tsx` (one effect reading `?settings=`).
 
-Acceptance (unit): nav model test asserts item order and hrefs; `App` route test asserts `/app/agents` does not match the `:botId` route.
+Acceptance (unit): `nav.test.ts` asserts item order, groups, mobile subset and active-key resolution (static paths win over `:botId`).
 
 ### Slice 1.3 — Agents page
 
-- [x] `apps/web/src/lots/AgentsPage.tsx`: grid of agent cards (avatar, name, role, LOTS status, latest activity preview, computer). Data from `rpc.bots.list`.
-- [x] `packages/lots-core`: `agentStatusFromBot()` mapping Rakazo run status → `IDLE | WORKING | WAITING | ERROR`, `AGENT_TEMPLATES` (Assistant, Researcher, Developer, Sales Scout, Reviewer).
-- [x] "New agent" dialog: pick a template → `rpc.bots.create` → navigate to the agent's chat.
+- [x] `apps/web/src/lots/AgentsPage.tsx`: grid of agent cards (avatar, name, role, LOTS status pill, latest message preview, computer). Data from the upstream `bots.list` RPC.
+- [x] `packages/lots-core` (`@lots/core`): `agentStatusFromRunStatus()` mapping Rakazo run status → `IDLE | WORKING | WAITING | ERROR`; `AGENT_TEMPLATES` (Assistant, Researcher, Developer, Sales Scout, Reviewer) with the spec §46 prompt-injection reminders baked into their instructions.
+- [x] "New agent" dialog: pick a template, optional name → `bots.create` → navigate to the agent's chat.
 - [x] Loading, empty and error states.
 
-Acceptance (unit): status mapping table test; template list test. Acceptance (manual/e2e, Phase 8 automation): create agent → chat → reload → history persists (Journey 1 steps 4–7, on the unchanged upstream Shell).
+Acceptance (unit): `agent-status.test.ts` status table and template tests pass. Acceptance (manual now, Playwright in Phase 8): create agent → chat → reload → history persists (Journey 1 steps 4–7, on the unchanged upstream Shell).
 
 ### Slice 1.4 — Onboarding copy
 
