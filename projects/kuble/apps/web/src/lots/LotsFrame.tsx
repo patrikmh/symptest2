@@ -161,7 +161,7 @@ function MobileItem({
   );
 }
 
-/** Brand mark: the same pastel square agents wear, in the first palette colour. */
+/** Brand mark: the same pastel square agents wear, in the third palette colour. */
 export function LotsMark({ size = 30 }: { size?: number }) {
   return <BotAvatar color={BOT_COLORS[2]} identity="lots" size={size} variant="lots" />;
 }
