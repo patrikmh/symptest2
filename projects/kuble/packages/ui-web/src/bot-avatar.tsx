@@ -24,9 +24,21 @@ export const BotAvatar = memo(function BotAvatar({
   const isWorking = ACTIVE_RUN_STATUSES.some((activeStatus) => activeStatus === status);
   const gradId = `spin-grad-${useId().replace(/[^a-zA-Z0-9-_]/g, "")}`;
   const preferredVariant = useAvatarStyle();
-  if ((variant ?? preferredVariant) === "organic") {
+  const resolvedVariant = variant ?? preferredVariant;
+  if (resolvedVariant === "organic") {
     return (
       <OrganicAvatar
+        color={color}
+        identity={identity}
+        size={size}
+        isWorking={isWorking}
+        className={className}
+      />
+    );
+  }
+  if (resolvedVariant === "lots") {
+    return (
+      <LotsAvatar
         color={color}
         identity={identity}
         size={size}
@@ -154,6 +166,113 @@ export const BotAvatar = memo(function BotAvatar({
     </div>
   );
 });
+
+/**
+ * LOTS agent mark: a rounded pastel square with a simple two-eye face. Identity picks the
+ * idle blink pattern and whether the eyes are bars or a smile; working state is shown by the
+ * shared eye animation plus a firmer outline.
+ */
+function LotsAvatar({
+  color,
+  identity,
+  size,
+  isWorking,
+  className,
+}: {
+  color: string;
+  identity?: string;
+  size: number;
+  isWorking: boolean;
+  className?: string;
+}) {
+  const seed = avatarIdentitySeed(identity || color || "#CDB4F7");
+  const eyeVariant = seed % 4;
+  const smiling = seed % 3 === 0;
+  const idleDuration = (4.2 + ((seed * 7) % 28) / 10).toFixed(2);
+  const idleDelay = (-(((seed * 13) % 45) / 10)).toFixed(2);
+  const radius = Math.max(6, Math.round(size * 0.28));
+  const eyeW = Math.max(3, Math.round(size * 0.11));
+  const eyeH = Math.max(6, Math.round(size * 0.26));
+  const eyeGap = Math.max(4, Math.round(size * 0.16));
+  const eyeRadius = Math.max(1.5, eyeW * 0.35);
+  const idleEyeAnimation = {
+    "--rakazo-eye-animation-name": `rakazo-eyes-idle-${eyeVariant}`,
+    "--rakazo-eye-animation-duration": `${idleDuration}s`,
+    "--rakazo-eye-animation-easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+    "--rakazo-eye-animation-delay": `${idleDelay}s`,
+  } as CSSProperties;
+  const workingEyeAnimation = {
+    "--rakazo-eye-animation-name": "rakazo-eyes-working",
+    "--rakazo-eye-animation-duration": "1.4s",
+    "--rakazo-eye-animation-easing": "ease-in-out",
+    "--rakazo-eye-animation-delay": "0s",
+  } as CSSProperties;
+
+  return (
+    <div
+      className={cn(
+        "rakazo-bot-avatar rakazo-lots-avatar group relative flex items-center justify-center select-none",
+        className,
+      )}
+      data-working={isWorking}
+      data-eye-pattern={eyeVariant}
+      data-face={smiling ? "smile" : "bars"}
+      style={{
+        width: size,
+        height: size,
+        flex: "none",
+        borderRadius: radius,
+        background: color,
+        boxShadow: isWorking
+          ? `0 0 0 2px ${darkenColor(color, 22)}, 0 6px 16px rgba(26, 26, 26, 0.14)`
+          : "0 2px 6px rgba(26, 26, 26, 0.10)",
+      }}
+    >
+      {(["idle", "working"] as const).map((mode) => (
+        <div
+          key={mode}
+          className={`rakazo-bot-avatar-eyes rakazo-bot-avatar-eyes-${mode} absolute inset-0 flex items-center justify-center`}
+          style={{
+            gap: eyeGap,
+            ...(mode === "idle" ? idleEyeAnimation : workingEyeAnimation),
+          }}
+        >
+          {[0, 1].map((eye) =>
+            smiling ? (
+              <svg
+                key={eye}
+                width={eyeH}
+                height={Math.round(eyeH * 0.6)}
+                viewBox="0 0 10 6"
+                aria-hidden="true"
+              >
+                <path
+                  d="M1 5 L5 1 L9 5"
+                  fill="none"
+                  stroke="#1A1A1A"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            ) : (
+              <span
+                key={eye}
+                className="block"
+                style={{
+                  width: eyeW,
+                  height: eyeH,
+                  borderRadius: eyeRadius,
+                  backgroundColor: "#1A1A1A",
+                }}
+              />
+            ),
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function OrganicAvatar({
   color,
@@ -288,13 +407,8 @@ function adjustColor(hex: string, percent: number): string {
 export function Wordmark({ className }: { className?: string }) {
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <div className="flex h-11 w-11 items-center justify-center gap-1.5 rounded-full bg-card">
-        <span className="h-4 w-[7px] rounded-full bg-primary" />
-        <span className="h-4 w-[7px] rounded-full bg-primary" />
-      </div>
-      <span className="font-[Aeonik,ui-sans-serif] text-[28px] tracking-tight text-foreground">
-        Rakazo
-      </span>
+      <LotsAvatar color="#CDB4F7" identity="lots-wordmark" size={44} isWorking={false} />
+      <span className="text-[28px] font-semibold tracking-tight text-foreground">LOTS</span>
     </div>
   );
 }

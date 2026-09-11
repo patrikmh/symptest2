@@ -1,7 +1,7 @@
 {
-  "name": "Rakazo",
-  "short_name": "Rakazo",
-  "description": "Your team of always-on agents.",
+  "name": "LOTS",
+  "short_name": "LOTS",
+  "description": "LOTS — your persistent AI coworkers.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#050506",

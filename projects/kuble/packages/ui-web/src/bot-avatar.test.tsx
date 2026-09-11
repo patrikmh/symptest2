@@ -39,6 +39,30 @@ describe("BotAvatar", () => {
     expect(html).toContain("rakazo-bot-avatar-ring");
   });
 
+  it("renders the LOTS mark as a pastel square with a face and no visor", () => {
+    const html = renderToString(
+      <BotAvatar color="#CDB4F7" identity="researcher" size={40} status="running" variant="lots" />,
+    );
+
+    expect(html).toContain("rakazo-lots-avatar");
+    expect(html).toContain('data-working="true"');
+    expect(html).toMatch(/data-face="(bars|smile)"/);
+    expect(html).toContain("background:#CDB4F7");
+    expect(html).not.toContain("rakazo-bot-avatar-visor");
+    expect(html).not.toContain("rakazo-bot-avatar-ring");
+  });
+
+  it("uses the LOTS mark when the avatar style context asks for it", () => {
+    const html = renderToString(
+      <AvatarStyleProvider value="lots">
+        <BotAvatar color="#FFD86B" identity="assistant" />
+      </AvatarStyleProvider>,
+    );
+
+    expect(html).toContain("rakazo-lots-avatar");
+    expect(html).toContain('data-working="false"');
+  });
+
   it("generates an organic avatar from the bot color", () => {
     const html = renderToString(
       <BotAvatar color="#D9508A" identity="maya" size={28} status="running" variant="organic" />,

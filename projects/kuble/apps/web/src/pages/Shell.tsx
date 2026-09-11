@@ -3933,7 +3933,7 @@ export function ShellPage() {
             email={session.data?.user.email}
             usage={usage}
             initialSection={settingsSection}
-            avatarStyle={bootstrapMe?.avatarStyle ?? "robot"}
+            avatarStyle={bootstrapMe?.avatarStyle ?? "lots"}
             isDeploymentOwner={bootstrapMe?.isDeploymentOwner === true}
             sandboxProvider={bootstrapMe?.sandboxProvider}
             messagingEnabled={messagingSurfaceEnabled}
@@ -4147,7 +4147,7 @@ export function ShellPage() {
   );
 
   return (
-    <AvatarStyleProvider value={bootstrapMe?.avatarStyle ?? "robot"}>{shell}</AvatarStyleProvider>
+    <AvatarStyleProvider value={bootstrapMe?.avatarStyle ?? "lots"}>{shell}</AvatarStyleProvider>
   );
 }
 

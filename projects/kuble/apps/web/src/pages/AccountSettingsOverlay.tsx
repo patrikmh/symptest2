@@ -126,8 +126,8 @@ export function GeneralSettingsPanels({
         <h3 className="text-[15px] font-medium text-foreground">
           <Trans>Avatars</Trans>
         </h3>
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          {(["robot", "organic"] as const).map((style) => (
+        <div className="mt-3 grid grid-cols-3 gap-3">
+          {(["lots", "robot", "organic"] as const).map((style) => (
             <Toggle
               key={style}
               variant="outline"
@@ -137,12 +137,20 @@ export function GeneralSettingsPanels({
               className="h-auto justify-start gap-3 px-3.5 py-3 text-[14px] font-normal"
             >
               <BotAvatar
-                color="#D9508A"
+                color="#CDB4F7"
                 identity="avatar-style-preview"
                 size={32}
                 variant={style}
               />
-              <span>{style === "robot" ? <Trans>Robot</Trans> : <Trans>Organic</Trans>}</span>
+              <span>
+                {style === "lots" ? (
+                  <Trans>LOTS</Trans>
+                ) : style === "robot" ? (
+                  <Trans>Robot</Trans>
+                ) : (
+                  <Trans>Organic</Trans>
+                )}
+              </span>
             </Toggle>
           ))}
         </div>

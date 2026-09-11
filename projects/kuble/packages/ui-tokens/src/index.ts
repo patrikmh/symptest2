@@ -121,14 +121,15 @@ export const tokens = darkTokens;
 
 export const RADIUS = "0.75rem";
 
+/** Mirrors `BOT_COLORS` in `@rakazo/contracts`: the LOTS pastel agent palette. */
 export const botColors = [
-  "#3EC5A8",
-  "#F5A03C",
-  "#6A6BF5",
-  "#9B5CF6",
-  "#3B82F6",
-  "#F2622A",
-  "#D9508A",
+  "#FFD86B",
+  "#9AD0F5",
+  "#CDB4F7",
+  "#A8E4B4",
+  "#F8A7B6",
+  "#F9C59B",
+  "#B7E3E8",
 ] as const;
 
 export function isAppearancePreference(
