@@ -1598,6 +1598,27 @@ export function ShellPage() {
       });
     }
   }, [active?.id, groupId, inGroup, routines, routinesBotId, searchParams, setSearchParams]);
+
+  // LOTS navigation opens Settings by URL (`?settings=<section>`), then strips the parameter.
+  useEffect(() => {
+    const requested = searchParams.get("settings");
+    if (requested === null) return;
+    const sections: SettingsSection[] = [
+      "general",
+      "models",
+      "memory",
+      "voice",
+      "usage",
+      "computer",
+      "updates",
+    ];
+    const section = sections.find((candidate) => candidate === requested) ?? "general";
+    setSettingsSection(section);
+    setSettingsOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("settings");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
   const activeSnapshot = inGroup
     ? snapshot?.groupId === groupId
       ? snapshot

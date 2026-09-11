@@ -1,4 +1,5 @@
 import { ACTIVE_RUN_STATUSES, avatarIdentitySeed, organicAvatarPath } from "@rakazo/core";
+import { botColors } from "@rakazo/ui-tokens";
 import { type CSSProperties, memo, useId, useSyncExternalStore } from "react";
 import { type AvatarStyle, useAvatarStyle } from "./avatar-style.js";
 import { cn } from "./lib/utils.js";
@@ -407,7 +408,7 @@ function adjustColor(hex: string, percent: number): string {
 export function Wordmark({ className }: { className?: string }) {
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <LotsAvatar color="#CDB4F7" identity="lots-wordmark" size={44} isWorking={false} />
+      <LotsAvatar color={botColors[2]} identity="lots-wordmark" size={44} isWorking={false} />
       <span className="text-[28px] font-semibold tracking-tight text-foreground">LOTS</span>
     </div>
   );

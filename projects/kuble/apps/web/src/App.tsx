@@ -1,6 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { LOCAL_SETTINGS_PAGE } from "@rakazo/contracts";
 import { Button, Skeleton } from "@rakazo/ui-web";
+import type { ReactNode } from "react";
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Navigate, Route, Routes, useSearchParams } from "react-router-dom";
 import { LoadingState } from "./components/ai/primitives";
@@ -12,10 +13,31 @@ import {
   sessionRetryDelayMs,
   showSessionUnavailable,
 } from "./lib/session-gate";
+import { AgentsPage } from "./lots/AgentsPage";
+import { LotsFrame } from "./lots/LotsFrame";
+import { PlannedPage } from "./lots/PlannedPage";
 import { IntegrationSetupPage } from "./pages/IntegrationSetup";
 import { LocalSettingsPage } from "./pages/LocalSettings";
 import { McpOAuthCallbackPage } from "./pages/McpOAuthCallback";
 import { ShellPage } from "./pages/Shell";
+
+/**
+ * Everything under /app sits inside the LOTS navigation frame (spec §29). Static segments are
+ * ranked above `:botId` by the router, so `/app/agents` never resolves as an agent id.
+ */
+const LOTS_ROUTES: readonly { path: string; element: ReactNode }[] = [
+  { path: "/app", element: <AgentsPage /> },
+  { path: "/app/agents", element: <AgentsPage /> },
+  { path: "/app/inbox", element: <PlannedPage section="inbox" /> },
+  { path: "/app/fyrar", element: <PlannedPage section="fyrar" /> },
+  { path: "/app/approvals", element: <PlannedPage section="approvals" /> },
+  { path: "/app/packs", element: <PlannedPage section="packs" /> },
+  { path: "/app/activity", element: <PlannedPage section="activity" /> },
+  { path: "/app/computers", element: <PlannedPage section="computers" /> },
+  { path: "/app/admin", element: <PlannedPage section="admin" /> },
+  { path: "/app/g/:groupId", element: <ShellPage /> },
+  { path: "/app/:botId", element: <ShellPage /> },
+];
 
 const AuthPage = lazy(() =>
   import("./pages/Auth").then((module) => ({ default: module.AuthPage })),
@@ -108,15 +130,13 @@ function SessionApp() {
               )
             }
           />
-          <Route path="/app" element={user ? <ShellPage /> : <Navigate to="/sign-in" replace />} />
-          <Route
-            path="/app/g/:groupId"
-            element={user ? <ShellPage /> : <Navigate to="/sign-in" replace />}
-          />
-          <Route
-            path="/app/:botId"
-            element={user ? <ShellPage /> : <Navigate to="/sign-in" replace />}
-          />
+          {LOTS_ROUTES.map(({ path, element }) => (
+            <Route
+              key={path}
+              path={path}
+              element={user ? <LotsFrame>{element}</LotsFrame> : <Navigate to="/sign-in" replace />}
+            />
+          ))}
         </Routes>
       </Suspense>
     </div>
