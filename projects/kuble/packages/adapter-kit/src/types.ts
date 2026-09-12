@@ -499,6 +499,8 @@ export interface BackgroundJobPayloads {
   "cloud_agent.poll": { agentId: string };
   /** Expire stale intended ExternalEffects (spec §16). */
   "approval.expire": { effectId?: string };
+  /** Reconcile uncertain pack writes (spec §20). */
+  "effect.reconcile": { effectId?: string };
 }
 
 export type BackgroundJobName = keyof BackgroundJobPayloads;

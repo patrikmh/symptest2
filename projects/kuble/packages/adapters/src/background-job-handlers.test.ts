@@ -119,6 +119,26 @@ describe("createBackgroundJobHandlers", () => {
     expect(expireApprovals).toHaveBeenCalledWith({ effectId: "effect-1" });
   });
 
+  it("reconciles uncertain effects through the injected callback", async () => {
+    const reconcileEffects = vi.fn(async () => undefined);
+    const handlers = createBackgroundJobHandlers({
+      executor: {} as unknown as ReturnType<typeof createRunExecutor>,
+      prisma: {} as unknown as PrismaClient,
+      sandbox: {} as unknown as SandboxProvider,
+      home: {} as unknown as AgentHomeStore,
+      jobs: {} as unknown as JobPublisher,
+      events: {} as unknown as ThreadEvents,
+      workerId: "worker-1",
+      runtime: {} as unknown as AgentRuntime,
+      secretStore: {} as unknown as EncryptedSecretStore,
+      memoryProviders: { resolve: vi.fn(async () => null) },
+      reconcileEffects,
+    });
+
+    await handlers["effect.reconcile"]({ effectId: "effect-1" });
+    expect(reconcileEffects).toHaveBeenCalledWith({ effectId: "effect-1" });
+  });
+
   it("resolves the deployment model when no user credential is configured", async () => {
     const prisma = {
       spaceModelPreference: { findFirst: vi.fn(async () => null) },

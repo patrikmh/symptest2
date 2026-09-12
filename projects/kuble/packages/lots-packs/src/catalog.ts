@@ -1,5 +1,13 @@
 import { definePack, type PackDefinition, type PackKey } from "./define-pack.js";
+import { reconcilePackWrite } from "./reconcile.js";
 import { webExtract, webSummarize } from "./web-research.js";
+
+const pendingLookup = { find: async () => null };
+
+async function catalogReconcile(tool: string, args: Record<string, unknown>) {
+  const outcome = await reconcilePackWrite(tool, args, pendingLookup);
+  return outcome.status === "succeeded" ? outcome.result : { status: outcome.status };
+}
 
 const stringProp = (description: string) => ({
   type: "object",
@@ -144,6 +152,7 @@ export const githubPack = definePack({
       name: "github.createIssue",
       classification: "EXTERNAL_WRITE",
       description: "Create an issue.",
+      reconcile: (args) => catalogReconcile("github.createIssue", args),
       inputSchema: {
         type: "object",
         required: ["repo", "title"],
@@ -158,6 +167,7 @@ export const githubPack = definePack({
       name: "github.commentIssue",
       classification: "EXTERNAL_WRITE",
       description: "Comment on an issue.",
+      reconcile: (args) => catalogReconcile("github.commentIssue", args),
       inputSchema: {
         type: "object",
         required: ["repo", "number", "body"],
@@ -172,6 +182,7 @@ export const githubPack = definePack({
       name: "github.commentPull",
       classification: "EXTERNAL_WRITE",
       description: "Comment on a pull request.",
+      reconcile: (args) => catalogReconcile("github.commentPull", args),
       inputSchema: {
         type: "object",
         required: ["repo", "number", "body"],
@@ -240,6 +251,7 @@ export const gmailPack = definePack({
       name: "gmail.send",
       classification: "EXTERNAL_WRITE",
       description: "Send an email.",
+      reconcile: (args) => catalogReconcile("gmail.send", args),
       inputSchema: {
         type: "object",
         required: ["to", "subject"],
@@ -290,6 +302,7 @@ export const calendarPack = definePack({
       name: "calendar.createEvent",
       classification: "EXTERNAL_WRITE",
       description: "Create an event.",
+      reconcile: (args) => catalogReconcile("calendar.createEvent", args),
       inputSchema: {
         type: "object",
         required: ["title", "start"],

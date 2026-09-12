@@ -1,3 +1,4 @@
+export { lotsEffectIdempotencyKey, UNCERTAIN_WRITE_COPY, UNCERTAIN_WRITE_HINT } from "@lots/core";
 export { lotsToolRequiresApproval } from "./approval.js";
 export {
   calendarPack,
@@ -28,12 +29,38 @@ export {
   packToolRequiresApproval,
 } from "./define-pack.js";
 export {
+  createMemoryCalendar,
+  createMemoryGitHub,
+  createMemoryGmail,
+  type MemoryEvent,
+  type MemoryIssue,
+  type MemoryMail,
+} from "./memory-providers.js";
+export {
   GITHUB_SCOPES,
   GOOGLE_SCOPES,
   githubAuthorizeUrl,
   googleAuthorizeUrl,
   packOAuthRedirectUri,
 } from "./oauth.js";
+export {
+  createEffectReconcileStore,
+  type EffectReconcileStore,
+  isReconcilablePackTool,
+  type PackReconcileLookup,
+  RECONCILABLE_TOOLS,
+  type ReconcileOutcome,
+  reconcilePackWrite,
+  reconcileUncertainEffects,
+  runEffectReconcile,
+} from "./reconcile.js";
+export {
+  createMemoryWriteStore,
+  type PackWriteRecord,
+  type PackWriteScope,
+  type PackWriteStore,
+  runPackWrite,
+} from "./run-write.js";
 export {
   enabledPackKeys,
   listPackSettingRows,

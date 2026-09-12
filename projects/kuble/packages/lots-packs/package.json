@@ -12,6 +12,7 @@
     "test": "vitest run --root ../.. packages/lots-packs/src"
   },
   "dependencies": {
+    "@lots/core": "workspace:*",
     "@rakazo/adapter-kit": "workspace:*",
     "@rakazo/core": "workspace:*"
   },

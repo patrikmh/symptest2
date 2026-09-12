@@ -492,6 +492,16 @@ export interface ExecutorDeps {
   shutdownSignal?: AbortSignal;
   /** Override tool approval (LOTS pack classifications). Defaults to Rakazo heuristics. */
   toolRequiresApproval?: (toolName: string, viaConnector: boolean) => boolean;
+  /** Spec §19 pack write key. Undefined keeps Rakazo's run:tool:hash key. */
+  effectIdempotencyKey?: (input: {
+    spaceId: string;
+    botId: string;
+    runId: string;
+    toolName: string;
+    args: Record<string, unknown>;
+  }) => string | undefined;
+  /** Enqueue reconcile when a write ends UNKNOWN (spec §20). */
+  onUncertainEffect?: (effectId: string) => Promise<void>;
 }
 
 function isAuditableToolResult(value: unknown): value is {
@@ -1841,12 +1851,19 @@ export function createRunExecutor(deps: ExecutorDeps) {
           const needsApprovalEarly = plan === "ask" || plan === "judge";
           // A resumed approval keeps its key even if "Always allow" changed the policy.
           const effectKey =
-            nextApprovedTool ||
+            deps.effectIdempotencyKey?.({
+              spaceId: run.spaceId,
+              botId: run.botId,
+              runId,
+              toolName: replayEffectToolName,
+              args,
+            }) ??
+            (nextApprovedTool ||
             name === "request_secret" ||
             needsApprovalEarly ||
             requiresApprovalByDefault
               ? approvalEffectKey(runId, replayEffectToolName, args)
-              : executionId;
+              : executionId);
           // Connector read-only hints must not bypass approval, review, or replay decisions.
           const applied = READ_ONLY_AGENT_TOOLS.has(name)
             ? undefined
@@ -1975,7 +1992,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
               const retryGate = resolveDuplicateEffectGate(current, name);
               if (retryGate.action === "return") return retryGate.result;
               if (retryGate.action === "uncertain") {
-                return settleUncertainEffect(deps.prisma, applied!.effect.id, name);
+                return settleUncertain(deps, applied!.effect.id, name);
               }
             }
             throw uncertainEffectError(name);
@@ -2072,7 +2089,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 return requestApproval();
               }
             } else if (gate.action === "uncertain") {
-              return settleUncertainEffect(deps.prisma, applied.effect.id, gate.toolName);
+              return settleUncertain(deps, applied.effect.id, gate.toolName);
             } else if (gate.action === "execute") {
               const early = await claimOrReturn("approved");
               if (early !== undefined) return early;
@@ -2963,7 +2980,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                   ? failedAttempt
                   : uncertainEffectResult(name);
               }
-              return settleUncertainEffect(deps.prisma, recordedForAsk.effect.id, "request_secret");
+              return settleUncertain(deps, recordedForAsk.effect.id, "request_secret");
             }
             if (!(await renewRunLease(deps, runId, workerId, fence))) {
               return pauseForSecret();
@@ -4441,6 +4458,16 @@ async function recordEffect(
     },
   });
   return { duplicate: false, effect };
+}
+
+async function settleUncertain(deps: ExecutorDeps, effectId: string, toolName: string) {
+  const result = await settleUncertainEffect(deps.prisma, effectId, toolName);
+  try {
+    await deps.onUncertainEffect?.(effectId);
+  } catch {
+    // Sweep job still picks the row up if enqueue fails.
+  }
+  return result;
 }
 
 async function completeEffect(

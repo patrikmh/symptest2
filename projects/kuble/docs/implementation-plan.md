@@ -187,8 +187,8 @@ Acceptance (integration with emulators): read tools execute without approval; wr
 
 ## Phase 6 — Idempotency and ambiguous writes
 
-- [ ] Idempotency key = org + agent + run + tool + destination + normalized payload hash (in `lots-core`); set on `ExternalEffect.idempotencyKey`.
-- [ ] `reconcile()` for `gmail.send`, `calendar.create`, `github.createIssue`, `github.comment`; Graphile task `effect.reconcile` for `uncertain` effects; UI copy "LOTS is checking whether this action completed."
+- [x] Idempotency key = org + agent + run + tool + destination + normalized payload hash (in `lots-core`); set on `ExternalEffect.idempotencyKey`.
+- [x] `reconcile()` for `gmail.send`, `calendar.create`, `github.createIssue`, `github.comment`; Graphile task `effect.reconcile` for `uncertain` effects; UI copy "LOTS is checking whether this action completed."
 
 Acceptance (unit): key stability under payload key reordering; (integration): approved Gmail send replayed twice sends once; a timed-out send becomes UNKNOWN, reconcile finds it → SUCCEEDED without resending.
 

@@ -12,3 +12,12 @@ export {
   LEGACY_FIRST_BOT_NAMES,
 } from "./first-bot.js";
 export { FYR_RUN_STATUSES, type FyrRunStatus, fyrarStatusFromRunStatus } from "./fyr-status.js";
+export {
+  isPackExternalWrite,
+  lotsEffectIdempotencyKey,
+  normalizePackToolId,
+  packWriteDestination,
+  stableJsonValue,
+  UNCERTAIN_WRITE_COPY,
+  UNCERTAIN_WRITE_HINT,
+} from "./idempotency.js";

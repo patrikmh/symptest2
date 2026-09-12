@@ -1,6 +1,6 @@
 import { type Role, visibleTo } from "@lots/access";
 import { isStaleIntended } from "@lots/approvals";
-import { fyrarStatusFromRunStatus } from "@lots/core";
+import { fyrarStatusFromRunStatus, UNCERTAIN_WRITE_COPY, UNCERTAIN_WRITE_HINT } from "@lots/core";
 import type { Actor, InboxItem } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { listApprovals } from "./approvals.js";
@@ -22,7 +22,7 @@ export async function listInbox(
   actor: Actor,
   role: Role,
 ): Promise<InboxItem[]> {
-  const [approvals, fyrRuns, updates] = await Promise.all([
+  const [approvals, fyrRuns, updates, uncertain] = await Promise.all([
     listApprovals(prisma, actor, role, "pending"),
     prisma.run.findMany({
       where: {
@@ -44,6 +44,14 @@ export async function listInbox(
         status: "completed",
       },
       include: { bot: { select: { name: true, userId: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    }),
+    prisma.externalEffect.findMany({
+      where: { spaceId: actor.spaceId, status: "uncertain" },
+      include: {
+        run: { include: { bot: { select: { name: true, userId: true, archivedAt: true } } } },
+      },
       orderBy: { createdAt: "desc" },
       take: 20,
     }),
@@ -72,6 +80,21 @@ export async function listInbox(
       subtitle: run.bot.name,
       href: run.routineId ? `/app/fyrar/${run.routineId}` : `/app/${run.botId}`,
       createdAt: (run.completedAt ?? run.createdAt).toISOString(),
+    });
+  }
+
+  for (const effect of uncertain) {
+    if (effect.run.bot.archivedAt) continue;
+    if (!owns(actor, role, { spaceId: actor.spaceId, ownerUserId: effect.run.bot.userId })) {
+      continue;
+    }
+    items.push({
+      kind: "update",
+      id: `uncertain:${effect.id}`,
+      title: UNCERTAIN_WRITE_COPY,
+      subtitle: UNCERTAIN_WRITE_HINT,
+      href: "/app/approvals",
+      createdAt: effect.createdAt.toISOString(),
     });
   }
 

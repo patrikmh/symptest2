@@ -23,6 +23,7 @@ const payloadSchemas = {
   "messaging.deliver": z.object({ runId: z.string().min(1).optional() }),
   "cloud_agent.poll": z.object({ agentId: z.string().min(1) }),
   "approval.expire": z.object({ effectId: z.string().min(1).optional() }),
+  "effect.reconcile": z.object({ effectId: z.string().min(1).optional() }),
 } satisfies { [Name in BackgroundJobName]: z.ZodType<BackgroundJobPayloads[Name]> };
 
 export function parseBackgroundJob(name: string, payload: unknown): BackgroundJob {
@@ -158,6 +159,19 @@ export function approvalExpireJob(effectId?: string, availableAt?: Date): Backgr
     name: "approval.expire",
     payload: effectId ? { effectId } : {},
     replaceKey: approvalExpireJobKey(effectId),
+    ...(availableAt ? { availableAt } : {}),
+  };
+}
+
+export function effectReconcileJobKey(effectId?: string): string {
+  return effectId ? `effect.reconcile:${effectId}` : "effect.reconcile:sweep";
+}
+
+export function effectReconcileJob(effectId?: string, availableAt?: Date): BackgroundJob {
+  return {
+    name: "effect.reconcile",
+    payload: effectId ? { effectId } : {},
+    replaceKey: effectReconcileJobKey(effectId),
     ...(availableAt ? { availableAt } : {}),
   };
 }

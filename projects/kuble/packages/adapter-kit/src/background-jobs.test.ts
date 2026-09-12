@@ -3,6 +3,8 @@ import {
   approvalExpireJob,
   approvalExpireJobKey,
   dispatchBackgroundJob,
+  effectReconcileJob,
+  effectReconcileJobKey,
   historyCompactJob,
   historyCompactJobKey,
   messagingDeliverJob,
@@ -22,6 +24,7 @@ function handlers(): BackgroundJobHandlers {
     "messaging.deliver": vi.fn(async () => undefined),
     "cloud_agent.poll": vi.fn(async () => undefined),
     "approval.expire": vi.fn(async () => undefined),
+    "effect.reconcile": vi.fn(async () => undefined),
   };
 }
 
@@ -102,6 +105,27 @@ describe("approvalExpireJob", () => {
     const target = handlers();
     await dispatchBackgroundJob(target, "approval.expire", { effectId: "effect-1" });
     expect(target["approval.expire"]).toHaveBeenCalledWith({ effectId: "effect-1" });
+  });
+});
+
+describe("effectReconcileJob", () => {
+  it("builds a sweep job and a per-effect replace key", () => {
+    expect(effectReconcileJob()).toEqual({
+      name: "effect.reconcile",
+      payload: {},
+      replaceKey: effectReconcileJobKey(),
+    });
+    expect(effectReconcileJob("effect-1")).toEqual({
+      name: "effect.reconcile",
+      payload: { effectId: "effect-1" },
+      replaceKey: effectReconcileJobKey("effect-1"),
+    });
+  });
+
+  it("validates and dispatches effect.reconcile", async () => {
+    const target = handlers();
+    await dispatchBackgroundJob(target, "effect.reconcile", { effectId: "effect-1" });
+    expect(target["effect.reconcile"]).toHaveBeenCalledWith({ effectId: "effect-1" });
   });
 });
 

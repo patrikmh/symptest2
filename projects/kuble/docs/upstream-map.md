@@ -146,7 +146,7 @@ The mapping is applied at the LOTS UI/RPC boundary only.
 
 | Requirement | Verdict | Notes |
 | --- | --- | --- |
-| Idempotency for external writes | **EXISTS** (mechanism) / **ADAPTER** (key shape) | `ExternalEffect.idempotencyKey` is unique; replay of `completed` returns the stored result. LOTS packs compute the key as spec §19 (org + agent + run + tool + destination + payload hash). |
+| Idempotency for external writes | **ADAPTER** | `ExternalEffect.idempotencyKey` is unique; replay of `completed` returns the stored result. Pack writes use `lotsEffectIdempotencyKey` (org + agent + run + tool + destination + payload hash). |
 | UNKNOWN outcome, no blind retry | **EXISTS** | Effect status `uncertain`; `settleUncertainEffect` in the executor. |
 | Reconciliation for Gmail send / Calendar create / GitHub issue+comment | **NEW** | Pack-level `reconcile()` implementations (§27) and an `effect.reconcile` Graphile task that calls them. |
 

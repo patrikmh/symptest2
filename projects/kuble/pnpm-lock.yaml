@@ -840,6 +840,9 @@ importers:
 
   packages/lots-packs:
     dependencies:
+      '@lots/core':
+        specifier: workspace:*
+        version: link:../lots-core
       '@rakazo/adapter-kit':
         specifier: workspace:*
         version: link:../adapter-kit

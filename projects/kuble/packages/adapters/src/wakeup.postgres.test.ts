@@ -18,6 +18,7 @@ function handlers(overrides: Partial<BackgroundJobHandlers> = {}): BackgroundJob
     "messaging.deliver": vi.fn(async () => undefined),
     "cloud_agent.poll": vi.fn(async () => undefined),
     "approval.expire": vi.fn(async () => undefined),
+    "effect.reconcile": vi.fn(async () => undefined),
     ...overrides,
   };
 }

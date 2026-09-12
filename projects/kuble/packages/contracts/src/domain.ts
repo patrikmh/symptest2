@@ -451,6 +451,7 @@ export const ApprovalSchema = z.object({
   detail: z.string().nullable(),
   preview: z.record(z.string(), z.string()),
   status: ApprovalStatusSchema,
+  checking: z.boolean(),
   createdAt: z.string(),
 });
 export type Approval = z.infer<typeof ApprovalSchema>;

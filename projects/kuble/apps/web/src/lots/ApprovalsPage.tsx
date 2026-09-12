@@ -180,6 +180,14 @@ function ApprovalCard({
         </div>
         <StatusPill status={approval.status} />
       </div>
+      {approval.checking ? (
+        <p className="mt-4 text-[13.5px] text-foreground/80">
+          <Trans>LOTS is checking whether this action completed.</Trans>
+          <span className="mt-1 block text-muted-foreground">
+            <Trans>Do not retry it manually yet.</Trans>
+          </span>
+        </p>
+      ) : null}
       {Object.keys(approval.preview).length > 0 ? (
         <dl className="mt-4 space-y-1.5 text-[13.5px]">
           {Object.entries(approval.preview).map(([key, value]) => (

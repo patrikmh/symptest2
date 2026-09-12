@@ -12,22 +12,37 @@ describe("listInbox", () => {
   it("orders pending approvals, failed Fyrar, completed Fyrar, then updates", async () => {
     const prisma = {
       externalEffect: {
-        findMany: vi.fn().mockResolvedValue([
-          {
-            id: "e-1",
-            spaceId: "space-1",
-            runId: "run-a",
-            kind: "gmail_send_email",
-            status: "intended",
-            request: { to: "anna@example.com" },
-            createdAt: new Date("2026-09-12T10:00:00.000Z"),
-            run: {
-              threadId: "t-1",
-              botId: "bot-1",
-              bot: { name: "Researcher", userId: "user-a", archivedAt: null },
+        findMany: vi.fn().mockImplementation(async ({ where }: { where: { status?: string } }) => {
+          if (where.status === "uncertain") {
+            return [
+              {
+                id: "e-unknown",
+                spaceId: "space-1",
+                createdAt: new Date("2026-09-12T10:30:00.000Z"),
+                run: {
+                  botId: "bot-1",
+                  bot: { name: "Researcher", userId: "user-a", archivedAt: null },
+                },
+              },
+            ];
+          }
+          return [
+            {
+              id: "e-1",
+              spaceId: "space-1",
+              runId: "run-a",
+              kind: "gmail_send_email",
+              status: "intended",
+              request: { to: "anna@example.com" },
+              createdAt: new Date("2026-09-12T10:00:00.000Z"),
+              run: {
+                threadId: "t-1",
+                botId: "bot-1",
+                bot: { name: "Researcher", userId: "user-a", archivedAt: null },
+              },
             },
-          },
-        ]),
+          ];
+        }),
       },
       message: { findMany: vi.fn().mockResolvedValue([]) },
       run: {
@@ -74,8 +89,10 @@ describe("listInbox", () => {
       "fyr_failed",
       "fyr_completed",
       "update",
+      "update",
     ]);
     expect(items[0]?.href).toBe("/app/approvals");
     expect(items[1]?.href).toBe("/app/fyrar/fyr-1");
+    expect(items.some((item) => item.title.startsWith("LOTS is checking"))).toBe(true);
   });
 });

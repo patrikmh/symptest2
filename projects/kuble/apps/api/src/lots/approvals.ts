@@ -68,6 +68,7 @@ function mapApproval(row: EffectRow, ask: AskIndex): Approval {
     detail: ask.get(row.id)?.detail ?? null,
     preview: approvalPreview(row.request),
     status: approvalStatusFromEffect(row.status, row.createdAt),
+    checking: row.status === "uncertain",
     createdAt: row.createdAt.toISOString(),
   };
 }

@@ -16,7 +16,7 @@ name LOTS).
 
 ## Status
 
-Phases 0–5 (inspection, Ratatosk shell, access, Fyrar, approvals, packs)
+Phases 0–6 (inspection, Ratatosk shell, access, Fyrar, approvals, packs, idempotency)
 are in place. See [`docs/implementation-plan.md`](./docs/implementation-plan.md)
 for the slice-by-slice checklist and
 [`docs/upstream-map.md`](./docs/upstream-map.md) for what is reused from

@@ -3,10 +3,12 @@ import {
   createLotsPacksConnector,
   enabledPackKeys,
   listPackSettingRows,
+  lotsEffectIdempotencyKey,
   lotsToolRequiresApproval,
+  runEffectReconcile,
 } from "@lots/packs";
 import type { JobPublisher, JobWorkerHost } from "@rakazo/adapter-kit";
-import { approvalExpireJob, runContinueJob } from "@rakazo/adapter-kit";
+import { approvalExpireJob, effectReconcileJob, runContinueJob } from "@rakazo/adapter-kit";
 import { ComposioConnector, IntegrationProviderSettings } from "@rakazo/adapters";
 import { loadRootEnv } from "@rakazo/core/node/load-root-env";
 
@@ -183,6 +185,15 @@ async function main() {
       process.env.CURSOR_API_KEY ?? "",
     ].filter(Boolean),
     toolRequiresApproval: lotsToolRequiresApproval,
+    effectIdempotencyKey: ({ spaceId, botId, runId, toolName, args }) =>
+      lotsEffectIdempotencyKey({
+        organization: spaceId,
+        agent: botId,
+        run: runId,
+        tool: toolName,
+        payload: args,
+      }),
+    onUncertainEffect: (effectId) => jobs.enqueue(effectReconcileJob(effectId)),
     secretStore: secrets,
     deploymentModelKey,
     dataDir,
@@ -216,9 +227,13 @@ async function main() {
         effectId: payload.effectId,
       });
     },
+    reconcileEffects: async (payload) => {
+      await runEffectReconcile(prisma, payload);
+    },
   });
   await jobHost.start(jobHandlers);
   await jobs.enqueue(approvalExpireJob());
+  await jobs.enqueue(effectReconcileJob());
   const reconciler = createJobReconciler({
     prisma,
     jobs,

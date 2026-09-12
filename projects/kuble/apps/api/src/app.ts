@@ -4,7 +4,9 @@ import {
   createLotsPacksConnector,
   enabledPackKeys,
   listPackSettingRows,
+  lotsEffectIdempotencyKey,
   lotsToolRequiresApproval,
+  runEffectReconcile,
 } from "@lots/packs";
 import { ORPCError, onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
@@ -17,7 +19,7 @@ import type {
   SandboxProvider,
   TransactionalEmailProvider,
 } from "@rakazo/adapter-kit";
-import { approvalExpireJob } from "@rakazo/adapter-kit";
+import { approvalExpireJob, effectReconcileJob } from "@rakazo/adapter-kit";
 import {
   applyMessagingOutboundStatus,
   ChatSdkMessagingSurface,
@@ -370,6 +372,15 @@ export async function createApp(
       env.cursorApiKey ?? "",
     ].filter(Boolean),
     toolRequiresApproval: lotsToolRequiresApproval,
+    effectIdempotencyKey: ({ spaceId, botId, runId, toolName, args }) =>
+      lotsEffectIdempotencyKey({
+        organization: spaceId,
+        agent: botId,
+        run: runId,
+        tool: toolName,
+        payload: args,
+      }),
+    onUncertainEffect: (effectId) => jobs.enqueue(effectReconcileJob(effectId)),
     secretStore: secrets,
     secretHttp: remoteConnectors,
     deploymentModelKey: env.deploymentModelKey,
@@ -400,10 +411,14 @@ export async function createApp(
     expireApprovals: async (payload) => {
       await runApprovalExpire(prisma, jobs, payload);
     },
+    reconcileEffects: async (payload) => {
+      await runEffectReconcile(prisma, payload);
+    },
   });
   if (inMemoryJobs) {
     await inMemoryJobs.start(jobHandlers);
     await jobs.enqueue(approvalExpireJob());
+    await jobs.enqueue(effectReconcileJob());
   }
   const reconciler = inMemoryJobs
     ? createJobReconciler({

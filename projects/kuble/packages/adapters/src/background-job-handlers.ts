@@ -36,6 +36,7 @@ export function createBackgroundJobHandlers(deps: {
   messaging?: MessagingSurface;
   cloudAgent?: CloudAgentConnection | null;
   expireApprovals?: (payload: { effectId?: string }) => Promise<void>;
+  reconcileEffects?: (payload: { effectId?: string }) => Promise<void>;
 }): BackgroundJobHandlers {
   const deliverMessaging = async (runId?: string) => {
     if (!deps.messaging) return;
@@ -102,6 +103,10 @@ export function createBackgroundJobHandlers(deps: {
     "approval.expire": async (payload) => {
       if (!deps.expireApprovals) return;
       await deps.expireApprovals(payload);
+    },
+    "effect.reconcile": async (payload) => {
+      if (!deps.reconcileEffects) return;
+      await deps.reconcileEffects(payload);
     },
     "history.compact": async (payload) => {
       await compactHistory(
