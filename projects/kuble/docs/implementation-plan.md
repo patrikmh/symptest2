@@ -141,15 +141,15 @@ Acceptance (integration): scripted bot calls `schedule_create` → run enters `w
 
 ### Slice 4.1 — Lifecycle facade
 
-- [ ] `packages/lots-approvals`: `approvalStatusFromEffect()` (intended→PENDING, approved→APPROVED, denied→REJECTED, executing/completed→CONSUMED, plus EXPIRED), `lots.approvals.list/get/approve/reject` (approve/reject call the upstream answer path so replay of the exact approved payload is unchanged).
-- [ ] Graphile task `approval.expire` (default TTL 24 h) → status EXPIRED, run continues with a denied tool result.
+- [x] `packages/lots-approvals`: `approvalStatusFromEffect()` (intended→PENDING, approved→APPROVED, denied→REJECTED, executing/completed→CONSUMED, plus EXPIRED), `lots.approvals.list/get/approve/reject` (approve/reject call the upstream answer path so replay of the exact approved payload is unchanged).
+- [x] Graphile task `approval.expire` (default TTL 24 h) → status EXPIRED, run continues with a denied tool result.
 
 Acceptance (unit): state-transition table; (integration): protected action → PENDING → approve → executor runs → CONSUMED; expired approval cannot be approved.
 
 ### Slice 4.2 — Approvals UI and Inbox
 
-- [ ] Approvals page: Pending / History; card with agent, human summary, payload preview, Reject/Approve, expandable details.
-- [ ] Inbox: pending approvals, failed Fyrar, completed Fyrar, updates — in that order.
+- [x] Approvals page: Pending / History; card with agent, human summary, payload preview, Reject/Approve, expandable details.
+- [x] Inbox: pending approvals, failed Fyrar, completed Fyrar, updates — in that order.
 
 Acceptance (e2e C): agent wants to send Gmail (emulated) → approval appears → approve → send succeeds → activity records it.
 

@@ -285,6 +285,13 @@ describe("resolveDuplicateEffectGate", () => {
     });
   });
 
+  it("returns an expired result without executing", () => {
+    expect(resolveDuplicateEffectGate({ status: "expired" }, "destination.write")).toEqual({
+      action: "return",
+      result: { error: "This approval expired." },
+    });
+  });
+
   it("returns paused for intended effects instead of executing", () => {
     expect(resolveDuplicateEffectGate({ status: "intended" }, "archive_bot")).toEqual({
       action: "paused",

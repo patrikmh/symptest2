@@ -22,6 +22,7 @@ const payloadSchemas = {
   "history.compact": z.object({ threadId: z.string().min(1) }),
   "messaging.deliver": z.object({ runId: z.string().min(1).optional() }),
   "cloud_agent.poll": z.object({ agentId: z.string().min(1) }),
+  "approval.expire": z.object({ effectId: z.string().min(1).optional() }),
 } satisfies { [Name in BackgroundJobName]: z.ZodType<BackgroundJobPayloads[Name]> };
 
 export function parseBackgroundJob(name: string, payload: unknown): BackgroundJob {
@@ -144,6 +145,19 @@ export function cloudAgentPollJob(
     name: "cloud_agent.poll",
     payload,
     replaceKey: cloudAgentPollJobKey(payload.agentId),
+    ...(availableAt ? { availableAt } : {}),
+  };
+}
+
+export function approvalExpireJobKey(effectId?: string): string {
+  return effectId ? `approval.expire:${effectId}` : "approval.expire:sweep";
+}
+
+export function approvalExpireJob(effectId?: string, availableAt?: Date): BackgroundJob {
+  return {
+    name: "approval.expire",
+    payload: effectId ? { effectId } : {},
+    replaceKey: approvalExpireJobKey(effectId),
     ...(availableAt ? { availableAt } : {}),
   };
 }

@@ -16,8 +16,8 @@ name LOTS).
 
 ## Status
 
-Phase 0 (upstream inspection) is complete and Phase 1 (Ratatosk shell) is in
-progress. See [`docs/implementation-plan.md`](./docs/implementation-plan.md)
+Phases 0–4 (inspection, Ratatosk shell, access, Fyrar, approvals and inbox)
+are in place. See [`docs/implementation-plan.md`](./docs/implementation-plan.md)
 for the slice-by-slice checklist and
 [`docs/upstream-map.md`](./docs/upstream-map.md) for what is reused from
 Rakazo versus built here.

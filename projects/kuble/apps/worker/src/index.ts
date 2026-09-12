@@ -1,4 +1,6 @@
+import { createApprovalExpireStore, expireStaleApprovals } from "@lots/approvals";
 import type { JobPublisher, JobWorkerHost } from "@rakazo/adapter-kit";
+import { approvalExpireJob, runContinueJob } from "@rakazo/adapter-kit";
 import { ComposioConnector, IntegrationProviderSettings } from "@rakazo/adapters";
 import { loadRootEnv } from "@rakazo/core/node/load-root-env";
 
@@ -195,8 +197,17 @@ async function main() {
     deploymentModelKey,
     messaging,
     cloudAgent,
+    expireApprovals: async (payload) => {
+      await expireStaleApprovals({
+        store: createApprovalExpireStore(prisma),
+        continueRun: (runId) => jobs.enqueue(runContinueJob(runId)),
+        scheduleSweep: (availableAt) => jobs.enqueue(approvalExpireJob(undefined, availableAt)),
+        effectId: payload.effectId,
+      });
+    },
   });
   await jobHost.start(jobHandlers);
+  await jobs.enqueue(approvalExpireJob());
   const reconciler = createJobReconciler({
     prisma,
     jobs,

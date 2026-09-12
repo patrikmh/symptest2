@@ -11,6 +11,7 @@ import type {
   SandboxProvider,
   TransactionalEmailProvider,
 } from "@rakazo/adapter-kit";
+import { approvalExpireJob } from "@rakazo/adapter-kit";
 import {
   applyMessagingOutboundStatus,
   ChatSdkMessagingSurface,
@@ -84,6 +85,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { type AppEnv, loadEnv } from "./env.js";
 import { mountLocalSettings } from "./local-settings.js";
+import { runApprovalExpire } from "./lots/approvals.js";
 import {
   createMessagingInboundHandler,
   teamChatSenderCanWakeMessageRoutines,
@@ -384,9 +386,13 @@ export async function createApp(
     deploymentModelKey: env.deploymentModelKey,
     messaging,
     cloudAgent,
+    expireApprovals: async (payload) => {
+      await runApprovalExpire(prisma, jobs, payload);
+    },
   });
   if (inMemoryJobs) {
     await inMemoryJobs.start(jobHandlers);
+    await jobs.enqueue(approvalExpireJob());
   }
   const reconciler = inMemoryJobs
     ? createJobReconciler({

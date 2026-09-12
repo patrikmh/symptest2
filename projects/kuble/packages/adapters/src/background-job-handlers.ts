@@ -35,6 +35,7 @@ export function createBackgroundJobHandlers(deps: {
   deploymentModelKey?: string;
   messaging?: MessagingSurface;
   cloudAgent?: CloudAgentConnection | null;
+  expireApprovals?: (payload: { effectId?: string }) => Promise<void>;
 }): BackgroundJobHandlers {
   const deliverMessaging = async (runId?: string) => {
     if (!deps.messaging) return;
@@ -97,6 +98,10 @@ export function createBackgroundJobHandlers(deps: {
         },
         payload,
       );
+    },
+    "approval.expire": async (payload) => {
+      if (!deps.expireApprovals) return;
+      await deps.expireApprovals(payload);
     },
     "history.compact": async (payload) => {
       await compactHistory(

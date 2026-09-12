@@ -497,6 +497,8 @@ export interface BackgroundJobPayloads {
   "messaging.deliver": { runId?: string };
   /** Reconcile durable remote-agent intent; scope is loaded from the database. */
   "cloud_agent.poll": { agentId: string };
+  /** Expire stale intended ExternalEffects (spec §16). */
+  "approval.expire": { effectId?: string };
 }
 
 export type BackgroundJobName = keyof BackgroundJobPayloads;

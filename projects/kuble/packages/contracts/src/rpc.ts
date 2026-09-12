@@ -9,6 +9,8 @@ import {
   AgentSkillCatalogEntrySchema,
   AgentSkillSchema,
   AppBootstrapSchema,
+  ApprovalSchema,
+  ApprovalTabSchema,
   ArtifactSchema,
   ArtifactWithContentSchema,
   AvatarStyleSchema,
@@ -35,6 +37,7 @@ import {
   FyrSchema,
   GroupDetailSchema,
   GroupSchema,
+  InboxItemSchema,
   IntegrationCatalogResultSchema,
   McpServerConfigInput,
   McpServerSchema,
@@ -782,6 +785,17 @@ export const appContract = {
       resume: oc.input(z.object({ fyrId: Id })).output(FyrSchema),
       runNow: oc.input(z.object({ fyrId: Id })).output(z.object({ runId: Id })),
       runs: oc.input(z.object({ fyrId: Id })).output(z.array(FyrRunSchema)),
+    },
+    approvals: {
+      list: oc
+        .input(z.object({ tab: ApprovalTabSchema.optional() }))
+        .output(z.array(ApprovalSchema)),
+      get: oc.input(z.object({ approvalId: Id })).output(ApprovalSchema),
+      approve: oc.input(z.object({ approvalId: Id })).output(z.object({ ok: z.literal(true) })),
+      reject: oc.input(z.object({ approvalId: Id })).output(z.object({ ok: z.literal(true) })),
+    },
+    inbox: {
+      list: oc.output(z.array(InboxItemSchema)),
     },
     admin: {
       members: {

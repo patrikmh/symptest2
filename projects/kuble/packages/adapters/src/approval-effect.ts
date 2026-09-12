@@ -351,6 +351,9 @@ export function resolveDuplicateEffectGate(
   if (effect.status === "denied") {
     return { action: "return", result: { error: "User denied this action." } };
   }
+  if (effect.status === "expired") {
+    return { action: "return", result: { error: "This approval expired." } };
+  }
   if (effect.status === "executing") {
     return { action: "uncertain", toolName };
   }

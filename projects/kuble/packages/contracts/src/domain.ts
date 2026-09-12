@@ -427,6 +427,47 @@ export const UpdateFyrInput = z.object({
 });
 export type UpdateFyrInput = z.infer<typeof UpdateFyrInput>;
 
+export const ApprovalStatusSchema = z.enum([
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
+  "EXPIRED",
+  "CONSUMED",
+]);
+export type ApprovalStatus = z.infer<typeof ApprovalStatusSchema>;
+
+export const ApprovalTabSchema = z.enum(["pending", "history"]);
+export type ApprovalTab = z.infer<typeof ApprovalTabSchema>;
+
+export const ApprovalSchema = z.object({
+  id: Id,
+  botId: Id,
+  botName: z.string(),
+  runId: Id,
+  threadId: Id,
+  messageId: Id.nullable(),
+  tool: z.string(),
+  summary: z.string(),
+  detail: z.string().nullable(),
+  preview: z.record(z.string(), z.string()),
+  status: ApprovalStatusSchema,
+  createdAt: z.string(),
+});
+export type Approval = z.infer<typeof ApprovalSchema>;
+
+export const InboxItemKindSchema = z.enum(["approval", "fyr_failed", "fyr_completed", "update"]);
+export type InboxItemKind = z.infer<typeof InboxItemKindSchema>;
+
+export const InboxItemSchema = z.object({
+  kind: InboxItemKindSchema,
+  id: z.string(),
+  title: z.string(),
+  subtitle: z.string(),
+  href: z.string(),
+  createdAt: z.string(),
+});
+export type InboxItem = z.infer<typeof InboxItemSchema>;
+
 export const RoutineSchema = z.object({
   id: Id,
   botId: Id,

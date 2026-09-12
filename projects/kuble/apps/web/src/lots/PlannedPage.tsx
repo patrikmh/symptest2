@@ -19,26 +19,12 @@ type Planned = {
 export function PlannedPage({
   section,
 }: {
-  section: Exclude<LotsNavKey, "agents" | "settings" | "admin" | "fyrar">;
+  section: Exclude<LotsNavKey, "agents" | "settings" | "admin" | "fyrar" | "approvals" | "inbox">;
 }) {
   const { t } = useLingui();
   const coworkers = "/app/agents";
   const settings = "/app/agents?settings=general";
   const planned: Record<typeof section, Planned> = {
-    inbox: {
-      title: t`Inbox`,
-      description: t`Approvals that need you, finished Fyrar and notes from your coworkers will gather here.`,
-      next: t`Until then, open a coworker — anything that needs you shows up in their chat.`,
-      href: coworkers,
-      cta: <Trans>Go to Coworkers</Trans>,
-    },
-    approvals: {
-      title: t`Approvals`,
-      description: t`When a coworker wants to send email, post or create something outside Ratatosk, they wait for a yes.`,
-      next: t`Those questions already appear as cards inside the coworker's chat.`,
-      href: coworkers,
-      cta: <Trans>Go to Coworkers</Trans>,
-    },
     packs: {
       title: t`Tools`,
       description: t`Web research, GitHub, Gmail and Calendar that your coworkers can use, once you connect them.`,

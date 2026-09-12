@@ -1,8 +1,9 @@
 import { ORPCError } from "@orpc/server";
 import type { JobPublisher } from "@rakazo/adapter-kit";
 import type { Actor, Bot } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import type { PrismaClient, ThreadEvents } from "@rakazo/db";
 import { getLotsAgent, listLotsAgents } from "./agents.js";
+import { decideApproval, getApproval, LotsApprovalError, listApprovals } from "./approvals.js";
 import {
   createFyr,
   getFyr,
@@ -13,6 +14,7 @@ import {
   setFyrEnabled,
   updateFyr,
 } from "./fyrar.js";
+import { listInbox } from "./inbox.js";
 import {
   inviteSpaceMember,
   LotsAccessError,
@@ -28,6 +30,9 @@ function mapAccessError(error: unknown): never {
   if (error instanceof LotsFyrError) {
     throw new ORPCError(error.code, { message: error.message });
   }
+  if (error instanceof LotsApprovalError) {
+    throw new ORPCError(error.code, { message: error.message });
+  }
   throw error;
 }
 
@@ -37,8 +42,9 @@ export function createLotsRouter(args: {
   prisma: PrismaClient;
   repos: { listBots: (actor: Actor) => Promise<Bot[]> };
   jobs: JobPublisher;
+  events: Pick<ThreadEvents, "answerRunInput">;
 }) {
-  const { authed, prisma, repos, jobs } = args;
+  const { authed, prisma, repos, jobs, events } = args;
 
   return {
     agents: {
@@ -230,6 +236,98 @@ export function createLotsRouter(args: {
           }
         },
       ),
+    },
+    approvals: {
+      list: authed.lots.approvals.list.handler(
+        async ({
+          context,
+          input,
+        }: {
+          context: { actor: Actor };
+          input: { tab?: "pending" | "history" };
+        }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await listApprovals(prisma, context.actor, role, input.tab ?? "pending");
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      get: authed.lots.approvals.get.handler(
+        async ({
+          context,
+          input,
+        }: {
+          context: { actor: Actor };
+          input: { approvalId: string };
+        }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await getApproval(prisma, context.actor, role, input.approvalId);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      approve: authed.lots.approvals.approve.handler(
+        async ({
+          context,
+          input,
+        }: {
+          context: { actor: Actor };
+          input: { approvalId: string };
+        }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await decideApproval(
+              prisma,
+              events,
+              jobs,
+              context.actor,
+              role,
+              input.approvalId,
+              "allow",
+            );
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      reject: authed.lots.approvals.reject.handler(
+        async ({
+          context,
+          input,
+        }: {
+          context: { actor: Actor };
+          input: { approvalId: string };
+        }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await decideApproval(
+              prisma,
+              events,
+              jobs,
+              context.actor,
+              role,
+              input.approvalId,
+              "deny",
+            );
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+    },
+    inbox: {
+      list: authed.lots.inbox.list.handler(async ({ context }: { context: { actor: Actor } }) => {
+        try {
+          const role = await loadSpaceRole(prisma, context.actor);
+          return await listInbox(prisma, context.actor, role);
+        } catch (error) {
+          mapAccessError(error);
+        }
+      }),
     },
   };
 }

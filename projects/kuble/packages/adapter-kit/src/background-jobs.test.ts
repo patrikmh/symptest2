@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  approvalExpireJob,
+  approvalExpireJobKey,
   dispatchBackgroundJob,
   historyCompactJob,
   historyCompactJobKey,
@@ -19,6 +21,7 @@ function handlers(): BackgroundJobHandlers {
     "history.compact": vi.fn(async () => undefined),
     "messaging.deliver": vi.fn(async () => undefined),
     "cloud_agent.poll": vi.fn(async () => undefined),
+    "approval.expire": vi.fn(async () => undefined),
   };
 }
 
@@ -78,6 +81,27 @@ describe("background job contracts", () => {
       computerId: "computer-1",
       leaseId: "lease-1",
     });
+  });
+});
+
+describe("approvalExpireJob", () => {
+  it("builds a sweep job and a per-effect replace key", () => {
+    expect(approvalExpireJob()).toEqual({
+      name: "approval.expire",
+      payload: {},
+      replaceKey: approvalExpireJobKey(),
+    });
+    expect(approvalExpireJob("effect-1")).toEqual({
+      name: "approval.expire",
+      payload: { effectId: "effect-1" },
+      replaceKey: approvalExpireJobKey("effect-1"),
+    });
+  });
+
+  it("validates and dispatches approval.expire", async () => {
+    const target = handlers();
+    await dispatchBackgroundJob(target, "approval.expire", { effectId: "effect-1" });
+    expect(target["approval.expire"]).toHaveBeenCalledWith({ effectId: "effect-1" });
   });
 });
 
