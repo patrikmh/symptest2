@@ -7,10 +7,14 @@ for every spec §6 action.
 Visibility (spec §14 / §7): same space, and either the owner, an Admin/Owner,
 or a coworker on a shared LotsTeam (`sharedViaTeam`).
 
-- `lots.agents.list/get` apply visibility. Upstream `bots.list` is unchanged
-  (still per user).
-- Admin Members: `lots.admin.members.list/invite/updateRole`. Invitation
-  accept is not implemented — pending invites are listed only.
+- `lots.agents.list/get` apply visibility. Upstream `bots.list` stays
+  per-user; `bots.get`, `spaces.list` (current space) and thread resolve
+  use the same visibility so Admin/Owner/LotsTeam can open another
+  member's chat.
+- Admin Members: `lots.admin.members.list/invite/updateRole`.
+- Invitees accept or decline with `lots.invitations.list/accept/decline`
+  (banner after sign-in). Accept creates `Member` + `SpaceMember` on the
+  inviting org and switches the client to that workspace.
 - The last Owner cannot be demoted. Only Owner can invite or change Admins.
 - `inspectActivity` is Admin/Owner. Members see their own activity, plus
   teammates on a LotsTeam.

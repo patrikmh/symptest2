@@ -114,3 +114,31 @@ export function inviteDenial(actorRole: Role, invitedRole: Role): "forbidden" | 
   }
   return can(actorRole, "manageMembers") ? null : "forbidden";
 }
+
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+export type InvitationAcceptDenial = "not_found" | "expired" | "not_pending";
+
+/**
+ * Whether the signed-in address may consume this invitation row. Mismatched
+ * email is `not_found` so the API does not leak that the invite exists.
+ */
+export function invitationAcceptDenial(input: {
+  actorEmail: string;
+  invitationEmail: string;
+  status: string;
+  expiresAt: Date | string;
+  now?: Date;
+}): InvitationAcceptDenial | null {
+  if (normalizeEmail(input.actorEmail) !== normalizeEmail(input.invitationEmail)) {
+    return "not_found";
+  }
+  const expiresAt = new Date(input.expiresAt).getTime();
+  if (!Number.isFinite(expiresAt) || expiresAt <= (input.now ?? new Date()).getTime()) {
+    return "expired";
+  }
+  if (input.status !== "pending") return "not_pending";
+  return null;
+}

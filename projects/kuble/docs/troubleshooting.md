@@ -23,6 +23,12 @@ OAuth redirect is `${WEB_ORIGIN}/app/packs/oauth`. Set
 `GOOGLE_CLIENT_ID` / `GITHUB_CLIENT_ID` (or the `LOTS_*` aliases) and the
 matching secrets.
 
+## An invite does not appear
+
+The signed-in email must match the invite (case-insensitive). Expired
+invites (7 days) disappear from Admin and from the join banner. Accept
+switches the selected workspace (`rakazo:space-id`).
+
 ## `pnpm seed:demo` fails
 
 Sign in once so a workspace exists, then retry. `DATABASE_URL` must point

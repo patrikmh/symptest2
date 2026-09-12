@@ -31,6 +31,7 @@ points. `packages/adapters` must not import `@lots/*`.
 | Approval | external write | `ExternalEffect` |
 | Team | LotsTeam | `CapabilityInstall` (`kind: lots-team`) |
 | Activity | timeline | `Event` |
+| Computer | computer | `Computer` (team / dedicated) |
 
 See [`upstream-map.md`](./upstream-map.md) for every spec section.
 
@@ -39,7 +40,7 @@ See [`upstream-map.md`](./upstream-map.md) for every spec section.
 | Check | Status |
 | --- | --- |
 | Fresh install / update | Installer exists; Compose acceptance needs Docker |
-| Login, org, roles | Rakazo auth + `@lots/access` |
+| Login, org, roles | Rakazo auth + `@lots/access` + invitation accept |
 | Agents and chat persist | Unchanged Rakazo bots/threads |
 | Memory, Docker computer | Unchanged Rakazo |
 | Fyrar, approvals, packs | Phases 3–5 |

@@ -41,7 +41,11 @@ import {
   GroupSchema,
   InboxItemSchema,
   IntegrationCatalogResultSchema,
+  InvitationAcceptResultSchema,
+  LotsComputerHealthSchema,
+  LotsComputerSchema,
   LotsTeamSchema,
+  PendingInvitationSchema,
   McpServerConfigInput,
   McpServerSchema,
   MemoryDocumentSchema,
@@ -822,6 +826,18 @@ export const appContract = {
       complete: oc
         .input(z.object({ code: z.string().min(1), state: z.string().min(1) }))
         .output(PackSchema),
+    },
+    invitations: {
+      list: oc.output(z.array(PendingInvitationSchema)),
+      accept: oc
+        .input(z.object({ invitationId: Id }))
+        .output(InvitationAcceptResultSchema),
+      decline: oc.input(z.object({ invitationId: Id })).output(z.object({ ok: z.literal(true) })),
+    },
+    computers: {
+      list: oc.output(z.array(LotsComputerSchema)),
+      get: oc.input(z.object({ computerId: Id })).output(LotsComputerSchema),
+      health: oc.output(LotsComputerHealthSchema),
     },
     admin: {
       members: {

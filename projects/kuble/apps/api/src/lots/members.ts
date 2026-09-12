@@ -1,13 +1,21 @@
 import { randomUUID } from "node:crypto";
 import {
   can,
+  invitationAcceptDenial,
   inviteDenial,
+  normalizeEmail,
   type Role,
   roleChangeDenial,
   roleFromSpaceMember,
   roleToSpaceMember,
 } from "@lots/access";
-import type { Actor, SpaceMember as SpaceMemberDto, SpaceMembersList } from "@rakazo/contracts";
+import type {
+  Actor,
+  InvitationAcceptResult,
+  PendingInvitation,
+  SpaceMember as SpaceMemberDto,
+  SpaceMembersList,
+} from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { loadOrganizationId } from "./role.js";
 
@@ -79,7 +87,7 @@ export async function listSpaceMembers(
       orderBy: { createdAt: "asc" },
     }),
     prisma.invitation.findMany({
-      where: { organizationId, status: "pending" },
+      where: { organizationId, status: "pending", expiresAt: { gt: new Date() } },
       orderBy: { createdAt: "asc" },
     }),
     prisma.spaceMember.count({ where: { spaceId: actor.spaceId, role: "owner" } }),
@@ -183,4 +191,171 @@ export async function updateSpaceMemberRole(
     }),
   ]);
   return toMemberDto(updated);
+}
+
+export async function listMyInvitations(
+  prisma: PrismaClient,
+  actor: Actor,
+): Promise<PendingInvitation[]> {
+  const email = normalizeEmail(actor.email);
+  const rows = await prisma.invitation.findMany({
+    where: { email, status: "pending", expiresAt: { gt: new Date() } },
+    include: {
+      organization: {
+        select: {
+          name: true,
+          spaces: { select: { id: true, isDefault: true }, orderBy: { createdAt: "asc" } },
+        },
+      },
+      user: { select: { name: true, email: true } },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+  return rows.flatMap((row) => {
+    const spaceId = preferredSpaceId(row.organization.spaces);
+    if (!spaceId) return [];
+    return [
+      {
+        id: row.id,
+        email: row.email,
+        role: roleToSpaceMember(roleFromSpaceMember(row.role)),
+        expiresAt: row.expiresAt.toISOString(),
+        organizationName: row.organization.name,
+        spaceId,
+        inviterName: row.user.name.trim() || row.user.email,
+      },
+    ];
+  });
+}
+
+export async function acceptSpaceInvitation(
+  prisma: PrismaClient,
+  actor: Actor,
+  invitationId: string,
+): Promise<InvitationAcceptResult> {
+  const invitation = await prisma.invitation.findUnique({
+    where: { id: invitationId },
+    include: {
+      organization: {
+        select: {
+          id: true,
+          spaces: { select: { id: true, isDefault: true }, orderBy: { createdAt: "asc" } },
+        },
+      },
+    },
+  });
+  if (!invitation) throw new LotsAccessError("NOT_FOUND", "Invite not found.");
+  const denial = invitationAcceptDenial({
+    actorEmail: actor.email,
+    invitationEmail: invitation.email,
+    status: invitation.status,
+    expiresAt: invitation.expiresAt,
+  });
+  if (denial === "not_found") throw new LotsAccessError("NOT_FOUND", "Invite not found.");
+  if (denial === "expired") throw new LotsAccessError("BAD_REQUEST", "This invite has expired.");
+  if (denial === "not_pending") {
+    throw new LotsAccessError("CONFLICT", "This invite is no longer pending.");
+  }
+
+  const spaces = invitation.organization.spaces;
+  const spaceId = preferredSpaceId(spaces);
+  if (!spaceId) throw new LotsAccessError("NOT_FOUND", "Workspace not found.");
+  const storedRole = roleToSpaceMember(roleFromSpaceMember(invitation.role));
+  const now = new Date();
+
+  const member = await prisma.$transaction(async (tx) => {
+    const claimed = await tx.invitation.updateMany({
+      where: { id: invitation.id, status: "pending", expiresAt: { gt: now } },
+      data: { status: "accepted" },
+    });
+    if (claimed.count !== 1) {
+      throw new LotsAccessError("CONFLICT", "This invite is no longer pending.");
+    }
+    await tx.member.upsert({
+      where: {
+        organizationId_userId: {
+          organizationId: invitation.organizationId,
+          userId: actor.userId,
+        },
+      },
+      create: {
+        id: randomUUID(),
+        organizationId: invitation.organizationId,
+        userId: actor.userId,
+        role: storedRole,
+        createdAt: now,
+      },
+      update: {},
+    });
+    const actorUser = await tx.user.findUnique({
+      where: { id: actor.userId },
+      select: { email: true, name: true },
+    });
+    const email = actorUser?.email ?? actor.email;
+    const name = actorUser?.name ?? actor.email;
+    let preferred: {
+      id: string;
+      userId: string;
+      role: string;
+      member: { user: { email: string; name: string } };
+    } | null = null;
+    for (const space of spaces) {
+      const row = await tx.spaceMember.upsert({
+        where: { spaceId_userId: { spaceId: space.id, userId: actor.userId } },
+        create: {
+          id: randomUUID(),
+          spaceId: space.id,
+          organizationId: invitation.organizationId,
+          userId: actor.userId,
+          role: storedRole,
+          createdAt: now,
+        },
+        update: {},
+      });
+      if (space.id === spaceId) {
+        preferred = {
+          id: row.id,
+          userId: row.userId,
+          role: row.role,
+          member: { user: { email, name } },
+        };
+      }
+    }
+    if (!preferred) throw new LotsAccessError("NOT_FOUND", "Workspace not found.");
+    return preferred;
+  });
+
+  return { spaceId, member: toMemberDto(member) };
+}
+
+export async function declineSpaceInvitation(
+  prisma: PrismaClient,
+  actor: Actor,
+  invitationId: string,
+): Promise<{ ok: true }> {
+  const invitation = await prisma.invitation.findUnique({ where: { id: invitationId } });
+  if (!invitation) throw new LotsAccessError("NOT_FOUND", "Invite not found.");
+  const denial = invitationAcceptDenial({
+    actorEmail: actor.email,
+    invitationEmail: invitation.email,
+    status: invitation.status,
+    expiresAt: invitation.expiresAt,
+  });
+  if (denial === "not_found") throw new LotsAccessError("NOT_FOUND", "Invite not found.");
+  if (denial === "expired") throw new LotsAccessError("BAD_REQUEST", "This invite has expired.");
+  if (denial === "not_pending") {
+    throw new LotsAccessError("CONFLICT", "This invite is no longer pending.");
+  }
+  const declined = await prisma.invitation.updateMany({
+    where: { id: invitation.id, status: "pending" },
+    data: { status: "declined" },
+  });
+  if (declined.count !== 1) {
+    throw new LotsAccessError("CONFLICT", "This invite is no longer pending.");
+  }
+  return { ok: true };
+}
+
+function preferredSpaceId(spaces: Array<{ id: string; isDefault: boolean }>): string | null {
+  return spaces.find((space) => space.isDefault)?.id ?? spaces[0]?.id ?? null;
 }

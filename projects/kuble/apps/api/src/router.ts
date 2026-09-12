@@ -144,8 +144,10 @@ import {
   toComputerStatus,
 } from "./computer-status.js";
 import { searchIntegrationCatalog } from "./integration-catalog.js";
+import { checkComputerHealth } from "./lots/health.js";
 import { packOAuthFromEnv } from "./lots/packs.js";
 import { createLotsRouter } from "./lots/router.js";
+import { getVisibleBot, listVisibleBots } from "./lots/visible-bot.js";
 import { buildMcpUpdateMaterial } from "./mcp-material.js";
 import {
   disconnectMemoryProvider,
@@ -916,7 +918,12 @@ export function createRouter(deps: RouterDeps) {
         repos.listBots(context.actor, { archived: true }),
       ),
       get: authed.bots.get.handler(async ({ context, input }) => {
-        const found = (await repos.listBots(context.actor)).find((bot) => bot.id === input.botId);
+        const found = await getVisibleBot({
+          prisma: deps.prisma,
+          actor: context.actor,
+          botId: input.botId,
+          listBots: (actor) => repos.listBots(actor),
+        });
         if (!found) throw new IsolationError();
         return found;
       }),
@@ -4631,6 +4638,11 @@ export function createRouter(deps: RouterDeps) {
       events: deps.events,
       secrets: deps.secrets,
       oauth: packOAuthFromEnv(deps.env.webOrigin),
+      computerHealth: () =>
+        checkComputerHealth({
+          sandbox: deps.env.sandboxProvider,
+          supervisorUrl: process.env.SANDBOX_SUPERVISOR_URL ?? "http://127.0.0.1:7091",
+        }),
     }),
   });
 }
@@ -4691,7 +4703,11 @@ async function spaceNavigationDto(
     contentBots,
     contentGroups,
   ] = await Promise.all([
-    repos.listBots(actor),
+    listVisibleBots({
+      prisma: deps.prisma,
+      actor,
+      listBots: (listed) => repos.listBots(listed),
+    }),
     groupRepos.listGroups(actor),
     repos.listSpaceBotsForSpaces(actor, inactiveSpaceIds),
     groupRepos.listSpaceGroupsForSpaces(actor, inactiveSpaceIds),

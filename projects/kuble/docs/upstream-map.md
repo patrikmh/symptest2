@@ -73,7 +73,7 @@ The mapping is applied at the LOTS UI/RPC boundary only.
 | OWNER role | **EXISTS** | `SpaceMember.role = "owner"` on bootstrap; space delete requires owner. |
 | MEMBER role | **EXISTS** | `SpaceMember.role` default `"member"`. |
 | ADMIN role | **NEW** | No `"admin"` value is used anywhere upstream. Roles are plain strings, so adding `"admin"` is a LOTS access module (`packages/lots-access`) plus checks at the LOTS RPC boundary. |
-| Member management / invitations | **NEW** | Better Auth organization plugin is mounted but `blockedAuthPaths` returns 404 for create/invite/accept/reject/remove/update-role ("Not available in version 1"). Multi-member spaces only exist in tests via direct inserts. LOTS needs `admin.members.list/invite/updateRole` on top of `Member`/`SpaceMember`/`Invitation`. |
+| Member management / invitations | **NEW** | Better Auth organization plugin is mounted but `blockedAuthPaths` returns 404 for create/invite/accept/reject/remove/update-role ("Not available in version 1"). `lots.admin.members.list/invite/updateRole` plus `lots.invitations.accept/decline` write `Member`/`SpaceMember`/`Invitation` directly. |
 | "Cannot remove the final Owner" | **NEW** | Simple guard in the LOTS access module. |
 
 ## §7 Resource ownership

@@ -60,7 +60,7 @@ Acceptance (unit): `bot-avatar.test.tsx` renders the `lots` style with the bot c
 - [x] `apps/web/src/lots/LotsFrame.tsx`: persistent left rail with Inbox, Coworkers, Fyrar, Approvals, Tools, Activity · Computers, Admin, Settings; mobile bottom bar with Inbox, Coworkers, Fyrar, More.
 - [x] Routes under `/app/*` wrapped in the frame; `/app` lands on Coworkers. `/app/:botId` and `/app/g/:groupId` keep rendering the upstream `ShellPage` (chat) inside the frame.
 - [x] Settings opens the upstream settings overlay through `?settings=<section>`.
-- [x] Pages not yet implemented (`PlannedPage`) render a calm empty state and a next step that already works.
+- [x] Pages that were still planned rendered a calm empty state; Computers is now a real read-only page.
 
 Upstream edit points: `apps/web/src/App.tsx` (route table), `apps/web/src/pages/Shell.tsx` (one effect reading `?settings=`).
 
@@ -213,3 +213,13 @@ Acceptance (shell test with Compose available): fresh install → healthy; rerun
 - [x] Remaining docs from spec §58: `architecture.md`, `development.md`, `fyrar.md`, `packs.md`, `approvals.md`, `access.md`, `troubleshooting.md`.
 
 Acceptance: Journeys 1–5 are automated where the checkout allows and otherwise documented in [`development.md`](./development.md); Definition of Done (§57) is in [`architecture.md`](./architecture.md).
+
+---
+
+## Phase 9 — Access leftovers and Computers
+
+- [x] Invitation accept/decline (`lots.invitations.*`) over `Invitation` → `Member`/`SpaceMember`; banner after sign-in; expired pending rows stay hidden.
+- [x] Other-member chat: `bots.get`, current-space `spaces.list`, and `resolveThreadTarget` reuse `visibleTo` so Admin/Owner/LotsTeam can open `/app/:botId`.
+- [x] Computers page: `lots.computers.list/get/health` over existing `Computer` rows and `/health/computer`.
+
+Acceptance (unit): accept creates memberships and claims the invite; Member cannot `get` another user's dedicated computer; Admin `visibleBotOwnerUserId` returns the other owner.

@@ -4,6 +4,7 @@ import { BotAvatar, cn } from "@rakazo/ui-web";
 import { MoreHorizontal } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { InviteBanner } from "./InviteBanner";
 import { activeNavKey, LOTS_NAV, type LotsNavItem, type LotsNavKey } from "./nav";
 
 /**
@@ -62,7 +63,10 @@ export function LotsFrame({ children }: { children: ReactNode }) {
         </ul>
       </nav>
 
-      <div className="relative flex min-w-0 flex-1 flex-col pb-[60px] md:pb-0">{children}</div>
+      <div className="relative flex min-w-0 flex-1 flex-col pb-[60px] md:pb-0">
+        <InviteBanner />
+        {children}
+      </div>
 
       <nav
         aria-label={t`Main`}

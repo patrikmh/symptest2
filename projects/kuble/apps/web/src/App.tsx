@@ -24,7 +24,7 @@ import { LotsFrame } from "./lots/LotsFrame";
 import { PackDetailPage } from "./lots/PackDetailPage";
 import { PackOAuthPage } from "./lots/PackOAuthPage";
 import { PacksPage } from "./lots/PacksPage";
-import { PlannedPage } from "./lots/PlannedPage";
+import { ComputersPage } from "./lots/ComputersPage";
 import { IntegrationSetupPage } from "./pages/IntegrationSetup";
 import { LocalSettingsPage } from "./pages/LocalSettings";
 import { McpOAuthCallbackPage } from "./pages/McpOAuthCallback";
@@ -45,7 +45,7 @@ const LOTS_ROUTES: readonly { path: string; element: ReactNode }[] = [
   { path: "/app/packs/oauth", element: <PackOAuthPage /> },
   { path: "/app/packs/:packKey", element: <PackDetailPage /> },
   { path: "/app/activity", element: <ActivityPage /> },
-  { path: "/app/computers", element: <PlannedPage section="computers" /> },
+  { path: "/app/computers", element: <ComputersPage /> },
   { path: "/app/admin", element: <AdminPage /> },
   { path: "/app/g/:groupId", element: <ShellPage /> },
   { path: "/app/:botId", element: <ShellPage /> },

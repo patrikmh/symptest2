@@ -37,6 +37,41 @@ export const SpaceMembersListSchema = z.object({
 });
 export type SpaceMembersList = z.infer<typeof SpaceMembersListSchema>;
 
+export const PendingInvitationSchema = z.object({
+  id: Id,
+  email: z.string().email(),
+  role: SpaceRoleSchema,
+  expiresAt: z.string(),
+  organizationName: z.string(),
+  spaceId: Id,
+  inviterName: z.string(),
+});
+export type PendingInvitation = z.infer<typeof PendingInvitationSchema>;
+
+export const InvitationAcceptResultSchema = z.object({
+  spaceId: Id,
+  member: SpaceMemberSchema,
+});
+export type InvitationAcceptResult = z.infer<typeof InvitationAcceptResultSchema>;
+
+export const LotsComputerSchema = z.object({
+  id: Id,
+  scope: ComputerModeSchema,
+  state: z.enum(["stopped", "booting", "running", "suspended", "error"]),
+  kind: z.string(),
+  ownerUserId: Id,
+  bots: z.array(z.object({ id: Id, name: z.string() })),
+});
+export type LotsComputer = z.infer<typeof LotsComputerSchema>;
+
+export const LotsComputerHealthSchema = z.object({
+  ok: z.boolean(),
+  ready: z.boolean(),
+  sandbox: z.string().nullable(),
+  supervisor: z.boolean().nullable(),
+});
+export type LotsComputerHealth = z.infer<typeof LotsComputerHealthSchema>;
+
 export const ThinkingLevelSchema = z.enum([
   "off",
   "minimal",

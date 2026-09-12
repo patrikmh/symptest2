@@ -38,6 +38,7 @@ import {
   resolveSendAttachments,
 } from "./artifacts.js";
 import { resolveBusyBotName, toComputerStatus } from "./computer-status.js";
+import { visibleBotOwnerUserId } from "./lots/visible-bot.js";
 import { withSerializableRetry } from "./serializable-retry.js";
 import { loadMessagePage } from "./thread-message-pages.js";
 
@@ -270,7 +271,15 @@ export async function resolveThreadTarget(
   const repos = createRepos(prisma);
   const groupRepos = createGroupRepos(prisma);
   if (input.botId) {
-    const bot = await repos.getBot(actor, input.botId);
+    let bot;
+    try {
+      bot = await repos.getBot(actor, input.botId);
+    } catch (error) {
+      if (!(error instanceof IsolationError)) throw error;
+      const ownerUserId = await visibleBotOwnerUserId(prisma, actor, input.botId);
+      if (!ownerUserId || ownerUserId === actor.userId) throw error;
+      bot = await repos.getBot({ ...actor, userId: ownerUserId }, input.botId);
+    }
     if (!bot.thread) throw new IsolationError();
     return {
       kind: "bot",

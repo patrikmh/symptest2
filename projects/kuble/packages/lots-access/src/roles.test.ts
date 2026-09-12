@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ACTIONS,
   can,
+  invitationAcceptDenial,
   inviteDenial,
   ROLES,
   type Role,
@@ -178,6 +179,56 @@ describe("inviteDenial", () => {
     expect(inviteDenial("ADMIN", "MEMBER")).toBeNull();
     expect(inviteDenial("ADMIN", "ADMIN")).toBe("forbidden");
     expect(inviteDenial("MEMBER", "MEMBER")).toBe("forbidden");
+  });
+});
+
+describe("invitationAcceptDenial", () => {
+  const now = new Date("2026-09-12T12:00:00.000Z");
+  const later = new Date("2026-09-19T12:00:00.000Z");
+
+  it("allows the invited address to accept a live pending invite", () => {
+    expect(
+      invitationAcceptDenial({
+        actorEmail: "Alex@Ratatosk.test",
+        invitationEmail: "alex@ratatosk.test",
+        status: "pending",
+        expiresAt: later,
+        now,
+      }),
+    ).toBeNull();
+  });
+
+  it("hides invites addressed to someone else", () => {
+    expect(
+      invitationAcceptDenial({
+        actorEmail: "pat@ratatosk.test",
+        invitationEmail: "alex@ratatosk.test",
+        status: "pending",
+        expiresAt: later,
+        now,
+      }),
+    ).toBe("not_found");
+  });
+
+  it("rejects expired and already-consumed invites", () => {
+    expect(
+      invitationAcceptDenial({
+        actorEmail: "alex@ratatosk.test",
+        invitationEmail: "alex@ratatosk.test",
+        status: "pending",
+        expiresAt: now,
+        now,
+      }),
+    ).toBe("expired");
+    expect(
+      invitationAcceptDenial({
+        actorEmail: "alex@ratatosk.test",
+        invitationEmail: "alex@ratatosk.test",
+        status: "accepted",
+        expiresAt: later,
+        now,
+      }),
+    ).toBe("not_pending");
   });
 });
 

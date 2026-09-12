@@ -4,8 +4,9 @@ import type { EncryptedSecretStore } from "@rakazo/adapters";
 import type { Actor, Bot, PackKey } from "@rakazo/contracts";
 import type { PrismaClient, ThreadEvents } from "@rakazo/db";
 import { getActivity, LotsActivityError, listActivity } from "./activity.js";
-import { getLotsAgent, listLotsAgents } from "./agents.js";
 import { decideApproval, getApproval, LotsApprovalError, listApprovals } from "./approvals.js";
+import { getLotsComputer, listLotsComputers, LotsComputerError } from "./computers.js";
+import type { ComputerHealthPayload } from "./health.js";
 import {
   createFyr,
   getFyr,
@@ -18,7 +19,10 @@ import {
 } from "./fyrar.js";
 import { listInbox } from "./inbox.js";
 import {
+  acceptSpaceInvitation,
+  declineSpaceInvitation,
   inviteSpaceMember,
+  listMyInvitations,
   LotsAccessError,
   listSpaceMembers,
   updateSpaceMemberRole,
@@ -34,7 +38,8 @@ import {
   setPackAvailability,
 } from "./packs.js";
 import { loadSpaceRole } from "./role.js";
-import { createTeam, getTeam, LotsTeamError, listTeams, sharedOwnerUserIds } from "./teams.js";
+import { createTeam, getTeam, LotsTeamError, listTeams } from "./teams.js";
+import { getVisibleBot, listVisibleBots } from "./visible-bot.js";
 
 function mapAccessError(error: unknown): never {
   if (error instanceof LotsAccessError) {
@@ -55,6 +60,9 @@ function mapAccessError(error: unknown): never {
   if (error instanceof LotsTeamError) {
     throw new ORPCError(error.code, { message: error.message });
   }
+  if (error instanceof LotsComputerError) {
+    throw new ORPCError(error.code, { message: error.message });
+  }
   throw error;
 }
 
@@ -67,51 +75,106 @@ export function createLotsRouter(args: {
   events: Pick<ThreadEvents, "answerRunInput">;
   secrets: Pick<EncryptedSecretStore, "put">;
   oauth: PackOAuthEnv;
+  computerHealth?: () => Promise<ComputerHealthPayload>;
 }) {
-  const { authed, prisma, repos, jobs, events, secrets, oauth } = args;
+  const { authed, prisma, repos, jobs, events, secrets, oauth, computerHealth } = args;
 
   return {
     agents: {
       list: authed.lots.agents.list.handler(async ({ context }: { context: { actor: Actor } }) => {
-        const role = await loadSpaceRole(prisma, context.actor);
-        const shared = await sharedOwnerUserIds(prisma, context.actor);
-        return listLotsAgents({
+        return listVisibleBots({
+          prisma,
           actor: context.actor,
-          role,
           listBots: (actor) => repos.listBots(actor),
-          sharedOwnerUserIds: shared,
-          listOwnerUserIds: async () => {
-            const rows = await prisma.bot.findMany({
-              where: { spaceId: context.actor.spaceId, archivedAt: null },
-              select: { userId: true },
-              distinct: ["userId"],
-            });
-            return rows.map((row) => row.userId);
-          },
         });
       }),
       get: authed.lots.agents.get.handler(
         async ({ context, input }: { context: { actor: Actor }; input: { botId: string } }) => {
-          const role = await loadSpaceRole(prisma, context.actor);
-          const shared = await sharedOwnerUserIds(prisma, context.actor);
-          const found = await getLotsAgent({
+          const found = await getVisibleBot({
+            prisma,
             actor: context.actor,
-            role,
             botId: input.botId,
-            sharedOwnerUserIds: shared,
             listBots: (actor) => repos.listBots(actor),
-            loadOwner: async (botId) => {
-              const row = await prisma.bot.findFirst({
-                where: { id: botId, spaceId: context.actor.spaceId, archivedAt: null },
-                select: { spaceId: true, userId: true },
-              });
-              return row ? { spaceId: row.spaceId, ownerUserId: row.userId } : null;
-            },
           });
           if (!found) throw new ORPCError("NOT_FOUND", { message: "Resource not found" });
           return found;
         },
       ),
+    },
+    invitations: {
+      list: authed.lots.invitations.list.handler(
+        async ({ context }: { context: { actor: Actor } }) => {
+          try {
+            return await listMyInvitations(prisma, context.actor);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      accept: authed.lots.invitations.accept.handler(
+        async ({
+          context,
+          input,
+        }: {
+          context: { actor: Actor };
+          input: { invitationId: string };
+        }) => {
+          try {
+            return await acceptSpaceInvitation(prisma, context.actor, input.invitationId);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      decline: authed.lots.invitations.decline.handler(
+        async ({
+          context,
+          input,
+        }: {
+          context: { actor: Actor };
+          input: { invitationId: string };
+        }) => {
+          try {
+            return await declineSpaceInvitation(prisma, context.actor, input.invitationId);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+    },
+    computers: {
+      list: authed.lots.computers.list.handler(
+        async ({ context }: { context: { actor: Actor } }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await listLotsComputers(prisma, context.actor, role);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      get: authed.lots.computers.get.handler(
+        async ({
+          context,
+          input,
+        }: {
+          context: { actor: Actor };
+          input: { computerId: string };
+        }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await getLotsComputer(prisma, context.actor, role, input.computerId);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      health: authed.lots.computers.health.handler(async () => {
+        if (!computerHealth) {
+          return { ok: false, ready: false, sandbox: null, supervisor: null };
+        }
+        return computerHealth();
+      }),
     },
     admin: {
       members: {
