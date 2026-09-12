@@ -3,6 +3,7 @@ import type { JobPublisher } from "@rakazo/adapter-kit";
 import type { EncryptedSecretStore } from "@rakazo/adapters";
 import type { Actor, Bot, PackKey } from "@rakazo/contracts";
 import type { PrismaClient, ThreadEvents } from "@rakazo/db";
+import { getActivity, LotsActivityError, listActivity } from "./activity.js";
 import { getLotsAgent, listLotsAgents } from "./agents.js";
 import { decideApproval, getApproval, LotsApprovalError, listApprovals } from "./approvals.js";
 import {
@@ -33,6 +34,7 @@ import {
   setPackAvailability,
 } from "./packs.js";
 import { loadSpaceRole } from "./role.js";
+import { createTeam, getTeam, LotsTeamError, listTeams, sharedOwnerUserIds } from "./teams.js";
 
 function mapAccessError(error: unknown): never {
   if (error instanceof LotsAccessError) {
@@ -45,6 +47,12 @@ function mapAccessError(error: unknown): never {
     throw new ORPCError(error.code, { message: error.message });
   }
   if (error instanceof LotsPackError) {
+    throw new ORPCError(error.code, { message: error.message });
+  }
+  if (error instanceof LotsActivityError) {
+    throw new ORPCError(error.code, { message: error.message });
+  }
+  if (error instanceof LotsTeamError) {
     throw new ORPCError(error.code, { message: error.message });
   }
   throw error;
@@ -66,10 +74,12 @@ export function createLotsRouter(args: {
     agents: {
       list: authed.lots.agents.list.handler(async ({ context }: { context: { actor: Actor } }) => {
         const role = await loadSpaceRole(prisma, context.actor);
+        const shared = await sharedOwnerUserIds(prisma, context.actor);
         return listLotsAgents({
           actor: context.actor,
           role,
           listBots: (actor) => repos.listBots(actor),
+          sharedOwnerUserIds: shared,
           listOwnerUserIds: async () => {
             const rows = await prisma.bot.findMany({
               where: { spaceId: context.actor.spaceId, archivedAt: null },
@@ -83,10 +93,12 @@ export function createLotsRouter(args: {
       get: authed.lots.agents.get.handler(
         async ({ context, input }: { context: { actor: Actor }; input: { botId: string } }) => {
           const role = await loadSpaceRole(prisma, context.actor);
+          const shared = await sharedOwnerUserIds(prisma, context.actor);
           const found = await getLotsAgent({
             actor: context.actor,
             role,
             botId: input.botId,
+            sharedOwnerUserIds: shared,
             listBots: (actor) => repos.listBots(actor),
             loadOwner: async (botId) => {
               const row = await prisma.bot.findFirst({
@@ -329,6 +341,73 @@ export function createLotsRouter(args: {
               input.approvalId,
               "deny",
             );
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+    },
+    activity: {
+      list: authed.lots.activity.list.handler(
+        async ({ context }: { context: { actor: Actor } }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await listActivity(prisma, context.actor, role);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      get: authed.lots.activity.get.handler(
+        async ({
+          context,
+          input,
+        }: {
+          context: { actor: Actor };
+          input: { activityId: string };
+        }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await getActivity(prisma, context.actor, role, input.activityId);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+    },
+    teams: {
+      list: authed.lots.teams.list.handler(async ({ context }: { context: { actor: Actor } }) => {
+        try {
+          const role = await loadSpaceRole(prisma, context.actor);
+          return await listTeams(prisma, context.actor, role);
+        } catch (error) {
+          mapAccessError(error);
+        }
+      }),
+      get: authed.lots.teams.get.handler(
+        async ({ context, input }: { context: { actor: Actor }; input: { teamId: string } }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await getTeam(prisma, context.actor, role, input.teamId);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      create: authed.lots.teams.create.handler(
+        async ({
+          context,
+          input,
+        }: {
+          context: { actor: Actor };
+          input: {
+            name: string;
+            members: Array<{ botId: string; role: "lead" | "specialist" | "reviewer" }>;
+          };
+        }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await createTeam(prisma, context.actor, role, input);
           } catch (error) {
             mapAccessError(error);
           }

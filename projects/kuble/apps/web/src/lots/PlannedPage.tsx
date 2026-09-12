@@ -21,19 +21,12 @@ export function PlannedPage({
 }: {
   section: Exclude<
     LotsNavKey,
-    "agents" | "settings" | "admin" | "fyrar" | "approvals" | "inbox" | "packs"
+    "agents" | "settings" | "admin" | "fyrar" | "approvals" | "inbox" | "packs" | "activity"
   >;
 }) {
   const { t } = useLingui();
   const coworkers = "/app/agents";
   const planned: Record<typeof section, Planned> = {
-    activity: {
-      title: t`Activity`,
-      description: t`A readable timeline of what your coworkers did, asked and were allowed to do.`,
-      next: t`Each coworker's chat is the record of their work today.`,
-      href: coworkers,
-      cta: <Trans>Go to Coworkers</Trans>,
-    },
     computers: {
       title: t`Computers`,
       description: t`The place each coworker works — shared with the team, or their own.`,

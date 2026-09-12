@@ -107,7 +107,7 @@ The mapping is applied at the LOTS UI/RPC boundary only.
 | Delegation to peer agents | **EXISTS** | `message_bot` / `handoff_to_bot` (`packages/adapters/src/bot-messages.ts`, `group-handoff.ts`) wake a peer bot's own thread with intents `request\|result\|question\|status\|fyi`; `run_subagent` for in-turn helpers; `spawn_bot` for persistent children (`parentBotId`, `spawnKey`). |
 | Target uses its own permissions; caller cannot grant more | **EXISTS** | Peer bots run under their own bot/user/space; subagents inherit parent tools minus delegation tools. |
 | Delegation visible in activity | **EXISTS** | `subagent`, `child_bot`, `handoff`, `bot_message_sent/received` message blocks and `thread.subagent` events. |
-| Team entity with LEAD/SPECIALIST/REVIEWER | **NEW** (small) | `ChatGroup` (2–6 bots, shared thread) is the closest primitive but has no roles. LOTS adds `LotsTeam` + `LotsTeamMember(role)` tables and uses them for (a) sharing visibility (§7) and (b) prompting the lead about its specialists/reviewer. Delegation itself stays on `message_bot`. |
+| Team entity with LEAD/SPECIALIST/REVIEWER | **ADAPTER** | `CapabilityInstall` (`kind: lots-team`) stores membership and `lead\|specialist\|reviewer`. Visibility uses `sharedViaTeam`. Delegation itself stays on `message_bot`. |
 
 ## §11–13 Fyrar
 
@@ -177,7 +177,7 @@ The mapping is applied at the LOTS UI/RPC boundary only.
 | Navigation: Inbox, Agents, Fyrar, Approvals, Packs, Activity, Computers, Admin, Settings | **NEW** | Upstream sidebar is bot list + Activity + Integrations + Settings. LOTS adds a top-level nav and routes. |
 | Agent chat screen | **EXISTS** | `apps/web/src/pages/Shell.tsx` (thread, composer, realtime via `threads.subscribe`, `AskCard`, block renderers for `text`, `card`, `ask`, `progress`, `steps`, `subagent`, `child_bot`, `file`, `image`, `handoff`, …). LOTS reuses it and adds the detail panel (model, computer, packs, Fyrar). |
 | Agents grid, Fyrar page, Approvals page, Packs page, Activity page, Admin page, Computers page, Inbox | **NEW** (UI) over **EXISTS/ADAPTER** data | Each page is a view over existing or thin RPCs listed above. |
-| Human-readable Activity timeline | **ADAPTER** | `Event` stream (`ProductEventType`) + `runs.list`; LOTS adds a space-wide, role-aware `activity.list` with a formatter. |
+| Human-readable Activity timeline | **ADAPTER** | `lots.activity.list/get` over `Event` with a formatter (delegation, fyrar, approvals). `/app/activity`. |
 | Onboarding (workspace → model → first agent → packs → Docker check) | **EXISTS** / **ADAPTER** | `apps/web/src/pages/Onboarding.tsx`: `model → integrations → bot`. LOTS renames copy, defaults the first agent to "Assistant", adds the Docker health step. |
 | i18n | **EXISTS** | Lingui; English catalog is the source of LOTS copy. Other locales fall back until translated. |
 
@@ -227,7 +227,7 @@ The mapping is applied at the LOTS UI/RPC boundary only.
 | `README.md` | LOTS README (this project); upstream README preserved at `docs/upstream/README.rakazo.md`. |
 | `docs/upstream-map.md` | this file |
 | `docs/implementation-plan.md` | Phase 0 deliverable |
-| `docs/architecture.md`, `development.md`, `fyrar.md`, `packs.md`, `approvals.md`, `access.md`, `troubleshooting.md` | written with their phases (see plan). Upstream `docs/self-host.md`, `docs/computer-runtime.md`, `docs/self-host-secrets.md` remain authoritative for the parts LOTS does not change. |
+| `docs/architecture.md`, `development.md`, `fyrar.md`, `packs.md`, `approvals.md`, `access.md`, `troubleshooting.md` | Phase 8. Upstream `docs/self-host.md`, `docs/computer-runtime.md`, `docs/self-host-secrets.md` remain authoritative for the parts LOTS does not change. |
 | `docs/installation.md` | Phase 7 (`infra/install/install.sh`, health endpoints, `pnpm seed:demo`). |
 
 ---

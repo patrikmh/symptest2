@@ -4,8 +4,12 @@ import { Button, cn, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger } from "
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { rpc } from "../lib/rpc";
+import { FriendlyErrorNote } from "./FriendlyErrorNote";
 
-type LoadState = { kind: "loading" } | { kind: "error" } | { kind: "ready"; approvals: Approval[] };
+type LoadState =
+  | { kind: "loading" }
+  | { kind: "error"; error: unknown }
+  | { kind: "ready"; approvals: Approval[] };
 
 const PREVIEW_LABELS = {
   to: "To",
@@ -27,8 +31,8 @@ export function ApprovalsPage() {
     setState({ kind: "loading" });
     try {
       setState({ kind: "ready", approvals: await rpc.lots.approvals.list({ tab: nextTab }) });
-    } catch {
-      setState({ kind: "error" });
+    } catch (error) {
+      setState({ kind: "error", error });
     }
   }, []);
 
@@ -72,7 +76,16 @@ export function ApprovalsPage() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value={tab} className="mt-6">
-          {state.kind === "loading" ? (
+          {state.kind === "error" ? (
+            <div className="mt-8">
+              <FriendlyErrorNote error={state.error} />
+              <div className="mt-4 flex justify-center">
+                <Button variant="outline" onClick={() => void load(tab)}>
+                  <Trans>Try again</Trans>
+                </Button>
+              </div>
+            </div>
+          ) : state.kind === "loading" ? (
             <ul className="space-y-4" aria-busy="true">
               {[0, 1].map((index) => (
                 <li key={index} className="rounded-3xl border border-border bg-card p-5">
@@ -82,15 +95,6 @@ export function ApprovalsPage() {
                 </li>
               ))}
             </ul>
-          ) : state.kind === "error" ? (
-            <div className="flex flex-col items-center text-center">
-              <p className="text-[15px] text-foreground/80">
-                <Trans>Approvals could not be loaded.</Trans>
-              </p>
-              <Button variant="outline" className="mt-4" onClick={() => void load(tab)}>
-                <Trans>Try again</Trans>
-              </Button>
-            </div>
           ) : (
             <ApprovalsView
               tab={tab}

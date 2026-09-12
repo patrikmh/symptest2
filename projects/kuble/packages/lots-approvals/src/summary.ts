@@ -1,3 +1,5 @@
+import { redactSensitiveRecord, redactSensitiveText } from "@lots/core";
+
 const PREVIEW_KEYS = ["to", "subject", "title", "collection", "name", "body"] as const;
 
 export function extractApprovalArgs(request: unknown): Record<string, unknown> {
@@ -18,20 +20,22 @@ export function approvalPreview(request: unknown): Record<string, string> {
     if (value == null || value === "") continue;
     preview[key] = String(value).slice(0, 280);
   }
-  return preview;
+  return redactSensitiveRecord(preview);
 }
 
 export function approvalSummary(tool: string, request: unknown, askText?: string | null): string {
   if (askText?.trim()) {
-    return askText
-      .trim()
-      .replace(/^Review before /i, "")
-      .replace(/\?$/, "");
+    return redactSensitiveText(
+      askText
+        .trim()
+        .replace(/^Review before /i, "")
+        .replace(/\?$/, ""),
+    );
   }
   if (tool === "schedule_create") return "Create Fyr";
   if (tool === "create_space") return "Create space";
   const args = extractApprovalArgs(request);
   const target = args.to ?? args.title ?? args.subject ?? args.name;
-  if (target) return `${tool} → ${String(target)}`;
+  if (target) return redactSensitiveText(`${tool} → ${String(target)}`);
   return tool.replaceAll("_", " ");
 }

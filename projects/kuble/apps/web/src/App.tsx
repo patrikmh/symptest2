@@ -13,6 +13,7 @@ import {
   sessionRetryDelayMs,
   showSessionUnavailable,
 } from "./lib/session-gate";
+import { ActivityPage } from "./lots/ActivityPage";
 import { AdminPage } from "./lots/AdminPage";
 import { AgentsPage } from "./lots/AgentsPage";
 import { ApprovalsPage } from "./lots/ApprovalsPage";
@@ -43,7 +44,7 @@ const LOTS_ROUTES: readonly { path: string; element: ReactNode }[] = [
   { path: "/app/packs", element: <PacksPage /> },
   { path: "/app/packs/oauth", element: <PackOAuthPage /> },
   { path: "/app/packs/:packKey", element: <PackDetailPage /> },
-  { path: "/app/activity", element: <PlannedPage section="activity" /> },
+  { path: "/app/activity", element: <ActivityPage /> },
   { path: "/app/computers", element: <PlannedPage section="computers" /> },
   { path: "/app/admin", element: <AdminPage /> },
   { path: "/app/g/:groupId", element: <ShellPage /> },

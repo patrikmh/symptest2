@@ -11,6 +11,9 @@
     "check": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run --root ../.. packages/lots-approvals/src"
   },
+  "dependencies": {
+    "@lots/core": "workspace:*"
+  },
   "devDependencies": {
     "typescript": "7.0.2",
     "vitest": "4.1.11"

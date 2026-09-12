@@ -10,12 +10,23 @@ export async function listLotsAgents(input: {
   role: Role;
   listBots: (actor: Actor) => Promise<Bot[]>;
   listOwnerUserIds: () => Promise<string[]>;
+  sharedOwnerUserIds?: Iterable<string>;
 }): Promise<Bot[]> {
   const canSeeOthers = visibleTo(
     { userId: input.actor.userId, spaceId: input.actor.spaceId, role: input.role },
     { spaceId: input.actor.spaceId, ownerUserId: "__other__" },
   );
-  if (!canSeeOthers) return input.listBots(input.actor);
+  if (!canSeeOthers) {
+    const own = await input.listBots(input.actor);
+    const extras = [...new Set(input.sharedOwnerUserIds ?? [])].filter(
+      (userId) => userId !== input.actor.userId,
+    );
+    if (extras.length === 0) return own;
+    const shared = await Promise.all(
+      extras.map((userId) => input.listBots({ ...input.actor, userId })),
+    );
+    return [...own, ...shared.flat()];
+  }
 
   const ownerIds = await input.listOwnerUserIds();
   const unique = [...new Set(ownerIds.length > 0 ? ownerIds : [input.actor.userId])];
@@ -31,13 +42,19 @@ export async function getLotsAgent(input: {
   botId: string;
   loadOwner: (botId: string) => Promise<{ spaceId: string; ownerUserId: string } | null>;
   listBots: (actor: Actor) => Promise<Bot[]>;
+  sharedOwnerUserIds?: Iterable<string>;
 }): Promise<Bot | null> {
   const resource = await input.loadOwner(input.botId);
   if (!resource) return null;
   if (
     !visibleTo(
       { userId: input.actor.userId, spaceId: input.actor.spaceId, role: input.role },
-      resource,
+      {
+        ...resource,
+        sharedViaTeam: input.sharedOwnerUserIds
+          ? [...input.sharedOwnerUserIds].includes(resource.ownerUserId)
+          : false,
+      },
     )
   ) {
     return null;

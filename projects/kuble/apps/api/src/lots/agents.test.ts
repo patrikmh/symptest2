@@ -58,6 +58,20 @@ describe("listLotsAgents", () => {
     expect(listBots).toHaveBeenCalledTimes(1);
   });
 
+  it("includes a teammate's bots when sharedOwnerUserIds is set", async () => {
+    const listBots = vi.fn(async (listed: Actor) =>
+      listed.userId === "user-a" ? [bot("a-1")] : [bot("b-1")],
+    );
+    const listed = await listLotsAgents({
+      actor: actorA,
+      role: "MEMBER",
+      listBots,
+      listOwnerUserIds: async () => ["user-a", "user-b"],
+      sharedOwnerUserIds: ["user-b"],
+    });
+    expect(listed.map((item) => item.id)).toEqual(["a-1", "b-1"]);
+  });
+
   it("returns every owner's bots for Admin and Owner", async () => {
     const listBots = vi.fn(async (listed: Actor) => [bot(`${listed.userId}-bot`)]);
     const listed = await listLotsAgents({
@@ -73,6 +87,20 @@ describe("listLotsAgents", () => {
 describe("getLotsAgent", () => {
   const own = bot("a-1");
   const other = bot("b-1");
+
+  it("returns a teammate's agent when sharedViaTeam is set", async () => {
+    const other = bot("b-1");
+    await expect(
+      getLotsAgent({
+        actor: actorA,
+        role: "MEMBER",
+        botId: "b-1",
+        listBots: async () => [other],
+        loadOwner: async () => ({ spaceId: "space-1", ownerUserId: "user-b" }),
+        sharedOwnerUserIds: ["user-b"],
+      }),
+    ).resolves.toEqual(other);
+  });
 
   it("returns 404-equivalent null when a Member asks for someone else's agent", async () => {
     const found = await getLotsAgent({

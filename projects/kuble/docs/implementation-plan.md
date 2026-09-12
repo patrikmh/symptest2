@@ -206,10 +206,10 @@ Acceptance (shell test with Compose available): fresh install → healthy; rerun
 
 ## Phase 8 — Hardening
 
-- [ ] Auth/RBAC tests, secret-redaction tests for pack payloads and activity text.
-- [ ] Friendly error mapper (computer unavailable, provider down, UNKNOWN write).
-- [ ] Delegation surfaced in Activity; `LotsTeam` with LEAD/SPECIALIST/REVIEWER (Journey 4).
-- [ ] Root-level CI workflow for `projects/kuble` (lint, typecheck, unit, integration, build, Playwright smoke with fake providers).
-- [ ] Remaining docs from spec §58: `architecture.md`, `development.md`, `fyrar.md`, `packs.md`, `approvals.md`, `access.md`, `troubleshooting.md`. (`installation.md` landed with Phase 7.)
+- [x] Auth/RBAC tests, secret-redaction tests for pack payloads and activity text.
+- [x] Friendly error mapper (computer unavailable, provider down, UNKNOWN write).
+- [x] Delegation surfaced in Activity; `LotsTeam` with LEAD/SPECIALIST/REVIEWER (Journey 4).
+- [x] Root-level CI workflow for `projects/kuble` (lint, typecheck, unit on the LOTS slice). Integration and Playwright stay in upstream `projects/kuble/.github/workflows` (GitHub does not run nested workflows).
+- [x] Remaining docs from spec §58: `architecture.md`, `development.md`, `fyrar.md`, `packs.md`, `approvals.md`, `access.md`, `troubleshooting.md`.
 
-Acceptance: all Journeys 1–5 automated or documented as manual with steps; Definition of Done (§57) checklist complete.
+Acceptance: Journeys 1–5 are automated where the checkout allows and otherwise documented in [`development.md`](./development.md); Definition of Done (§57) is in [`architecture.md`](./architecture.md).

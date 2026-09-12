@@ -4,6 +4,7 @@ import { ATTACHMENT_MAX_BASE64_LENGTH, ATTACHMENT_MAX_COUNT } from "./attachment
 import {
   ActionApprovalRuleSchema,
   ActionAutoReviewSettingsSchema,
+  ActivityItemSchema,
   AgentSecretInputSchema,
   AgentSecretSchema,
   AgentSkillCatalogEntrySchema,
@@ -28,6 +29,7 @@ import {
   CreateBotInput,
   CreateFyrInput,
   CreateGroupInput,
+  CreateLotsTeamInput,
   CreateRoutineInput,
   CreateScratchpadItemInput,
   DeploymentSettingsSchema,
@@ -39,6 +41,7 @@ import {
   GroupSchema,
   InboxItemSchema,
   IntegrationCatalogResultSchema,
+  LotsTeamSchema,
   McpServerConfigInput,
   McpServerSchema,
   MemoryDocumentSchema,
@@ -799,6 +802,15 @@ export const appContract = {
     },
     inbox: {
       list: oc.output(z.array(InboxItemSchema)),
+    },
+    activity: {
+      list: oc.output(z.array(ActivityItemSchema)),
+      get: oc.input(z.object({ activityId: Id })).output(ActivityItemSchema),
+    },
+    teams: {
+      list: oc.output(z.array(LotsTeamSchema)),
+      get: oc.input(z.object({ teamId: Id })).output(LotsTeamSchema),
+      create: oc.input(CreateLotsTeamInput).output(LotsTeamSchema),
     },
     packs: {
       list: oc.output(z.array(PackSchema)),

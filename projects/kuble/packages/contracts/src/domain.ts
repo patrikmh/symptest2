@@ -504,6 +504,65 @@ export const PackConnectResultSchema = z.object({
 });
 export type PackConnectResult = z.infer<typeof PackConnectResultSchema>;
 
+export const ActivityKindSchema = z.enum([
+  "run",
+  "fyr",
+  "approval",
+  "delegation",
+  "tool",
+  "update",
+]);
+export type ActivityKind = z.infer<typeof ActivityKindSchema>;
+
+export const ActivityDetailSchema = z.object({
+  agent: z.string().nullable(),
+  tool: z.string().nullable(),
+  provider: z.string().nullable(),
+  runId: z.string().nullable(),
+  externalRef: z.string().nullable(),
+  error: z.string().nullable(),
+});
+export type ActivityDetail = z.infer<typeof ActivityDetailSchema>;
+
+export const ActivityItemSchema = z.object({
+  id: Id,
+  kind: ActivityKindSchema,
+  text: z.string(),
+  botId: Id.nullable(),
+  botName: z.string(),
+  href: z.string(),
+  createdAt: z.string(),
+  detail: ActivityDetailSchema,
+});
+export type ActivityItem = z.infer<typeof ActivityItemSchema>;
+
+export const LotsTeamRoleSchema = z.enum(["lead", "specialist", "reviewer"]);
+export type LotsTeamRole = z.infer<typeof LotsTeamRoleSchema>;
+
+export const LotsTeamMemberSchema = z.object({
+  botId: Id,
+  botName: z.string(),
+  role: LotsTeamRoleSchema,
+});
+export type LotsTeamMember = z.infer<typeof LotsTeamMemberSchema>;
+
+export const LotsTeamSchema = z.object({
+  id: Id,
+  name: z.string(),
+  members: z.array(LotsTeamMemberSchema),
+  createdAt: z.string(),
+});
+export type LotsTeam = z.infer<typeof LotsTeamSchema>;
+
+export const CreateLotsTeamInput = z.object({
+  name: z.string().trim().min(1).max(80),
+  members: z
+    .array(z.object({ botId: Id, role: LotsTeamRoleSchema }))
+    .min(2)
+    .max(8),
+});
+export type CreateLotsTeamInput = z.infer<typeof CreateLotsTeamInput>;
+
 export const RoutineSchema = z.object({
   id: Id,
   botId: Id,

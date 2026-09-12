@@ -22,6 +22,10 @@ describe("approvalPreview", () => {
       subject: "Follow-up",
     });
   });
+
+  it("redacts token-like body text", () => {
+    expect(approvalPreview({ body: "Bearer abc.def.ghi" }).body).toBe("[redacted]");
+  });
 });
 
 describe("approvalSummary", () => {

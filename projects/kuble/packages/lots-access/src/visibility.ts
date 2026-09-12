@@ -9,7 +9,7 @@ export type AccessActor = {
 export type OwnedResource = {
   spaceId: string;
   ownerUserId: string;
-  /** Teams land in Phase 8; treat as false until then. */
+  /** True when the viewer shares a LotsTeam with this resource's owner. */
   sharedViaTeam?: boolean;
 };
 

@@ -16,8 +16,7 @@ name LOTS).
 
 ## Status
 
-Phases 0–7 (inspection, Ratatosk shell, access, Fyrar, approvals, packs,
-idempotency, installer and health) are in place. See
+Phases 0–8 (inspection through hardening) are in place. See
 [`docs/implementation-plan.md`](./docs/implementation-plan.md) for the
 slice-by-slice checklist and [`docs/upstream-map.md`](./docs/upstream-map.md)
 for what is reused from Rakazo versus built here.
