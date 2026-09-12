@@ -5,8 +5,8 @@ import {
   acceptSpaceInvitation,
   declineSpaceInvitation,
   inviteSpaceMember,
-  listMyInvitations,
   LotsAccessError,
+  listMyInvitations,
   listSpaceMembers,
   updateSpaceMemberRole,
 } from "./members.js";

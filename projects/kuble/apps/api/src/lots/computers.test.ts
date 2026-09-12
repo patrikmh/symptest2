@@ -1,7 +1,7 @@
 import type { Actor } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { describe, expect, it, vi } from "vitest";
-import { getLotsComputer, listLotsComputers, LotsComputerError } from "./computers.js";
+import { getLotsComputer, LotsComputerError, listLotsComputers } from "./computers.js";
 
 const member: Actor = {
   userId: "user-a",
@@ -42,10 +42,12 @@ describe("listLotsComputers", () => {
   it("shows every computer in the space to Admin", async () => {
     const prisma = {
       computer: {
-        findMany: vi.fn().mockResolvedValue([
-          row("own", "user-a", "dedicated"),
-          row("hidden", "user-b", "dedicated"),
-        ]),
+        findMany: vi
+          .fn()
+          .mockResolvedValue([
+            row("own", "user-a", "dedicated"),
+            row("hidden", "user-b", "dedicated"),
+          ]),
       },
     } as unknown as PrismaClient;
     const listed = await listLotsComputers(prisma, member, "ADMIN");

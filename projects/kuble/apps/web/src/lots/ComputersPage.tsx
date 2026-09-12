@@ -1,7 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { computerHealthFromPayload } from "@lots/core";
 import type { LotsComputer, LotsComputerHealth } from "@rakazo/contracts";
-import { Button, Skeleton, cn } from "@rakazo/ui-web";
+import { Button, cn, Skeleton } from "@rakazo/ui-web";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { rpc } from "../lib/rpc";

@@ -38,5 +38,4 @@ describe("visibleBotOwnerUserId", () => {
     } as unknown as PrismaClient;
     await expect(visibleBotOwnerUserId(prisma, actor, "bot-b")).resolves.toBeNull();
   });
-
 });
