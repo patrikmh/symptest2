@@ -144,6 +144,7 @@ import {
   toComputerStatus,
 } from "./computer-status.js";
 import { searchIntegrationCatalog } from "./integration-catalog.js";
+import { createLotsRouter } from "./lots/router.js";
 import { buildMcpUpdateMaterial } from "./mcp-material.js";
 import {
   disconnectMemoryProvider,
@@ -4621,6 +4622,7 @@ export function createRouter(deps: RouterDeps) {
         prepareVoice(deps, context.actor, input),
       ),
     },
+    lots: createLotsRouter({ authed, prisma: deps.prisma, repos }),
   });
 }
 

@@ -55,8 +55,11 @@ import {
   ServerUpdateRunSchema,
   ServerUpdateStatusSchema,
   SkillPlaybookSchema,
+  SpaceMemberSchema,
+  SpaceMembersListSchema,
   SpaceMemoryConfigSchema,
   SpaceNavigationSchema,
+  SpaceRoleSchema,
   SpaceSchema,
   TaughtSkillSchema,
   TeachRecordingEventSchema,
@@ -760,6 +763,23 @@ export const appContract = {
     list: oc.output(z.array(AgentSecretSchema)),
     put: oc.input(AgentSecretInputSchema).output(AgentSecretSchema),
     remove: oc.input(z.object({ id: Id })).output(z.object({ ok: z.literal(true) })),
+  },
+  lots: {
+    agents: {
+      list: oc.output(z.array(BotSchema)),
+      get: oc.input(botId).output(BotSchema),
+    },
+    admin: {
+      members: {
+        list: oc.output(SpaceMembersListSchema),
+        invite: oc
+          .input(z.object({ email: z.string().trim().email(), role: SpaceRoleSchema }))
+          .output(SpaceMemberSchema),
+        updateRole: oc
+          .input(z.object({ memberId: Id, role: SpaceRoleSchema }))
+          .output(SpaceMemberSchema),
+      },
+    },
   },
 };
 

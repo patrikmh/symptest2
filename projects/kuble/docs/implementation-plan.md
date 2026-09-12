@@ -91,22 +91,22 @@ Acceptance (unit): `first-bot.test.ts` — profile name/description and spawn ke
 
 ### Slice 2.1 — Roles
 
-- [ ] `packages/lots-access`: `Role = OWNER | ADMIN | MEMBER`, `roleFromSpaceMember()`, `can(role, action)` table matching spec §6.
-- [ ] Prisma: no schema change; `"admin"` is a new value of `SpaceMember.role`.
+- [x] `packages/lots-access`: `Role = OWNER | ADMIN | MEMBER`, `roleFromSpaceMember()`, `can(role, action)` table matching spec §6.
+- [x] Prisma: no schema change; `"admin"` is a new value of `SpaceMember.role`.
 
 Acceptance (unit): permission table tests for every action × role.
 
 ### Slice 2.2 — Visibility predicate
 
-- [ ] `visibleTo(actor, resource)` = same space AND (owner OR admin/owner OR shared via team).
-- [ ] `lots.agents.list/get` in `apps/api/src/lots/` apply the predicate; upstream `bots.*` untouched.
+- [x] `visibleTo(actor, resource)` = same space AND (owner OR admin/owner OR shared via team).
+- [x] `lots.agents.list/get` in `apps/api/src/lots/` apply the predicate; upstream `bots.*` untouched.
 
 Acceptance (integration): Member A cannot `lots.agents.get` Member B's agent (404), Admin can, Owner can.
 
 ### Slice 2.3 — Members admin
 
-- [ ] `lots.admin.members.list/invite/updateRole` over `Member`/`SpaceMember`/`Invitation`; final-owner guard.
-- [ ] Admin page → Members tab.
+- [x] `lots.admin.members.list/invite/updateRole` over `Member`/`SpaceMember`/`Invitation`; final-owner guard.
+- [x] Admin page → Members tab.
 
 Acceptance (integration): invite creates an `Invitation`; role change to OWNER/ADMIN/MEMBER persists; removing the last OWNER is rejected.
 

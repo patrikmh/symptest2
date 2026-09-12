@@ -12,6 +12,31 @@ export type MemoryScopeValue = z.infer<typeof MemoryScopeSchema>;
 export const AvatarStyleSchema = z.enum(["lots", "robot", "organic"]);
 export type AvatarStyle = z.infer<typeof AvatarStyleSchema>;
 
+/** Stored on `SpaceMember.role` / `Invitation.role` (spec §6). */
+export const SpaceRoleSchema = z.enum(["owner", "admin", "member"]);
+export type SpaceRole = z.infer<typeof SpaceRoleSchema>;
+
+export const SpaceMemberKindSchema = z.enum(["member", "invitation"]);
+export type SpaceMemberKind = z.infer<typeof SpaceMemberKindSchema>;
+
+export const SpaceMemberSchema = z.object({
+  id: Id,
+  userId: Id.nullable(),
+  email: z.string().email(),
+  name: z.string(),
+  role: SpaceRoleSchema,
+  kind: SpaceMemberKindSchema,
+  expiresAt: z.string().nullable(),
+});
+export type SpaceMember = z.infer<typeof SpaceMemberSchema>;
+
+export const SpaceMembersListSchema = z.object({
+  viewerRole: SpaceRoleSchema,
+  ownerCount: z.number().int().nonnegative(),
+  members: z.array(SpaceMemberSchema),
+});
+export type SpaceMembersList = z.infer<typeof SpaceMembersListSchema>;
+
 export const ThinkingLevelSchema = z.enum([
   "off",
   "minimal",

@@ -16,7 +16,11 @@ type Planned = {
  * Sections whose pages arrive in later phases of docs/implementation-plan.md. Each renders an
  * honest empty state: what the page will do, and a useful next step that already works.
  */
-export function PlannedPage({ section }: { section: Exclude<LotsNavKey, "agents" | "settings"> }) {
+export function PlannedPage({
+  section,
+}: {
+  section: Exclude<LotsNavKey, "agents" | "settings" | "admin">;
+}) {
   const { t } = useLingui();
   const coworkers = "/app/agents";
   const settings = "/app/agents?settings=general";
@@ -62,13 +66,6 @@ export function PlannedPage({ section }: { section: Exclude<LotsNavKey, "agents"
       next: t`You do not need to set this up. Every coworker already has a place to work.`,
       href: coworkers,
       cta: <Trans>Go to Coworkers</Trans>,
-    },
-    admin: {
-      title: t`Admin`,
-      description: t`Members, roles, tools and connections for this workspace.`,
-      next: t`Invite people and manage connections from Settings for now.`,
-      href: settings,
-      cta: <Trans>Open settings</Trans>,
     },
   };
   const page = planned[section];

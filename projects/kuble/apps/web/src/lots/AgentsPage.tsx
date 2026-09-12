@@ -10,14 +10,14 @@ import { NewAgentDialog } from "./NewAgentDialog";
 
 type LoadState = { kind: "loading" } | { kind: "error" } | { kind: "ready"; bots: Bot[] };
 
-/** Coworkers grid (spec §31). Reads the upstream bot list; the chat itself is the upstream shell. */
+/** Coworkers grid (spec §31). Visibility comes from `lots.agents.list` (spec §7). */
 export function AgentsPage() {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [creating, setCreating] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const bots = await rpc.bots.list();
+      const bots = await rpc.lots.agents.list();
       setState({ kind: "ready", bots });
     } catch {
       setState({ kind: "error" });

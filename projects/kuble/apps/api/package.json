@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@hono/node-server": "2.1.1",
+    "@lots/access": "workspace:*",
     "@orpc/server": "1.15.0",
     "@rakazo/adapter-kit": "workspace:*",
     "@rakazo/adapters": "workspace:*",
