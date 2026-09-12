@@ -240,3 +240,57 @@ msgstr "Bjud in folk och hantera anslutningar från Inställningar tills vidare.
 
 msgid "Language"
 msgstr "Språk"
+
+msgid "Workspace"
+msgstr "Arbetsyta"
+
+msgid "Model"
+msgstr "Modell"
+
+msgid "Computer"
+msgstr "Dator"
+
+msgid "Tools they can use"
+msgstr "Verktyg de kan använda"
+
+msgid "Web Research is on — your coworker can search and read the web. GitHub, Gmail and Calendar connect later, when you need them."
+msgstr "Webbresearch är på — din medarbetare kan söka och läsa på webben. GitHub, Gmail och Kalender kopplas senare, när du behöver dem."
+
+msgid "Web Research"
+msgstr "Webbresearch"
+
+msgid "On"
+msgstr "På"
+
+msgid "GitHub, Gmail, Calendar"
+msgstr "GitHub, Gmail, Kalender"
+
+msgid "Later"
+msgstr "Senare"
+
+msgid "A place to work"
+msgstr "En plats att jobba på"
+
+msgid "Each coworker already has a computer. This just checks that it is reachable."
+msgstr "Varje medarbetare har redan en dator. Det här kontrollerar bara att den går att nå."
+
+msgid "Checking…"
+msgstr "Kontrollerar…"
+
+msgid "Ready — a computer is available."
+msgstr "Redo — en dator finns tillgänglig."
+
+msgid "No computer is configured yet. You can still chat; scheduled work that needs a computer will wait."
+msgstr "Ingen dator är konfigurerad ännu. Du kan ändå chatta; schemalagt arbete som behöver en dator får vänta."
+
+msgid "Could not create your coworker"
+msgstr "Kunde inte skapa din medarbetare"
+
+msgid "Opening {profile.name}…"
+msgstr "Öppnar {profile.name}…"
+
+msgid "Connect a model"
+msgstr "Koppla en modell"
+
+msgid "Continue"
+msgstr "Fortsätt"

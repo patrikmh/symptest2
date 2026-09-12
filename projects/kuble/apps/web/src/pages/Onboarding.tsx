@@ -1,5 +1,11 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import {
+  type ComputerHealth,
+  computerHealthFromPayload,
+  findFirstBot,
+  firstBotProfile,
+} from "@lots/core";
+import {
   DEFAULT_MODEL_CONTEXT_WINDOW,
   DEFAULT_MODEL_MAX_TOKENS,
   type IntegrationSetupState,
@@ -23,8 +29,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Wordmark,
 } from "@rakazo/ui-web";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { IntegrationSetup } from "../components/integrations/IntegrationSetup";
 import type { ModelCatalogEntry } from "../lib/model-auth";
@@ -32,41 +39,22 @@ import { rpc } from "../lib/rpc";
 import { useModelOAuthSignIn } from "../lib/use-model-oauth-signin";
 
 const CUSTOM_MODEL_OPTION = "__rakazo_custom_model__";
-const FIRST_BOT_NAME = "Chief";
-const FIRST_BOT_SPAWN_KEY = "onboarding:first";
 const FIRST_BOT_LOCK = "rakazo:onboarding-first-bot";
 
 /** Survives StrictMode remounts; concurrent first-bot creates share one in-flight attempt. */
 let firstBotEnsure: Promise<{ id: string }> | null = null;
 
-function findFirstBot(
-  bots: Array<{ id: string; name: string; spawnKey: string | null }>,
-): { id: string } | undefined {
-  const bySpawnKey = bots.find((bot) => bot.spawnKey === FIRST_BOT_SPAWN_KEY);
-  if (bySpawnKey) return { id: bySpawnKey.id };
-  // Legacy first-run Chief created before spawnKey was set.
-  const byName = bots.find((bot) => bot.name === FIRST_BOT_NAME);
-  return byName ? { id: byName.id } : undefined;
-}
-
 async function createOrReuseFirstBot(): Promise<{ id: string }> {
   const existing = await rpc.bots.list();
   const reuse = findFirstBot(existing);
-  if (reuse) return reuse;
+  if (reuse) return { id: reuse.id };
   try {
-    const created = await rpc.bots.create({
-      name: FIRST_BOT_NAME,
-      title: "",
-      description: "",
-      instructions: "",
-      notifyOnFinish: true,
-      spawnKey: FIRST_BOT_SPAWN_KEY,
-    });
+    const created = await rpc.bots.create(firstBotProfile());
     return { id: created.id };
   } catch (error) {
     // Another tab won the unique (spaceId, spawnKey) race; reuse that bot only.
     const afterConflict = await rpc.bots.list();
-    const winner = afterConflict.find((bot) => bot.spawnKey === FIRST_BOT_SPAWN_KEY);
+    const winner = findFirstBot(afterConflict);
     if (winner) return { id: winner.id };
     throw error;
   }
@@ -93,15 +81,18 @@ function providerLabel(entry: ModelCatalogEntry): string {
   return entry.provider === "openai-codex" ? "ChatGPT" : (entry.providerName ?? entry.provider);
 }
 
-function nextStepAfterModel(needsIntegrationSetup: boolean): "integrations" | "bot" {
-  return needsIntegrationSetup ? "integrations" : "bot";
+type OnboardingStep = "loading" | "model" | "integrations" | "packs" | "computer" | "bot";
+
+function nextStepAfterModel(needsIntegrationSetup: boolean): Exclude<OnboardingStep, "loading"> {
+  return needsIntegrationSetup ? "integrations" : "packs";
 }
 
 export function OnboardingPage() {
   const { t } = useLingui();
   const navigate = useNavigate();
   const fieldId = useId();
-  const [step, setStep] = useState<"loading" | "model" | "integrations" | "bot">("loading");
+  const [step, setStep] = useState<OnboardingStep>("loading");
+  const [computerHealth, setComputerHealth] = useState<ComputerHealth | null>(null);
   const [integrationSetup, setIntegrationSetup] = useState<IntegrationSetupState | null>(null);
   const needsIntegrationSetup = integrationSetup?.needsSetup ?? false;
   const [integrationServers, setIntegrationServers] = useState<string[]>([]);
@@ -160,7 +151,7 @@ export function OnboardingPage() {
           setProvider(preferred.provider);
           setModelId(preferred.provider === OPENAI_COMPATIBLE_PROVIDER_ID ? "" : preferred.id);
         }
-        setStep(me.needsModel ? "model" : integrations?.needsSetup ? "integrations" : "bot");
+        setStep(me.needsModel ? "model" : integrations?.needsSetup ? "integrations" : "packs");
       })
       .catch(() => setStep("bot"));
     return () => {
@@ -363,7 +354,7 @@ export function OnboardingPage() {
       navigate(`/app/${bot.id}`);
     } catch (err) {
       createStartedRef.current = false;
-      setError(err instanceof Error ? err.message : t`Could not create your bot`);
+      setError(err instanceof Error ? err.message : t`Could not create your coworker`);
     }
   }
 
@@ -372,9 +363,32 @@ export function OnboardingPage() {
     void createFirstBot();
   }, [step]);
 
+  useEffect(() => {
+    if (step !== "computer") return;
+    let cancelled = false;
+    void fetch("/health")
+      .then(async (response) => {
+        if (!response.ok) throw new Error("health");
+        return response.json() as Promise<{ sandbox?: unknown }>;
+      })
+      .then((payload) => {
+        if (!cancelled) setComputerHealth(computerHealthFromPayload(payload));
+      })
+      .catch(() => {
+        if (!cancelled) setComputerHealth(computerHealthFromPayload(null));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [step]);
+
+  const profile = firstBotProfile();
+
   return (
     <div className="min-h-full bg-background px-6 py-12">
       <div className="mx-auto w-full max-w-[560px]">
+        <Wordmark className="mb-10 scale-90 origin-left" />
+        {step !== "loading" ? <OnboardingProgress step={step} /> : null}
         {step === "loading" ? (
           <p className="text-muted-foreground">
             <Trans>Loading…</Trans>
@@ -672,11 +686,15 @@ export function OnboardingPage() {
           <IntegrationSetup
             serverSetup
             initialState={integrationSetup}
-            onDone={() => setStep("bot")}
+            onDone={() => setStep("packs")}
             onServerConnected={(id) =>
               setIntegrationServers((current) => [...new Set([...current, id])])
             }
           />
+        ) : null}
+        {step === "packs" ? <OnboardingPacksStep onContinue={() => setStep("computer")} /> : null}
+        {step === "computer" ? (
+          <OnboardingComputerStep health={computerHealth} onContinue={() => setStep("bot")} />
         ) : null}
         {step === "bot" ? (
           <div>
@@ -688,13 +706,148 @@ export function OnboardingPage() {
                 </Button>
               </div>
             ) : (
-              <p className="text-muted-foreground">
-                <Trans>Opening chat…</Trans>
+              <p className="text-muted-foreground" data-testid="lots-onboarding-opening">
+                <Trans>Opening {profile.name}…</Trans>
               </p>
             )}
           </div>
         ) : null}
       </div>
     </div>
+  );
+}
+
+export function OnboardingPacksStep({ onContinue }: { onContinue: () => void }) {
+  return (
+    <div data-testid="lots-onboarding-packs">
+      <h1 className="text-[32px] font-medium text-foreground">
+        <Trans>Tools they can use</Trans>
+      </h1>
+      <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
+        <Trans>
+          Web Research is on — your coworker can search and read the web. GitHub, Gmail and Calendar
+          connect later, when you need them.
+        </Trans>
+      </p>
+      <ul className="mt-6 space-y-2 text-[14px]">
+        <li className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3">
+          <span>
+            <Trans>Web Research</Trans>
+          </span>
+          <span className="text-[12px] font-medium text-muted-foreground">
+            <Trans>On</Trans>
+          </span>
+        </li>
+        <li className="flex items-center justify-between rounded-2xl border border-dashed border-border px-4 py-3 text-muted-foreground">
+          <span>
+            <Trans>GitHub, Gmail, Calendar</Trans>
+          </span>
+          <span className="text-[12px]">
+            <Trans>Later</Trans>
+          </span>
+        </li>
+      </ul>
+      <Button className="mt-6" data-testid="lots-onboarding-packs-continue" onClick={onContinue}>
+        <Trans>Continue</Trans>
+      </Button>
+    </div>
+  );
+}
+
+export function OnboardingComputerStep({
+  health,
+  onContinue,
+}: {
+  health: ComputerHealth | null;
+  onContinue: () => void;
+}) {
+  return (
+    <div data-testid="lots-onboarding-computer">
+      <h1 className="text-[32px] font-medium text-foreground">
+        <Trans>A place to work</Trans>
+      </h1>
+      <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
+        <Trans>Each coworker already has a computer. This just checks that it is reachable.</Trans>
+      </p>
+      <p
+        className="mt-6 text-[14px] text-foreground/80"
+        data-testid="lots-onboarding-computer-status"
+      >
+        {health === null ? (
+          <Trans>Checking…</Trans>
+        ) : health.ready ? (
+          <Trans>Ready — a computer is available.</Trans>
+        ) : (
+          <Trans>
+            No computer is configured yet. You can still chat; scheduled work that needs a computer
+            will wait.
+          </Trans>
+        )}
+      </p>
+      <Button className="mt-6" data-testid="lots-onboarding-computer-continue" onClick={onContinue}>
+        <Trans>Continue</Trans>
+      </Button>
+    </div>
+  );
+}
+
+function OnboardingProgress({ step }: { step: OnboardingStep }) {
+  const index = onboardingProgressIndex(step);
+  return (
+    <ol className="mb-10 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
+      <OnboardingStepLabel current={false} done>
+        <Trans>Workspace</Trans>
+      </OnboardingStepLabel>
+      <StepSep />
+      <OnboardingStepLabel current={index === 1} done={index > 1}>
+        <Trans>Model</Trans>
+      </OnboardingStepLabel>
+      <StepSep />
+      <OnboardingStepLabel current={index === 2} done={index > 2}>
+        <Trans>Tools</Trans>
+      </OnboardingStepLabel>
+      <StepSep />
+      <OnboardingStepLabel current={index === 3} done={index > 3}>
+        <Trans>Computer</Trans>
+      </OnboardingStepLabel>
+      <StepSep />
+      <OnboardingStepLabel current={index === 4} done={false}>
+        <Trans>Coworker</Trans>
+      </OnboardingStepLabel>
+    </ol>
+  );
+}
+
+function onboardingProgressIndex(step: OnboardingStep): number {
+  if (step === "model" || step === "integrations") return 1;
+  if (step === "packs") return 2;
+  if (step === "computer") return 3;
+  if (step === "bot") return 4;
+  return 0;
+}
+
+function OnboardingStepLabel({
+  current,
+  done,
+  children,
+}: {
+  current: boolean;
+  done: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <li
+      className={current ? "font-medium text-foreground" : done ? "text-foreground/70" : undefined}
+    >
+      {children}
+    </li>
+  );
+}
+
+function StepSep() {
+  return (
+    <li aria-hidden="true" className="text-border">
+      ·
+    </li>
   );
 }

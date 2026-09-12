@@ -77,12 +77,13 @@ Acceptance (unit): `agent-status.test.ts` status table and template tests pass. 
 
 ### Slice 1.4 — Onboarding copy
 
-- [ ] Onboarding steps read: Create workspace → Connect model → Create first agent ("Assistant — General AI coworker for research and organization.") → Enable packs (Web Research on) → Computer check.
-- [ ] The Docker check step calls `/health/computer` (added in Phase 7; until then it reads `sandbox` from `/health`).
+- [x] Onboarding steps read: Create workspace → Connect model → Create first coworker (Assistant — "General AI coworker for research and organization.") → Enable tools (Web Research on) → Computer check.
+- [x] The computer step reads `sandbox` from `/health` (`computerHealthFromPayload` in `@lots/core`). `/health/computer` arrives in Phase 7.
+- [x] First coworker is created from `firstBotProfile()` (Assistant template + `onboarding:first` spawn key). Leftover Chief bots are still reused.
 
-Upstream edit points: `apps/web/src/pages/Onboarding.tsx` (copy + one step).
+Upstream edit points: `apps/web/src/pages/Onboarding.tsx` (copy + packs/computer steps).
 
-Acceptance: first agent created by onboarding is named "Assistant" with the spec description.
+Acceptance (unit): `first-bot.test.ts` — profile name/description and spawn key; computer health table.
 
 ---
 

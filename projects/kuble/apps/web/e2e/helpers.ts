@@ -24,14 +24,18 @@ export async function rpc<T>(page: Page, procedure: string, body: unknown): Prom
   return parsed.json as T;
 }
 
+/** Name of the coworker created during first-run onboarding (spec §38). */
+export const FIRST_ONBOARDING_BOT_NAME = "Assistant";
+
 export async function completeOnboarding(page: Page, testInfo?: TestInfo) {
   await page.waitForURL(/\/(onboarding|app)/, { timeout: 20_000 });
-  // Optional Server integrations step (needsSetup). Skip when shown, then the
-  // first bot is created automatically — land in Chief's chat with no form.
   const integrations = page.getByRole("heading", { name: "Server integrations", exact: true });
-  const chief = page.getByText("Chief").first();
-  await integrations.or(chief).or(page.getByText("Opening chat…")).waitFor({ timeout: 20_000 });
-  if ((await chief.isVisible().catch(() => false)) && page.url().includes("/app")) {
+  const packs = page.getByTestId("lots-onboarding-packs");
+  const computer = page.getByTestId("lots-onboarding-computer");
+  const opening = page.getByTestId("lots-onboarding-opening");
+  const firstBot = page.getByText(FIRST_ONBOARDING_BOT_NAME).first();
+  await integrations.or(packs).or(computer).or(opening).or(firstBot).waitFor({ timeout: 20_000 });
+  if ((await firstBot.isVisible().catch(() => false)) && page.url().includes("/app")) {
     if (testInfo) {
       await captureScreenshot(page, testInfo, "03-create-first-bot");
       await captureScreenshot(page, testInfo, "06-onboarding-complete");
@@ -42,8 +46,15 @@ export async function completeOnboarding(page: Page, testInfo?: TestInfo) {
     if (testInfo) await captureScreenshot(page, testInfo, "02-connect-apps");
     await page.getByRole("button", { name: "Skip", exact: true }).click();
   }
+  if (await packs.isVisible().catch(() => false)) {
+    if (testInfo) await captureScreenshot(page, testInfo, "03-enable-packs");
+    await page.getByTestId("lots-onboarding-packs-continue").click();
+  }
+  if (await computer.isVisible().catch(() => false)) {
+    await page.getByTestId("lots-onboarding-computer-continue").click();
+  }
   await page.waitForURL(/\/app\//, { timeout: 20_000 });
-  await expect(page.getByText("Chief").first()).toBeVisible();
+  await expect(page.getByText(FIRST_ONBOARDING_BOT_NAME).first()).toBeVisible();
   if (testInfo) {
     await captureScreenshot(page, testInfo, "03-create-first-bot");
     await captureScreenshot(page, testInfo, "06-onboarding-complete");
@@ -58,7 +69,7 @@ export async function signup(
   testInfo?: TestInfo,
 ) {
   await page.goto("/sign-up");
-  await expect(page.getByRole("heading", { name: "Create your Rakazo" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Create your Ratatosk workspace" })).toBeVisible();
   if (testInfo) await captureScreenshot(page, testInfo, "01-sign-up");
   await page.getByPlaceholder("Your name").fill(name);
   await page.getByPlaceholder("Your email address").fill(email);

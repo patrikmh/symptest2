@@ -26,7 +26,6 @@ test("onboarding skips model connect when a default model is already available",
     }),
   );
 
-  const createRequest = page.waitForRequest("**/rpc/bots/create");
   const stamp = Date.now();
   await signup(
     page,
@@ -46,16 +45,21 @@ test("onboarding skips model connect when a default model is already available",
     await expect(page.getByRole("button", { name, exact: true })).toBeHidden();
   }
 
+  await expect(page.getByTestId("lots-onboarding-packs")).toBeVisible();
+  const createRequest = page.waitForRequest("**/rpc/bots/create");
+  await page.getByTestId("lots-onboarding-packs-continue").click();
+  await expect(page.getByTestId("lots-onboarding-computer")).toBeVisible();
+  await page.getByTestId("lots-onboarding-computer-continue").click();
+
   expect((await createRequest).postDataJSON()).toMatchObject({
     json: {
-      name: "Chief",
-      title: "",
-      description: "",
-      instructions: "",
+      name: "Assistant",
+      title: "General assistant",
+      description: "General AI coworker for research and organization.",
       spawnKey: "onboarding:first",
     },
   });
-  await expect(page.getByRole("combobox", { name: "Message Chief" })).toBeVisible({
+  await expect(page.getByRole("combobox", { name: "Message Assistant" })).toBeVisible({
     timeout: 20_000,
   });
   await captureScreenshot(page, testInfo, "onboarding-model-auto-skip");
