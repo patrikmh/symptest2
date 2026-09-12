@@ -12,5 +12,8 @@ Calendar.
 - External writes use `lotsEffectIdempotencyKey`. Timeouts become UNKNOWN
   (`uncertain`); `effect.reconcile` looks the action up before anyone retries.
 
-Live GitHub/Gmail/Calendar HTTP execute is not implemented yet. Unconnected
-writes error with “needs a connected account.”
+GitHub, Gmail, and Calendar execute over HTTP with the stored OAuth access
+token. Unconnected tools error with “needs a connected account.” Tokens
+never appear in tool results. `effect.reconcile` looks up gmail.send,
+calendar.createEvent, and GitHub issue/comment creates against the same
+APIs.

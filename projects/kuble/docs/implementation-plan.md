@@ -223,3 +223,13 @@ Acceptance: Journeys 1–5 are automated where the checkout allows and otherwise
 - [x] Computers page: `lots.computers.list/get/health` over existing `Computer` rows and `/health/computer`.
 
 Acceptance (unit): accept creates memberships and claims the invite; Member cannot `get` another user's dedicated computer; Admin `visibleBotOwnerUserId` returns the other owner.
+
+---
+
+## Phase 10 — Live pack execute
+
+- [x] GitHub / Gmail / Calendar HTTP `execute` in `@lots/packs` using the stored OAuth access token (`Connection` + `EncryptedSecretStore`).
+- [x] Connector resolves the token per space/user; missing connection still errors “needs a connected account.”
+- [x] `effect.reconcile` lookup hits the same APIs for `gmail.send`, `calendar.createEvent`, and GitHub issue/comment creates.
+
+Acceptance (unit, mocked fetch): create issue / send mail / create event return sanitized provider fields; no token in the result; reconcile finds a sent Gmail.

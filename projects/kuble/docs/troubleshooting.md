@@ -14,8 +14,8 @@ Settings → Models. Confirm the provider key. Scripted runtime
 ## LOTS is checking whether this action completed
 
 An external write timed out (`uncertain`). Do not retry it in Gmail/GitHub
-by hand. The `effect.reconcile` job looks it up. Until live pack execute
-exists, production lookup is a no-op.
+by hand. The `effect.reconcile` job looks it up on the connected account
+(sent mail, calendar events, GitHub issues/comments).
 
 ## Tools will not connect
 

@@ -1,6 +1,8 @@
 import { createApprovalExpireStore, expireStaleApprovals } from "@lots/approvals";
 import {
   createLotsPacksConnector,
+  createPackAccessTokenResolver,
+  createPackReconcileLookup,
   enabledPackKeys,
   listPackSettingRows,
   lotsEffectIdempotencyKey,
@@ -70,6 +72,13 @@ async function main() {
     publisher: pool,
   });
   const secrets = new EncryptedSecretStore(resolveEncryptionKey(process.env));
+  const resolvePackAccessToken = createPackAccessTokenResolver({
+    prisma,
+    decrypt: (ciphertext, recordId) => secrets.load(ciphertext, recordId),
+  });
+  const packReconcileLookup = createPackReconcileLookup({
+    resolveToken: resolvePackAccessToken,
+  });
   const events = createThreadEvents(prisma, realtime, {
     runSecretWriter: createRunSecretWriter(secrets),
   });
@@ -142,6 +151,7 @@ async function main() {
     createLotsPacksConnector({
       listEnabledPackKeys: async (context) =>
         enabledPackKeys(context.spaceId ? await listPackSettingRows(prisma, context.spaceId) : []),
+      resolveAccessToken: resolvePackAccessToken,
     }),
     new InstalledConnectorProvider(prisma, secrets),
     ...integrationSettings.providers(),
@@ -228,7 +238,7 @@ async function main() {
       });
     },
     reconcileEffects: async (payload) => {
-      await runEffectReconcile(prisma, payload);
+      await runEffectReconcile(prisma, payload, packReconcileLookup);
     },
   });
   await jobHost.start(jobHandlers);

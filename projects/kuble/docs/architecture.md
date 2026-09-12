@@ -44,7 +44,7 @@ See [`upstream-map.md`](./upstream-map.md) for every spec section.
 | Agents and chat persist | Unchanged Rakazo bots/threads |
 | Memory, Docker computer | Unchanged Rakazo |
 | Fyrar, approvals, packs | Phases 3–5 |
-| Idempotent / UNKNOWN writes | Phase 6 (live provider execute still pending) |
+| Idempotent / UNKNOWN writes | Phase 6 + Phase 10 live HTTP execute / reconcile lookup |
 | Credentials stay out of model/logs | Upstream redaction + LOTS key-name redaction |
 | Activity visible | `/app/activity` |
 | Tests | LOTS unit tests + root `kuble` workflow |

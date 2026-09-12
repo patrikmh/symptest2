@@ -18,16 +18,25 @@ export {
 } from "./classification.js";
 export { createLotsPacksConnector } from "./connector.js";
 export {
+  createPackAccessTokenResolver,
+  createPackReconcileLookup,
+  type PackAccessTokenResolver,
+  refreshPackGoogleToken,
+} from "./credentials.js";
+export {
   definePack,
   PACK_CONNECTIONS,
   PACK_KEYS,
   type PackConnection,
   type PackDefinition,
+  type PackExecuteContext,
   type PackKey,
   type PackTool,
   packToolByName,
   packToolRequiresApproval,
 } from "./define-pack.js";
+export { executePackTool, findPackWrite } from "./execute.js";
+export { PackProviderError } from "./http.js";
 export {
   createMemoryCalendar,
   createMemoryGitHub,
@@ -68,4 +77,5 @@ export {
   PACK_SETTING_KIND,
   setPackEnabled,
 } from "./settings.js";
+export { packTokensFromSecret, providerForPackTool, refreshGoogleAccessToken } from "./token.js";
 export { type WebSource, webExtract, webSource, webSummarize } from "./web-research.js";

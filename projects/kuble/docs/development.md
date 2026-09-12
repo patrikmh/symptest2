@@ -37,7 +37,7 @@ Root CI for this monorepo is [`.github/workflows/kuble.yml`](../../.github/workf
 | --- | --- |
 | 1 Agent — create Researcher, chat, reload | Unit: templates + agents page. Admin/Owner open another member's chat via visibility adapters. Manual/Playwright: upstream Shell. |
 | 2 Fyr — “every weekday at 8”, confirm, Run Now | Unit: fyrar RPC + Create Fyr approval. Compose/chat path needs a running app. |
-| 3 Approval — draft email, approve, send | Unit: approvals + pack idempotency. Live Gmail execute is not wired. |
+| 3 Approval — draft email, approve, send | Unit: approvals + pack idempotency + mocked Gmail/GitHub/Calendar HTTP. Live provider calls need a connected account. |
 | 4 Delegation — Researcher → Reviewer | Activity formats `thread.subagent` / `group.handoff`. LotsTeam stores LEAD/SPECIALIST/REVIEWER. Delegation itself is Rakazo `message_bot`. |
 | 5 Restart — stop/start containers | Installer `--update` / Compose restart. Not run here (no Docker). |
 

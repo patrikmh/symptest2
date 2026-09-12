@@ -1,6 +1,17 @@
-import { definePack, type PackDefinition, type PackKey } from "./define-pack.js";
+import {
+  definePack,
+  type PackDefinition,
+  type PackKey,
+  type PackToolExecute,
+} from "./define-pack.js";
+import { executePackTool } from "./execute.js";
 import { reconcilePackWrite } from "./reconcile.js";
 import { webExtract, webSummarize } from "./web-research.js";
+
+const connectedExecute =
+  (name: string): PackToolExecute =>
+  (args, context) =>
+    executePackTool(name, args, context);
 
 const pendingLookup = { find: async () => null };
 
@@ -96,12 +107,14 @@ export const githubPack = definePack({
       name: "github.listRepos",
       classification: "READ",
       description: "List repositories the connected account can see.",
+      execute: connectedExecute("github.listRepos"),
       inputSchema: stringProp("optional query"),
     },
     {
       name: "github.searchRepos",
       classification: "READ",
       description: "Search repositories.",
+      execute: connectedExecute("github.searchRepos"),
       inputSchema: {
         type: "object",
         required: ["query"],
@@ -112,6 +125,7 @@ export const githubPack = definePack({
       name: "github.listIssues",
       classification: "READ",
       description: "List issues in a repository.",
+      execute: connectedExecute("github.listIssues"),
       inputSchema: {
         type: "object",
         required: ["repo"],
@@ -122,6 +136,7 @@ export const githubPack = definePack({
       name: "github.readIssue",
       classification: "READ",
       description: "Read one issue.",
+      execute: connectedExecute("github.readIssue"),
       inputSchema: {
         type: "object",
         required: ["repo", "number"],
@@ -132,6 +147,7 @@ export const githubPack = definePack({
       name: "github.listPulls",
       classification: "READ",
       description: "List pull requests in a repository.",
+      execute: connectedExecute("github.listPulls"),
       inputSchema: {
         type: "object",
         required: ["repo"],
@@ -142,6 +158,7 @@ export const githubPack = definePack({
       name: "github.readPull",
       classification: "READ",
       description: "Read one pull request.",
+      execute: connectedExecute("github.readPull"),
       inputSchema: {
         type: "object",
         required: ["repo", "number"],
@@ -152,6 +169,7 @@ export const githubPack = definePack({
       name: "github.createIssue",
       classification: "EXTERNAL_WRITE",
       description: "Create an issue.",
+      execute: connectedExecute("github.createIssue"),
       reconcile: (args) => catalogReconcile("github.createIssue", args),
       inputSchema: {
         type: "object",
@@ -167,6 +185,7 @@ export const githubPack = definePack({
       name: "github.commentIssue",
       classification: "EXTERNAL_WRITE",
       description: "Comment on an issue.",
+      execute: connectedExecute("github.commentIssue"),
       reconcile: (args) => catalogReconcile("github.commentIssue", args),
       inputSchema: {
         type: "object",
@@ -182,6 +201,7 @@ export const githubPack = definePack({
       name: "github.commentPull",
       classification: "EXTERNAL_WRITE",
       description: "Comment on a pull request.",
+      execute: connectedExecute("github.commentPull"),
       reconcile: (args) => catalogReconcile("github.commentPull", args),
       inputSchema: {
         type: "object",
@@ -197,6 +217,7 @@ export const githubPack = definePack({
       name: "github.mergePull",
       classification: "DESTRUCTIVE",
       description: "Merge a pull request.",
+      execute: connectedExecute("github.mergePull"),
       inputSchema: {
         type: "object",
         required: ["repo", "number"],
@@ -217,6 +238,7 @@ export const gmailPack = definePack({
       name: "gmail.search",
       classification: "READ",
       description: "Search mail.",
+      execute: connectedExecute("gmail.search"),
       inputSchema: {
         type: "object",
         required: ["query"],
@@ -227,6 +249,7 @@ export const gmailPack = definePack({
       name: "gmail.readThread",
       classification: "READ",
       description: "Read a thread.",
+      execute: connectedExecute("gmail.readThread"),
       inputSchema: {
         type: "object",
         required: ["threadId"],
@@ -237,6 +260,7 @@ export const gmailPack = definePack({
       name: "gmail.createDraft",
       classification: "DRAFT",
       description: "Create a draft. Does not send.",
+      execute: connectedExecute("gmail.createDraft"),
       inputSchema: {
         type: "object",
         required: ["to", "subject"],
@@ -251,6 +275,7 @@ export const gmailPack = definePack({
       name: "gmail.send",
       classification: "EXTERNAL_WRITE",
       description: "Send an email.",
+      execute: connectedExecute("gmail.send"),
       reconcile: (args) => catalogReconcile("gmail.send", args),
       inputSchema: {
         type: "object",
@@ -276,12 +301,14 @@ export const calendarPack = definePack({
       name: "calendar.listEvents",
       classification: "READ",
       description: "List upcoming events.",
+      execute: connectedExecute("calendar.listEvents"),
       inputSchema: { type: "object", properties: { calendarId: { type: "string" } } },
     },
     {
       name: "calendar.searchEvents",
       classification: "READ",
       description: "Search events.",
+      execute: connectedExecute("calendar.searchEvents"),
       inputSchema: {
         type: "object",
         required: ["query"],
@@ -292,6 +319,7 @@ export const calendarPack = definePack({
       name: "calendar.checkAvailability",
       classification: "READ",
       description: "Check whether a time is free.",
+      execute: connectedExecute("calendar.checkAvailability"),
       inputSchema: {
         type: "object",
         required: ["start", "end"],
@@ -302,6 +330,7 @@ export const calendarPack = definePack({
       name: "calendar.createEvent",
       classification: "EXTERNAL_WRITE",
       description: "Create an event.",
+      execute: connectedExecute("calendar.createEvent"),
       reconcile: (args) => catalogReconcile("calendar.createEvent", args),
       inputSchema: {
         type: "object",
@@ -317,6 +346,7 @@ export const calendarPack = definePack({
       name: "calendar.updateEvent",
       classification: "EXTERNAL_WRITE",
       description: "Update an event.",
+      execute: connectedExecute("calendar.updateEvent"),
       inputSchema: {
         type: "object",
         required: ["eventId"],
@@ -327,6 +357,7 @@ export const calendarPack = definePack({
       name: "calendar.deleteEvent",
       classification: "DESTRUCTIVE",
       description: "Cancel or delete an event.",
+      execute: connectedExecute("calendar.deleteEvent"),
       inputSchema: {
         type: "object",
         required: ["eventId"],

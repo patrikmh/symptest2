@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
 import {
   createLotsPacksConnector,
+  createPackAccessTokenResolver,
+  createPackReconcileLookup,
   enabledPackKeys,
   listPackSettingRows,
   lotsEffectIdempotencyKey,
@@ -172,6 +174,13 @@ export async function createApp(
         })
       : new InMemoryRealtimeFanout());
   const secrets = new EncryptedSecretStore(env.encryptionKey);
+  const resolvePackAccessToken = createPackAccessTokenResolver({
+    prisma,
+    decrypt: (ciphertext, recordId) => secrets.load(ciphertext, recordId),
+  });
+  const packReconcileLookup = createPackReconcileLookup({
+    resolveToken: resolvePackAccessToken,
+  });
   const events = createThreadEvents(prisma, realtime, {
     runSecretWriter: createRunSecretWriter(secrets),
   });
@@ -279,6 +288,7 @@ export async function createApp(
     createLotsPacksConnector({
       listEnabledPackKeys: async (context) =>
         enabledPackKeys(context.spaceId ? await listPackSettingRows(prisma, context.spaceId) : []),
+      resolveAccessToken: resolvePackAccessToken,
     }),
     installed,
     ...integrationSettings
@@ -413,7 +423,7 @@ export async function createApp(
       await runApprovalExpire(prisma, jobs, payload);
     },
     reconcileEffects: async (payload) => {
-      await runEffectReconcile(prisma, payload);
+      await runEffectReconcile(prisma, payload, packReconcileLookup);
     },
   });
   if (inMemoryJobs) {

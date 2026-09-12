@@ -11,8 +11,15 @@ export type PackKey = (typeof PACK_KEYS)[number];
 export const PACK_CONNECTIONS = ["none", "github", "google"] as const;
 export type PackConnection = (typeof PACK_CONNECTIONS)[number];
 
+export type PackExecuteContext = {
+  accessToken?: string;
+  signal?: AbortSignal;
+  fetchImpl?: typeof fetch;
+};
+
 export type PackToolExecute = (
   args: Record<string, unknown>,
+  context?: PackExecuteContext,
 ) => Promise<Record<string, unknown>> | Record<string, unknown>;
 
 export type PackTool = {

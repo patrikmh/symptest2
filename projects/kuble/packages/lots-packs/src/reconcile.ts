@@ -16,6 +16,8 @@ export type PackReconcileLookup = {
   find: (query: {
     tool: string;
     request: Record<string, unknown>;
+    spaceId?: string;
+    userId?: string;
   }) => Promise<Record<string, unknown> | null | "ambiguous">;
 };
 
@@ -42,6 +44,8 @@ export type EffectReconcileRow = {
   kind: string;
   status: string;
   request: unknown;
+  spaceId?: string;
+  userId?: string;
 };
 
 export type EffectReconcileStore = {
@@ -66,7 +70,14 @@ export async function reconcileUncertainEffects(input: {
       row.request && typeof row.request === "object" && !Array.isArray(row.request)
         ? (row.request as Record<string, unknown>)
         : {};
-    const outcome = await reconcilePackWrite(row.kind, request, input.lookup);
+    const outcome = await reconcilePackWrite(row.kind, request, {
+      find: (query) =>
+        input.lookup.find({
+          ...query,
+          spaceId: row.spaceId ?? query.spaceId,
+          userId: row.userId ?? query.userId,
+        }),
+    });
     if (outcome.status !== "succeeded") continue;
     if (await input.store.markCompleted(row.id, outcome.result)) completed.push(row.id);
   }
@@ -78,9 +89,22 @@ export function createEffectReconcileStore(prisma: object): EffectReconcileStore
     externalEffect: {
       findMany: (args: {
         where: { status: string; id?: string };
-        select: { id: true; kind: true; status: true; request: true };
+        select: {
+          id: true;
+          kind: true;
+          status: true;
+          request: true;
+          spaceId: true;
+          run: { select: { bot: { select: { userId: true } } } };
+        };
         take: number;
-      }) => Promise<EffectReconcileRow[]>;
+      }) => Promise<
+        Array<
+          EffectReconcileRow & {
+            run?: { bot?: { userId?: string } };
+          }
+        >
+      >;
       updateMany: (args: {
         where: { id: string; status: string };
         data: { status: string; result: Record<string, unknown> };
@@ -89,11 +113,26 @@ export function createEffectReconcileStore(prisma: object): EffectReconcileStore
   };
   return {
     async listUncertain(effectId) {
-      return db.externalEffect.findMany({
+      const rows = await db.externalEffect.findMany({
         where: { status: "uncertain", ...(effectId ? { id: effectId } : {}) },
-        select: { id: true, kind: true, status: true, request: true },
+        select: {
+          id: true,
+          kind: true,
+          status: true,
+          request: true,
+          spaceId: true,
+          run: { select: { bot: { select: { userId: true } } } },
+        },
         take: effectId ? 1 : 50,
       });
+      return rows.map((row) => ({
+        id: row.id,
+        kind: row.kind,
+        status: row.status,
+        request: row.request,
+        spaceId: row.spaceId,
+        userId: row.run?.bot?.userId,
+      }));
     },
     async markCompleted(effectId, result) {
       const updated = await db.externalEffect.updateMany({
