@@ -1,4 +1,4 @@
-export const UI_LOCALES = ["en", "de", "ko", "tr", "hi", "pt-BR", "zh-CN", "es", "ru"] as const;
+export const UI_LOCALES = ["en", "de", "ko", "tr", "hi", "pt-BR", "zh-CN", "es", "ru", "sv"] as const;
 
 export type UiLocale = (typeof UI_LOCALES)[number];
 
@@ -14,6 +14,7 @@ export const UI_LOCALE_LABELS: Record<UiLocale, string> = {
   "zh-CN": "简体中文",
   es: "Español",
   ru: "Русский",
+  sv: "Svenska",
 };
 
 /** Return whether a value is one of the supported web UI locales. */
@@ -27,7 +28,8 @@ export function isUiLocale(value: string | null | undefined): value is UiLocale 
     value === "pt-BR" ||
     value === "zh-CN" ||
     value === "es" ||
-    value === "ru"
+    value === "ru" ||
+    value === "sv"
   );
 }
 
@@ -37,6 +39,7 @@ export function normalizeUiLocale(raw: string | null | undefined): UiLocale {
   const normalized = raw.trim().toLowerCase().replace(/_/g, "-");
   if (normalized === "pt" || normalized.startsWith("pt-")) return "pt-BR";
   if (normalized === "es" || normalized.startsWith("es-")) return "es";
+  if (normalized === "sv" || normalized.startsWith("sv-")) return "sv";
   // Simplified Chinese only. Do not fold zh-TW / zh-HK / zh-Hant into zh-CN.
   if (
     normalized === "zh" ||

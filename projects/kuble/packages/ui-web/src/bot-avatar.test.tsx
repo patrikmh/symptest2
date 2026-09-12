@@ -39,7 +39,7 @@ describe("BotAvatar", () => {
     expect(html).toContain("rakazo-bot-avatar-ring");
   });
 
-  it("renders the LOTS mark as a pastel square with a face and no visor", () => {
+  it("renders the Ratatosk mark as a pastel square with a face and no visor", () => {
     const html = renderToString(
       <BotAvatar color="#CDB4F7" identity="researcher" size={40} status="running" variant="lots" />,
     );
@@ -52,7 +52,7 @@ describe("BotAvatar", () => {
     expect(html).not.toContain("rakazo-bot-avatar-ring");
   });
 
-  it("uses the LOTS mark when the avatar style context asks for it", () => {
+  it("uses the Ratatosk mark when the avatar style context asks for it", () => {
     const html = renderToString(
       <AvatarStyleProvider value="lots">
         <BotAvatar color="#FFD86B" identity="assistant" />

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { activeNavKey, LOTS_NAV } from "./nav";
 
-describe("LOTS navigation", () => {
+describe("Ratatosk navigation", () => {
   it("lists the spec §29 items in order, split into two groups", () => {
     expect(LOTS_NAV.map((item) => item.key)).toEqual([
       "inbox",
@@ -21,7 +21,7 @@ describe("LOTS navigation", () => {
     ]);
   });
 
-  it("puts Inbox, Agents and Fyrar in the mobile bar and the rest under More", () => {
+  it("puts Inbox, Coworkers and Fyrar in the mobile bar and the rest under More", () => {
     expect(LOTS_NAV.filter((item) => item.mobile).map((item) => item.key)).toEqual([
       "inbox",
       "agents",

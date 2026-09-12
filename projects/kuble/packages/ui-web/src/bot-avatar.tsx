@@ -169,7 +169,7 @@ export const BotAvatar = memo(function BotAvatar({
 });
 
 /**
- * LOTS agent mark: a rounded pastel square with a simple two-eye face. Identity picks the
+ * Ratatosk agent mark: a rounded pastel square with a simple two-eye face. Identity picks the
  * idle blink pattern and whether the eyes are bars or a smile; working state is shown by the
  * shared eye animation plus a firmer outline.
  */
@@ -409,7 +409,7 @@ export function Wordmark({ className }: { className?: string }) {
   return (
     <div className={cn("flex items-center gap-3", className)}>
       <LotsAvatar color={botColors[2]} identity="lots-wordmark" size={44} isWorking={false} />
-      <span className="text-[28px] font-semibold tracking-tight text-foreground">LOTS</span>
+      <span className="text-[28px] font-semibold tracking-tight text-foreground">Ratatosk</span>
     </div>
   );
 }

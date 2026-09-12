@@ -10,7 +10,7 @@ import { NewAgentDialog } from "./NewAgentDialog";
 
 type LoadState = { kind: "loading" } | { kind: "error" } | { kind: "ready"; bots: Bot[] };
 
-/** Agents grid (spec §31). Reads the upstream bot list; the chat itself is the upstream shell. */
+/** Coworkers grid (spec §31). Reads the upstream bot list; the chat itself is the upstream shell. */
 export function AgentsPage() {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [creating, setCreating] = useState(false);
@@ -30,13 +30,18 @@ export function AgentsPage() {
 
   return (
     <div className="flex h-full flex-col overflow-y-auto px-6 py-8 md:px-10">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-[26px] font-semibold tracking-tight">
-          <Trans>Agents</Trans>
-        </h1>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-[26px] font-semibold tracking-tight">
+            <Trans>Coworkers</Trans>
+          </h1>
+          <p className="mt-1 text-[14px] text-muted-foreground">
+            <Trans>People you can give work to. They remember the conversation.</Trans>
+          </p>
+        </div>
         <Button onClick={() => setCreating(true)} data-testid="lots-new-agent">
           <Plus aria-hidden="true" />
-          <Trans>New agent</Trans>
+          <Trans>New coworker</Trans>
         </Button>
       </div>
 
@@ -58,7 +63,7 @@ export function AgentsPage() {
       ) : state.kind === "error" ? (
         <div className="mt-16 flex flex-col items-center text-center">
           <p className="text-[15px] text-foreground/80">
-            <Trans>Your agents could not be loaded.</Trans>
+            <Trans>Your coworkers could not be loaded.</Trans>
           </p>
           <Button variant="outline" className="mt-4" onClick={() => void load()}>
             <Trans>Try again</Trans>
@@ -68,17 +73,17 @@ export function AgentsPage() {
         <div className="mt-16 flex flex-col items-center text-center">
           <BotAvatar color={BOT_COLORS[2]} identity="empty" size={64} variant="lots" />
           <h2 className="mt-6 text-[18px] font-medium">
-            <Trans>No agents yet</Trans>
+            <Trans>No coworkers yet</Trans>
           </h2>
-          <p className="mt-2 max-w-[380px] text-[14px] text-muted-foreground">
+          <p className="mt-2 max-w-[400px] text-[14px] text-muted-foreground">
             <Trans>
-              An agent is a coworker you keep: it remembers your conversation, can be given tools,
-              and can work on a schedule.
+              A coworker is someone you keep: they remember what you talked about, can use tools,
+              and can repeat work on a schedule.
             </Trans>
           </p>
           <Button className="mt-6" onClick={() => setCreating(true)}>
             <Plus aria-hidden="true" />
-            <Trans>Create your first agent</Trans>
+            <Trans>Add your first coworker</Trans>
           </Button>
         </div>
       ) : (
@@ -99,11 +104,11 @@ export function AgentsPage() {
 function AgentCard({ bot }: { bot: Bot }) {
   const { t } = useLingui();
   const status = agentStatusFromRunStatus(bot.status);
-  const computer = bot.computerMode === "dedicated" ? t`Private computer` : t`Team computer`;
+  const computer = bot.computerMode === "dedicated" ? t`Own computer` : t`Shared computer`;
   return (
     <Link
       to={`/app/${bot.id}`}
-      className="group flex h-full flex-col rounded-3xl border border-border bg-card p-5 shadow-sm transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="group flex h-full flex-col rounded-3xl border border-border bg-card p-5 shadow-sm transition-[transform,box-shadow,border-color] hover:-translate-y-0.5 hover:border-foreground/15 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       data-testid="lots-agent-card"
       data-agent-status={status}
     >
@@ -119,17 +124,19 @@ function AgentCard({ bot }: { bot: Bot }) {
           <div className="flex items-center gap-2">
             <h2 className="truncate text-[16px] font-medium">{bot.name}</h2>
             {bot.unread ? (
-              <span className="size-2 shrink-0 rounded-full bg-foreground">
-                <span className="sr-only">{t`Unread`}</span>
+              <span className="shrink-0 rounded-full bg-foreground px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-background uppercase">
+                <Trans>New</Trans>
               </span>
             ) : null}
           </div>
-          <p className="truncate text-[13px] text-muted-foreground">{bot.title || t`Agent`}</p>
+          <p className="truncate text-[13px] text-muted-foreground">{bot.title || t`Coworker`}</p>
         </div>
         <StatusPill status={status} />
       </div>
       <p className="mt-4 line-clamp-2 min-h-[2.6em] text-[13.5px] leading-snug text-foreground/75">
-        {bot.preview || <span className="text-muted-foreground">{t`No messages yet`}</span>}
+        {bot.preview || (
+          <span className="text-muted-foreground">{t`Say hello to get started`}</span>
+        )}
       </p>
       <p className="mt-4 text-[12px] text-muted-foreground">{computer}</p>
     </Link>
@@ -145,7 +152,7 @@ function StatusPill({ status }: { status: AgentStatus }) {
     ) : status === "ERROR" ? (
       <Trans>Failed</Trans>
     ) : (
-      <Trans>Idle</Trans>
+      <Trans>Ready</Trans>
     );
   return (
     <span

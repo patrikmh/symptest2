@@ -144,7 +144,7 @@ export function GeneralSettingsPanels({
               />
               <span>
                 {style === "lots" ? (
-                  <Trans>LOTS</Trans>
+                  <Trans>Ratatosk</Trans>
                 ) : style === "robot" ? (
                   <Trans>Robot</Trans>
                 ) : (

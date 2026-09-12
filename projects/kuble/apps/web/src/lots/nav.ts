@@ -49,7 +49,7 @@ export const LOTS_NAV: readonly LotsNavItem[] = [
 const CHAT_PATH = /^\/app\/(g\/)?[^/]+$/;
 
 /**
- * Which rail item is active for a path. Agent and group chats belong to Agents; unknown
+ * Which rail item is active for a path. Coworker and group chats belong to Coworkers; unknown
  * paths highlight nothing rather than guessing.
  */
 export function activeNavKey(pathname: string): LotsNavKey | null {

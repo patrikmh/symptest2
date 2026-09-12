@@ -20,7 +20,7 @@ describe("agentStatusFromRunStatus", () => {
     expect(agentStatusFromRunStatus(runStatus)).toBe(expected);
   });
 
-  it("only ever returns one of the four LOTS statuses", () => {
+  it("only ever returns one of the four Ratatosk statuses", () => {
     for (const status of ["queued", "failed", "waiting_input", "idle", "x"]) {
       expect(AGENT_STATUSES).toContain(agentStatusFromRunStatus(status));
     }
@@ -39,6 +39,7 @@ describe("AGENT_TEMPLATES", () => {
     expect(agentTemplate("assistant").description).toBe(
       "General AI coworker for research and organization.",
     );
+    expect(AGENT_TEMPLATES.every((template) => template.suggestedRoutine.length > 0)).toBe(true);
   });
 
   it("gives every template the prompt-injection and approval reminders", () => {

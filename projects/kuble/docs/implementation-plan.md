@@ -17,7 +17,7 @@ Ground rules for every slice:
   - `apps/web/src/lots/` — LOTS pages, navigation frame, agent cards.
   - `apps/api/src/lots/` — `lots.*` oRPC procedures and health sub-routes.
   - `infra/install/` — `install.sh`.
-- Vocabulary stays Rakazo's in code and LOTS's in UI copy (Agent, Fyr, Pack, Approval).
+- Vocabulary stays Rakazo's in code and Ratatosk's in UI copy (Coworker, Fyr, Tool, Approval). See [`brand.md`](./brand.md).
 - Deterministic offline tests by default (Vitest; fake sandbox; scripted runtime;
   model emulator; Composio emulator for Gmail/GitHub/Calendar shapes).
 - `apps/desktop`, `apps/mobile`, `apps/www` remain in the tree but outside LOTS
@@ -38,17 +38,18 @@ Acceptance: both documents exist; every spec section §1–§50 has a row in the
 
 ---
 
-## Phase 1 — LOTS shell
+## Phase 1 — Ratatosk shell
 
-Goal: the app is recognisably LOTS, has the LOTS navigation, lists agents as
-cards, and chat works unchanged on the Rakazo runtime.
+Goal: the app is recognisably Ratatosk, has the Ratatosk navigation, lists
+coworkers as cards, and chat works unchanged on the Rakazo runtime.
 
 ### Slice 1.1 — Branding
 
-- [x] Product name "LOTS" in `apps/web/index.html` (title, PWA title, description), `site.webmanifest`, the `Wordmark`, the Welcome page and the sign-in/sign-up headings.
+- [x] Product name "Ratatosk" in `apps/web/index.html` (title, PWA title, description), `site.webmanifest`, the `Wordmark`, the Welcome page and the sign-in/sign-up headings. Story and vocabulary: [`docs/brand.md`](./brand.md).
 - [x] Pastel agent palette replaces `BOT_COLORS` (`packages/contracts/src/ids.ts`) and `botColors` (`packages/ui-tokens`).
 - [x] New avatar style `"lots"` in `packages/ui-web` (rounded square, pastel fill, two dark eyes, smile variant by identity). New users default to it (Prisma default + migration `20260911000000_lots_avatar_style`); upstream `robot`/`organic` styles remain selectable.
-- [ ] Re-extract Lingui catalogs (`pnpm --filter @rakazo/web intl:extract`) once LOTS copy settles; until then new strings fall back to English.
+- [x] Swedish UI locale (`sv`) for Ratatosk chrome (Medarbetare, Fyrar, Verktyg, Delad/Egen dator). Other strings fall back to English.
+- [ ] Re-extract Lingui catalogs (`pnpm --filter @rakazo/web intl:extract`) once remaining copy settles; until then new strings fall back to English.
 
 Upstream edit points: `apps/web/index.html`, `apps/web/public/site.webmanifest`, `packages/ui-web/src/bot-avatar.tsx` (`LotsAvatar` branch, `Wordmark`), `packages/ui-web/src/avatar-style.tsx` (type union), `packages/contracts/src/{ids,domain}.ts`, `packages/ui-tokens/src/index.ts`, `packages/db/prisma/schema.prisma`, `apps/api/src/router.ts` (avatar style normalisation), `apps/web/src/pages/{Shell,AccountSettingsOverlay,Welcome,Auth}.tsx`.
 
@@ -56,10 +57,10 @@ Acceptance (unit): `bot-avatar.test.tsx` renders the `lots` style with the bot c
 
 ### Slice 1.2 — Navigation frame
 
-- [x] `apps/web/src/lots/LotsFrame.tsx`: persistent left rail with Inbox, Agents, Fyrar, Approvals, Packs, Activity · Computers, Admin, Settings; mobile bottom bar with Inbox, Agents, Fyrar, More.
-- [x] Routes under `/app/*` wrapped in the frame; `/app` lands on Agents. `/app/:botId` and `/app/g/:groupId` keep rendering the upstream `ShellPage` (chat) inside the frame.
+- [x] `apps/web/src/lots/LotsFrame.tsx`: persistent left rail with Inbox, Coworkers, Fyrar, Approvals, Tools, Activity · Computers, Admin, Settings; mobile bottom bar with Inbox, Coworkers, Fyrar, More.
+- [x] Routes under `/app/*` wrapped in the frame; `/app` lands on Coworkers. `/app/:botId` and `/app/g/:groupId` keep rendering the upstream `ShellPage` (chat) inside the frame.
 - [x] Settings opens the upstream settings overlay through `?settings=<section>`.
-- [x] Pages not yet implemented (`PlannedPage`) render a calm empty state naming the phase that delivers them.
+- [x] Pages not yet implemented (`PlannedPage`) render a calm empty state and a next step that already works.
 
 Upstream edit points: `apps/web/src/App.tsx` (route table), `apps/web/src/pages/Shell.tsx` (one effect reading `?settings=`).
 

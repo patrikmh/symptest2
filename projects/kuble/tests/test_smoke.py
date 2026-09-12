@@ -18,6 +18,7 @@ def test_spec_and_phase0_docs_exist():
         "LOTS_MVP_SPEC.md",
         "docs/upstream-map.md",
         "docs/implementation-plan.md",
+        "docs/brand.md",
         "docs/upstream/README.rakazo.md",
     ):
         assert (PROJECT_DIR / relative).is_file(), relative

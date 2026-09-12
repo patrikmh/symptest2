@@ -1,19 +1,22 @@
-# LOTS (project `kuble`)
+# Ratatosk (project `kuble`)
 
-LOTS is a persistent multi-agent workspace: create AI coworkers, chat with them
-continuously, give them tools (Packs), schedule recurring work (Fyrar), let them
-delegate to each other, and approve sensitive actions before they happen.
+Ratatosk is a persistent multi-agent workspace: create AI coworkers, chat
+with them continuously, give them tools, schedule recurring work (Fyrar),
+let them delegate to each other, and approve sensitive actions before they
+happen. See [`docs/brand.md`](./docs/brand.md) for the name and the words
+people see (English *Coworkers* / Swedish *Medarbetare*).
 
 It is a product layer on top of [Rakazo](https://github.com/elie222/rakazo)
 (Apache-2.0), vendored here as a squashed `git subtree`. Rakazo provides the
 agent runtime (Pi), persistent conversations, memory, routines, delegation,
-Docker-backed computers and integrations plumbing. LOTS adds only the product
-surface and the safety/control layer described in
-[`LOTS_MVP_SPEC.md`](./LOTS_MVP_SPEC.md).
+Docker-backed computers and integrations plumbing. Ratatosk adds only the
+product surface and the safety/control layer described in
+[`LOTS_MVP_SPEC.md`](./LOTS_MVP_SPEC.md) (the spec still uses the working
+name LOTS).
 
 ## Status
 
-Phase 0 (upstream inspection) is complete and Phase 1 (LOTS shell) is in
+Phase 0 (upstream inspection) is complete and Phase 1 (Ratatosk shell) is in
 progress. See [`docs/implementation-plan.md`](./docs/implementation-plan.md)
 for the slice-by-slice checklist and
 [`docs/upstream-map.md`](./docs/upstream-map.md) for what is reused from
@@ -22,10 +25,10 @@ Rakazo versus built here.
 ## Layout
 
 ```text
-apps/web, apps/api, apps/worker   Rakazo applications (LOTS code under src/lots/)
-packages/*                        Rakazo packages; LOTS packages are packages/lots-*
+apps/web, apps/api, apps/worker   Rakazo applications (Ratatosk UI under src/lots/)
+packages/*                        Rakazo packages; Ratatosk packages are packages/lots-*
 infra/                            Compose files, sandbox supervisor, computer image, updater
-docs/                             Rakazo docs plus LOTS docs (upstream-map, implementation-plan, …)
+docs/                             Rakazo docs plus Ratatosk docs (brand, upstream-map, plan)
 docs/upstream/README.rakazo.md    The upstream README as imported
 LOTS_MVP_SPEC.md                  The product specification this project implements
 tests/                            Monorepo-level smoke checks (pytest); real tests are TypeScript
@@ -54,8 +57,8 @@ corepack pnpm dev
 ```
 
 Open <http://127.0.0.1:5173>. Upstream's [self-hosting guide](./docs/self-host.md)
-and [computer runtime notes](./docs/computer-runtime.md) still apply. A LOTS
-`install.sh` arrives in Phase 7.
+and [computer runtime notes](./docs/computer-runtime.md) still apply. A
+Ratatosk `install.sh` arrives in Phase 7.
 
 ## Test
 

@@ -7,7 +7,7 @@ import { Link, useLocation } from "react-router-dom";
 import { activeNavKey, LOTS_NAV, type LotsNavItem, type LotsNavKey } from "./nav";
 
 /**
- * Persistent LOTS navigation (spec §29): a left rail on desktop, a bottom bar on mobile.
+ * Persistent Ratatosk navigation (spec §29): a left rail on desktop, a bottom bar on mobile.
  * Pages render inside; the upstream chat shell keeps its own bot sidebar as the second column.
  */
 export function LotsFrame({ children }: { children: ReactNode }) {
@@ -19,10 +19,10 @@ export function LotsFrame({ children }: { children: ReactNode }) {
 
   const labels: Record<LotsNavKey, string> = {
     inbox: t`Inbox`,
-    agents: t`Agents`,
+    agents: t`Coworkers`,
     fyrar: t`Fyrar`,
     approvals: t`Approvals`,
-    packs: t`Packs`,
+    packs: t`Tools`,
     activity: t`Activity`,
     computers: t`Computers`,
     admin: t`Admin`,
@@ -41,11 +41,13 @@ export function LotsFrame({ children }: { children: ReactNode }) {
       >
         <Link
           to="/app/agents"
-          className="mb-6 flex items-center gap-3 rounded-2xl px-2 py-1 xl:px-3"
-          aria-label="LOTS"
+          className="mb-6 flex items-center gap-3 rounded-2xl px-2 py-1 transition-colors hover:bg-sidebar-accent/60 xl:px-3"
+          aria-label="Ratatosk"
         >
           <LotsMark />
-          <span className="hidden text-[19px] font-semibold tracking-tight xl:inline">LOTS</span>
+          <span className="hidden text-[19px] font-semibold tracking-tight xl:inline">
+            Ratatosk
+          </span>
         </Link>
         <ul className="flex flex-col gap-1">
           {primary.map((item) => (
@@ -74,33 +76,43 @@ export function LotsFrame({ children }: { children: ReactNode }) {
           aria-expanded={moreOpen}
           onClick={() => setMoreOpen((open) => !open)}
           className={cn(
-            "flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px]",
-            moreOpen ? "text-foreground" : "text-muted-foreground",
+            "flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] transition-colors",
+            moreOpen ? "font-medium text-foreground" : "text-muted-foreground",
           )}
         >
-          <MoreHorizontal size={20} strokeWidth={1.8} aria-hidden="true" />
+          <MoreHorizontal size={20} strokeWidth={moreOpen ? 2.1 : 1.8} aria-hidden="true" />
           {t`More`}
         </button>
       </nav>
       {moreOpen ? (
-        <div className="absolute inset-x-3 bottom-[68px] z-50 rounded-2xl border border-border bg-card p-2 shadow-lg md:hidden">
-          <ul className="grid grid-cols-2 gap-1">
-            {moreItems.map((item) => (
-              <li key={item.key}>
-                <Link
-                  to={item.href}
-                  className={cn(
-                    "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[14px]",
-                    active === item.key ? "bg-accent text-foreground" : "text-foreground/80",
-                  )}
-                >
-                  <item.icon size={17} strokeWidth={1.8} aria-hidden="true" />
-                  {labels[item.key]}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <>
+          <button
+            type="button"
+            aria-label={t`Close`}
+            className="absolute inset-0 z-40 bg-foreground/10 md:hidden"
+            onClick={() => setMoreOpen(false)}
+          />
+          <div className="absolute inset-x-3 bottom-[68px] z-50 rounded-2xl border border-border bg-card p-2 shadow-lg md:hidden">
+            <ul className="grid grid-cols-2 gap-1">
+              {moreItems.map((item) => (
+                <li key={item.key}>
+                  <Link
+                    to={item.href}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[14px] transition-colors",
+                      active === item.key
+                        ? "bg-accent font-medium text-foreground"
+                        : "text-foreground/80 hover:bg-accent/60",
+                    )}
+                  >
+                    <item.icon size={17} strokeWidth={1.8} aria-hidden="true" />
+                    {labels[item.key]}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
       ) : null}
     </div>
   );
@@ -117,21 +129,27 @@ function RailItem({
 }) {
   const isActive = active === item.key;
   return (
-    <li>
+    <li className="relative">
       <Link
         to={item.href}
         aria-current={isActive ? "page" : undefined}
         title={label}
         className={cn(
-          "flex items-center justify-center gap-3 rounded-2xl px-2 py-2.5 text-[14px] transition-colors xl:justify-start xl:px-3",
+          "flex items-center justify-center gap-3 rounded-2xl px-2 py-2.5 text-[14px] transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 xl:justify-start xl:px-3",
           isActive
-            ? "bg-sidebar-accent text-foreground shadow-sm"
+            ? "bg-sidebar-accent font-medium text-foreground shadow-sm"
             : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
         )}
       >
-        <item.icon size={19} strokeWidth={1.8} aria-hidden="true" />
+        <item.icon size={19} strokeWidth={isActive ? 2.1 : 1.8} aria-hidden="true" />
         <span className="hidden xl:inline">{label}</span>
       </Link>
+      {isActive ? (
+        <span
+          aria-hidden="true"
+          className="absolute -start-2 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-foreground"
+        />
+      ) : null}
     </li>
   );
 }
@@ -151,11 +169,11 @@ function MobileItem({
       to={item.href}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px]",
-        isActive ? "text-foreground" : "text-muted-foreground",
+        "flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] transition-colors",
+        isActive ? "font-medium text-foreground" : "text-muted-foreground",
       )}
     >
-      <item.icon size={20} strokeWidth={1.8} aria-hidden="true" />
+      <item.icon size={20} strokeWidth={isActive ? 2.1 : 1.8} aria-hidden="true" />
       {label}
     </Link>
   );

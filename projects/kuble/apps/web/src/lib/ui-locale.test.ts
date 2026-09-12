@@ -24,6 +24,10 @@ describe("normalizeUiLocale", () => {
     expect(normalizeUiLocale("ru-RU")).toBe("ru");
     expect(normalizeUiLocale("ru_KZ")).toBe("ru");
     expect(normalizeUiLocale(" RU ")).toBe("ru");
+    expect(normalizeUiLocale("sv")).toBe("sv");
+    expect(normalizeUiLocale("sv-SE")).toBe("sv");
+    expect(normalizeUiLocale("sv_FI")).toBe("sv");
+    expect(normalizeUiLocale(" SV ")).toBe("sv");
     expect(normalizeUiLocale("zh-CN")).toBe("zh-CN");
     expect(normalizeUiLocale("zh")).toBe("zh-CN");
     expect(normalizeUiLocale("zh-Hans")).toBe("zh-CN");

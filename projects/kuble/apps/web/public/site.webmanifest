@@ -1,7 +1,7 @@
 {
-  "name": "LOTS",
-  "short_name": "LOTS",
-  "description": "LOTS — your persistent AI coworkers.",
+  "name": "Ratatosk",
+  "short_name": "Ratatosk",
+  "description": "Ratatosk — AI coworkers that remember, run on a schedule and ask before they act.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#050506",

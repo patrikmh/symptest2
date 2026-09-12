@@ -22,7 +22,7 @@ import { McpOAuthCallbackPage } from "./pages/McpOAuthCallback";
 import { ShellPage } from "./pages/Shell";
 
 /**
- * Everything under /app sits inside the LOTS navigation frame (spec §29). Static segments are
+ * Everything under /app sits inside the Ratatosk navigation frame (spec §29). Static segments are
  * ranked above `:botId` by the router, so `/app/agents` never resolves as an agent id.
  */
 const LOTS_ROUTES: readonly { path: string; element: ReactNode }[] = [

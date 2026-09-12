@@ -14,15 +14,15 @@ export function WelcomePage() {
       <div className="flex flex-1 flex-col items-center justify-center gap-11 pb-[90px]">
         <div className="flex items-center gap-[26px]">
           <BotAvatar color={BOT_COLORS[2]} identity="lots" size={88} variant="lots" />
-          <div className="text-[76px] font-semibold leading-none tracking-[-0.03em] text-foreground">
-            LOTS
+          <div className="text-[64px] font-semibold leading-none tracking-[-0.03em] text-foreground md:text-[76px]">
+            Ratatosk
           </div>
         </div>
-        <p className="max-w-[600px] text-center text-[27px] leading-[1.4] text-foreground/75">
+        <p className="max-w-[640px] px-6 text-center text-[24px] leading-[1.4] text-foreground/75 md:text-[27px]">
           <Trans>
-            Persistent AI coworkers
+            AI coworkers that remember, work on a schedule
             <br />
-            you can give real work to.
+            and ask before they act.
           </Trans>
         </p>
         <button

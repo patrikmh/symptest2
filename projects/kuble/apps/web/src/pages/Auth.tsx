@@ -33,9 +33,9 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
   const title = sent ? (
     <Trans>Check your email</Trans>
   ) : mode === "in" ? (
-    <Trans>Sign in to LOTS</Trans>
+    <Trans>Sign in to Ratatosk</Trans>
   ) : mode === "up" ? (
-    <Trans>Create your LOTS workspace</Trans>
+    <Trans>Create your Ratatosk workspace</Trans>
   ) : (
     <Trans>Reset your password</Trans>
   );

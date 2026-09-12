@@ -228,4 +228,18 @@ describe("lingui catalogs", () => {
       'msgstr "{0, plural, one {# модель} few {# модели} many {# моделей} other {# модели}}"',
     );
   });
+
+  it("ships the Swedish runtime catalog with Ratatosk chrome", () => {
+    const catalog = readFileSync(
+      fileURLToPath(new URL("../locales/sv/messages.po", import.meta.url)),
+      "utf8",
+    );
+
+    expect(catalog).toContain('msgid "Coworkers"\nmsgstr "Medarbetare"');
+    expect(catalog).toContain('msgid "Fyrar"\nmsgstr "Fyrar"');
+    expect(catalog).toContain('msgid "Tools"\nmsgstr "Verktyg"');
+    expect(catalog).toContain('msgid "Own computer"\nmsgstr "Egen dator"');
+    expect(catalog).toContain('msgid "Shared computer"\nmsgstr "Delad dator"');
+    expect(catalog).toContain('msgid "Sign in to Ratatosk"\nmsgstr "Logga in på Ratatosk"');
+  });
 });

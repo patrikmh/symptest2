@@ -30,7 +30,7 @@ not depend on any other project.
 | ------- | ----------- |
 | [snake-game](projects/snake-game/) | Single-file HTML5 canvas Snake with power-ups, levels and sound. |
 | [grokcall](projects/grokcall/) | AI phone assistant replacing voicemail via Grok Bot, 46elks & ElevenLabs. |
-| [kuble](projects/kuble/) | LOTS: persistent multi-agent workspace (agents, Fyrar, approvals, packs) built on a vendored Rakazo fork. |
+| [kuble](projects/kuble/) | Ratatosk: persistent multi-agent workspace (coworkers, Fyrar, approvals, tools) built on a vendored Rakazo fork. |
 
 ## Adding a project
 

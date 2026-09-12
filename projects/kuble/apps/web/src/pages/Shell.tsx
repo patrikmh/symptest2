@@ -1599,7 +1599,7 @@ export function ShellPage() {
     }
   }, [active?.id, groupId, inGroup, routines, routinesBotId, searchParams, setSearchParams]);
 
-  // LOTS navigation opens Settings by URL (`?settings=<section>`), then strips the parameter.
+  // Ratatosk navigation opens Settings by URL (`?settings=<section>`), then strips the parameter.
   useEffect(() => {
     const requested = searchParams.get("settings");
     if (requested === null) return;
