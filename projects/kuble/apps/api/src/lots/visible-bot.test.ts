@@ -15,6 +15,7 @@ describe("visibleBotOwnerUserId", () => {
     const prisma = {
       bot: {
         findFirst: vi.fn().mockResolvedValue({ spaceId: "space-1", userId: "user-b" }),
+        findMany: vi.fn().mockResolvedValue([]),
       },
       spaceMember: {
         findUnique: vi.fn().mockResolvedValue({ role: "admin" }),
@@ -28,6 +29,7 @@ describe("visibleBotOwnerUserId", () => {
     const prisma = {
       bot: {
         findFirst: vi.fn().mockResolvedValue({ spaceId: "space-1", userId: "user-b" }),
+        findMany: vi.fn().mockResolvedValue([]),
       },
       spaceMember: {
         findUnique: vi.fn().mockResolvedValue({ role: "member" }),

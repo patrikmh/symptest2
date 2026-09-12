@@ -218,7 +218,7 @@ describe("acceptSpaceInvitation", () => {
     const spaceUpsert = vi.fn().mockResolvedValue({
       id: "sm-new",
       userId: "user-alex",
-      role: "member",
+      role: "admin",
     });
     const updateMany = vi.fn().mockResolvedValue({ count: 1 });
     const tx = {
