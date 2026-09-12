@@ -53,6 +53,9 @@ importers:
       '@lots/core':
         specifier: workspace:*
         version: link:../../packages/lots-core
+      '@lots/packs':
+        specifier: workspace:*
+        version: link:../../packages/lots-packs
       '@orpc/server':
         specifier: 1.15.0
         version: 1.15.0(@opentelemetry/api@1.9.1)(crossws@0.3.5)(ws@8.21.3)
@@ -366,6 +369,9 @@ importers:
       '@lots/approvals':
         specifier: workspace:*
         version: link:../../packages/lots-approvals
+      '@lots/packs':
+        specifier: workspace:*
+        version: link:../../packages/lots-packs
       '@rakazo/adapter-kit':
         specifier: workspace:*
         version: link:../../packages/adapter-kit
@@ -824,6 +830,22 @@ importers:
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.5.0)(jsdom@30.0.1(@noble/hashes@2.3.0))(vite@8.3.0(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.13)(yaml@2.9.0))
 
   packages/lots-core:
+    devDependencies:
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.5.0)(jsdom@30.0.1(@noble/hashes@2.3.0))(vite@8.3.0(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.13)(yaml@2.9.0))
+
+  packages/lots-packs:
+    dependencies:
+      '@rakazo/adapter-kit':
+        specifier: workspace:*
+        version: link:../adapter-kit
+      '@rakazo/core':
+        specifier: workspace:*
+        version: link:../core
     devDependencies:
       typescript:
         specifier: 7.0.2

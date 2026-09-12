@@ -41,6 +41,7 @@ describe("Ratatosk navigation", () => {
     ["/app/fyrar/fyr_123", "fyrar"],
     ["/app/approvals", "approvals"],
     ["/app/packs", "packs"],
+    ["/app/packs/gmail", "packs"],
     ["/app/activity", "activity"],
     ["/app/computers", "computers"],
     ["/app/admin", "admin"],

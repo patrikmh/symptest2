@@ -468,6 +468,41 @@ export const InboxItemSchema = z.object({
 });
 export type InboxItem = z.infer<typeof InboxItemSchema>;
 
+export const PackKeySchema = z.enum(["web", "github", "gmail", "calendar"]);
+export type PackKey = z.infer<typeof PackKeySchema>;
+
+export const PackClassificationSchema = z.enum(["READ", "DRAFT", "EXTERNAL_WRITE", "DESTRUCTIVE"]);
+export type PackClassification = z.infer<typeof PackClassificationSchema>;
+
+export const PackConnectionKindSchema = z.enum(["none", "github", "google"]);
+export type PackConnectionKind = z.infer<typeof PackConnectionKindSchema>;
+
+export const PackToolSchema = z.object({
+  name: z.string(),
+  classification: PackClassificationSchema,
+  description: z.string(),
+  approval: z.boolean(),
+});
+export type PackTool = z.infer<typeof PackToolSchema>;
+
+export const PackSchema = z.object({
+  key: PackKeySchema,
+  name: z.string(),
+  description: z.string(),
+  connection: PackConnectionKindSchema,
+  enabled: z.boolean(),
+  connected: z.boolean(),
+  connectionStatus: z.enum(["none", "pending", "connected", "revoked", "error"]),
+  tools: z.array(PackToolSchema),
+});
+export type Pack = z.infer<typeof PackSchema>;
+
+export const PackConnectResultSchema = z.object({
+  pack: PackSchema,
+  authorizationUrl: z.string().nullable(),
+});
+export type PackConnectResult = z.infer<typeof PackConnectResultSchema>;
+
 export const RoutineSchema = z.object({
   id: Id,
   botId: Id,

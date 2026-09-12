@@ -57,6 +57,7 @@ export function activeNavKey(pathname: string): LotsNavKey | null {
   if (direct) return direct.key === "settings" ? "agents" : direct.key;
   if (pathname === "/app" || pathname === "/app/") return "agents";
   if (pathname.startsWith("/app/fyrar/")) return "fyrar";
+  if (pathname.startsWith("/app/packs/")) return "packs";
   if (CHAT_PATH.test(pathname)) return "agents";
   return null;
 }

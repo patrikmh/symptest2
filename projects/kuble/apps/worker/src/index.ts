@@ -1,4 +1,10 @@
 import { createApprovalExpireStore, expireStaleApprovals } from "@lots/approvals";
+import {
+  createLotsPacksConnector,
+  enabledPackKeys,
+  listPackSettingRows,
+  lotsToolRequiresApproval,
+} from "@lots/packs";
 import type { JobPublisher, JobWorkerHost } from "@rakazo/adapter-kit";
 import { approvalExpireJob, runContinueJob } from "@rakazo/adapter-kit";
 import { ComposioConnector, IntegrationProviderSettings } from "@rakazo/adapters";
@@ -131,6 +137,10 @@ async function main() {
     },
   );
   const stack = createConnectorStack(false, undefined, [
+    createLotsPacksConnector({
+      listEnabledPackKeys: async (context) =>
+        enabledPackKeys(context.spaceId ? await listPackSettingRows(prisma, context.spaceId) : []),
+    }),
     new InstalledConnectorProvider(prisma, secrets),
     ...integrationSettings.providers(),
     mcp,
@@ -172,6 +182,7 @@ async function main() {
       process.env.COMPOSIO_API_KEY ?? "",
       process.env.CURSOR_API_KEY ?? "",
     ].filter(Boolean),
+    toolRequiresApproval: lotsToolRequiresApproval,
     secretStore: secrets,
     deploymentModelKey,
     dataDir,

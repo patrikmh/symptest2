@@ -144,6 +144,7 @@ import {
   toComputerStatus,
 } from "./computer-status.js";
 import { searchIntegrationCatalog } from "./integration-catalog.js";
+import { packOAuthFromEnv } from "./lots/packs.js";
 import { createLotsRouter } from "./lots/router.js";
 import { buildMcpUpdateMaterial } from "./mcp-material.js";
 import {
@@ -4628,6 +4629,8 @@ export function createRouter(deps: RouterDeps) {
       repos,
       jobs: deps.jobs,
       events: deps.events,
+      secrets: deps.secrets,
+      oauth: packOAuthFromEnv(deps.env.webOrigin),
     }),
   });
 }

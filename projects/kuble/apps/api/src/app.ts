@@ -1,5 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
+import {
+  createLotsPacksConnector,
+  enabledPackKeys,
+  listPackSettingRows,
+  lotsToolRequiresApproval,
+} from "@lots/packs";
 import { ORPCError, onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import type {
@@ -267,6 +273,10 @@ export async function createApp(
     pipedream,
   });
   const stack = createConnectorStack(false, composioOverride, [
+    createLotsPacksConnector({
+      listEnabledPackKeys: async (context) =>
+        enabledPackKeys(context.spaceId ? await listPackSettingRows(prisma, context.spaceId) : []),
+    }),
     installed,
     ...integrationSettings
       .providers()
@@ -359,6 +369,7 @@ export async function createApp(
       env.composioApiKey ?? "",
       env.cursorApiKey ?? "",
     ].filter(Boolean),
+    toolRequiresApproval: lotsToolRequiresApproval,
     secretStore: secrets,
     secretHttp: remoteConnectors,
     deploymentModelKey: env.deploymentModelKey,

@@ -159,27 +159,27 @@ Acceptance (e2e C): agent wants to send Gmail (emulated) → approval appears �
 
 ### Slice 5.1 — Pack API
 
-- [ ] `packages/lots-packs`: `definePack({ key, name, description, connection, tools })`, tool `{ name, classification, inputSchema, execute, reconcile? }`; adapter to `ConnectorProvider`; classification → approval gate (`EXTERNAL_WRITE`/`DESTRUCTIVE` require approval).
-- [ ] `LotsPackSetting` (space-wide enable/disable) + `lots.packs.list/enable/disable`.
+- [x] `packages/lots-packs`: `definePack({ key, name, description, connection, tools })`, tool `{ name, classification, inputSchema, execute, reconcile? }`; adapter to `ConnectorProvider`; classification → approval gate (`EXTERNAL_WRITE`/`DESTRUCTIVE` require approval).
+- [x] Pack enable/disable stored as `CapabilityInstall` (`kind: lots-pack`) + `lots.packs.list/enable/disable`.
 
 Acceptance (unit): classification mapping; a pack cannot register a tool without a classification.
 
 ### Slice 5.2 — Web Research
 
-- [ ] Wraps builtin `web_search`/`web_fetch`; adds `web.extract` and `web.summarize`; enabled by default.
+- [x] Wraps builtin `web_search`/`web_fetch`; adds `web.extract` and `web.summarize`; enabled by default.
 
 Acceptance (unit): results carry content, title, URL, timestamp.
 
 ### Slice 5.3 — Shared OAuth + Connections
 
-- [ ] One Google OAuth flow (Gmail + Calendar scopes) and one GitHub OAuth App flow; tokens stored via `EncryptedSecretStore` and `Connection`; `lots.packs.connect/disconnect`.
-- [ ] Packs page grid and detail.
+- [x] One Google OAuth flow (Gmail + Calendar scopes) and one GitHub OAuth App flow; tokens stored via `EncryptedSecretStore` and `Connection`; `lots.packs.connect/disconnect`.
+- [x] Packs page grid and detail.
 
 Acceptance (integration, mocked provider): connect → `Connection.status = connected`; API never returns token material.
 
 ### Slice 5.4–5.6 — GitHub, Gmail, Calendar packs
 
-- [ ] Tools and classifications exactly as spec §24–§26.
+- [x] Tools and classifications exactly as spec §24–§26.
 
 Acceptance (integration with emulators): read tools execute without approval; write tools create PENDING approvals.
 

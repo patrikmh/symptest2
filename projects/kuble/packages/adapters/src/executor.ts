@@ -490,6 +490,8 @@ export interface ExecutorDeps {
   cloudAgent?: CloudAgentConnection | null;
   /** Aborted when createApp stop() begins so in-flight continueRun boot waits exit promptly. */
   shutdownSignal?: AbortSignal;
+  /** Override tool approval (LOTS pack classifications). Defaults to Rakazo heuristics. */
+  toolRequiresApproval?: (toolName: string, viaConnector: boolean) => boolean;
 }
 
 function isAuditableToolResult(value: unknown): value is {
@@ -1796,7 +1798,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
             viaConnector,
           );
           const requiresApprovalByDefault =
-            requiresUnattendedApproval || toolRequiresApproval(name, viaConnector);
+            requiresUnattendedApproval ||
+            (deps.toolRequiresApproval ?? toolRequiresApproval)(name, viaConnector);
           const requiresMandatoryApproval =
             requiresUnattendedApproval || toolRequiresExplicitApproval(name);
           const connectorKind = connectorKindFromToolName(

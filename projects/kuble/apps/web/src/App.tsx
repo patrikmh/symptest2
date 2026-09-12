@@ -20,6 +20,9 @@ import { FyrarPage } from "./lots/FyrarPage";
 import { FyrDetailPage } from "./lots/FyrDetailPage";
 import { InboxPage } from "./lots/InboxPage";
 import { LotsFrame } from "./lots/LotsFrame";
+import { PackDetailPage } from "./lots/PackDetailPage";
+import { PackOAuthPage } from "./lots/PackOAuthPage";
+import { PacksPage } from "./lots/PacksPage";
 import { PlannedPage } from "./lots/PlannedPage";
 import { IntegrationSetupPage } from "./pages/IntegrationSetup";
 import { LocalSettingsPage } from "./pages/LocalSettings";
@@ -37,7 +40,9 @@ const LOTS_ROUTES: readonly { path: string; element: ReactNode }[] = [
   { path: "/app/fyrar", element: <FyrarPage /> },
   { path: "/app/fyrar/:fyrId", element: <FyrDetailPage /> },
   { path: "/app/approvals", element: <ApprovalsPage /> },
-  { path: "/app/packs", element: <PlannedPage section="packs" /> },
+  { path: "/app/packs", element: <PacksPage /> },
+  { path: "/app/packs/oauth", element: <PackOAuthPage /> },
+  { path: "/app/packs/:packKey", element: <PackDetailPage /> },
   { path: "/app/activity", element: <PlannedPage section="activity" /> },
   { path: "/app/computers", element: <PlannedPage section="computers" /> },
   { path: "/app/admin", element: <AdminPage /> },

@@ -19,19 +19,14 @@ type Planned = {
 export function PlannedPage({
   section,
 }: {
-  section: Exclude<LotsNavKey, "agents" | "settings" | "admin" | "fyrar" | "approvals" | "inbox">;
+  section: Exclude<
+    LotsNavKey,
+    "agents" | "settings" | "admin" | "fyrar" | "approvals" | "inbox" | "packs"
+  >;
 }) {
   const { t } = useLingui();
   const coworkers = "/app/agents";
-  const settings = "/app/agents?settings=general";
   const planned: Record<typeof section, Planned> = {
-    packs: {
-      title: t`Tools`,
-      description: t`Web research, GitHub, Gmail and Calendar that your coworkers can use, once you connect them.`,
-      next: t`Connections are managed under Settings for now.`,
-      href: settings,
-      cta: <Trans>Open settings</Trans>,
-    },
     activity: {
       title: t`Activity`,
       description: t`A readable timeline of what your coworkers did, asked and were allowed to do.`,

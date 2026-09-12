@@ -199,7 +199,7 @@ The mapping is applied at the LOTS UI/RPC boundary only.
 | fyrar.list/get/create/update/pause/resume/runNow | **EXISTS** | `routines.*`, `routines.testRun`. |
 | fyrar.runs | **ADAPTER** | new query. |
 | approvals.list/get/approve/reject | **ADAPTER** | `ExternalEffect` + `threads.answer`. |
-| packs.list/connect/disconnect/enable/disable | **ADAPTER** / **NEW** | `connections.*` for connect/disconnect; org-wide enable/disable is a new `LotsPackSetting` row. |
+| packs.list/get/connect/disconnect/complete/enable/disable | **ADAPTER** | Enable/disable is a `CapabilityInstall` (`kind: lots-pack`); connect/disconnect reuse `Connection` + `EncryptedSecretStore` (connector id `lots`). Tokens never appear on the DTO. |
 | computers.list/get/health | **ADAPTER** | `Computer` + supervisor health. |
 | activity.list/get | **ADAPTER** | `Event` + `Run`. |
 | admin.members.list/invite/updateRole | **NEW** | see §6. |

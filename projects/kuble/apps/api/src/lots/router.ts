@@ -1,6 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import type { JobPublisher } from "@rakazo/adapter-kit";
-import type { Actor, Bot } from "@rakazo/contracts";
+import type { EncryptedSecretStore } from "@rakazo/adapters";
+import type { Actor, Bot, PackKey } from "@rakazo/contracts";
 import type { PrismaClient, ThreadEvents } from "@rakazo/db";
 import { getLotsAgent, listLotsAgents } from "./agents.js";
 import { decideApproval, getApproval, LotsApprovalError, listApprovals } from "./approvals.js";
@@ -21,6 +22,16 @@ import {
   listSpaceMembers,
   updateSpaceMemberRole,
 } from "./members.js";
+import {
+  completePackConnect,
+  connectPack,
+  disconnectPack,
+  getPack,
+  LotsPackError,
+  listPacks,
+  type PackOAuthEnv,
+  setPackAvailability,
+} from "./packs.js";
 import { loadSpaceRole } from "./role.js";
 
 function mapAccessError(error: unknown): never {
@@ -33,6 +44,9 @@ function mapAccessError(error: unknown): never {
   if (error instanceof LotsApprovalError) {
     throw new ORPCError(error.code, { message: error.message });
   }
+  if (error instanceof LotsPackError) {
+    throw new ORPCError(error.code, { message: error.message });
+  }
   throw error;
 }
 
@@ -43,8 +57,10 @@ export function createLotsRouter(args: {
   repos: { listBots: (actor: Actor) => Promise<Bot[]> };
   jobs: JobPublisher;
   events: Pick<ThreadEvents, "answerRunInput">;
+  secrets: Pick<EncryptedSecretStore, "put">;
+  oauth: PackOAuthEnv;
 }) {
-  const { authed, prisma, repos, jobs, events } = args;
+  const { authed, prisma, repos, jobs, events, secrets, oauth } = args;
 
   return {
     agents: {
@@ -328,6 +344,79 @@ export function createLotsRouter(args: {
           mapAccessError(error);
         }
       }),
+    },
+    packs: {
+      list: authed.lots.packs.list.handler(async ({ context }: { context: { actor: Actor } }) => {
+        try {
+          return await listPacks(prisma, context.actor);
+        } catch (error) {
+          mapAccessError(error);
+        }
+      }),
+      get: authed.lots.packs.get.handler(
+        async ({ context, input }: { context: { actor: Actor }; input: { packKey: PackKey } }) => {
+          try {
+            return await getPack(prisma, context.actor, input.packKey);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      enable: authed.lots.packs.enable.handler(
+        async ({ context, input }: { context: { actor: Actor }; input: { packKey: PackKey } }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await setPackAvailability(prisma, context.actor, role, input.packKey, true);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      disable: authed.lots.packs.disable.handler(
+        async ({ context, input }: { context: { actor: Actor }; input: { packKey: PackKey } }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await setPackAvailability(prisma, context.actor, role, input.packKey, false);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      connect: authed.lots.packs.connect.handler(
+        async ({ context, input }: { context: { actor: Actor }; input: { packKey: PackKey } }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await connectPack(prisma, context.actor, role, input.packKey, oauth);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      disconnect: authed.lots.packs.disconnect.handler(
+        async ({ context, input }: { context: { actor: Actor }; input: { packKey: PackKey } }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await disconnectPack(prisma, context.actor, role, input.packKey);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      complete: authed.lots.packs.complete.handler(
+        async ({
+          context,
+          input,
+        }: {
+          context: { actor: Actor };
+          input: { code: string; state: string };
+        }) => {
+          try {
+            return await completePackConnect(prisma, context.actor, secrets, oauth, input);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
     },
   };
 }

@@ -52,6 +52,9 @@ import {
   ModelConnectInputSchema,
   ModelCredentialSchema,
   ModelOAuthBeginSchema,
+  PackConnectResultSchema,
+  PackKeySchema,
+  PackSchema,
   ReorderBotsInput,
   RoutineSchema,
   ScratchpadItemSchema,
@@ -796,6 +799,17 @@ export const appContract = {
     },
     inbox: {
       list: oc.output(z.array(InboxItemSchema)),
+    },
+    packs: {
+      list: oc.output(z.array(PackSchema)),
+      get: oc.input(z.object({ packKey: PackKeySchema })).output(PackSchema),
+      enable: oc.input(z.object({ packKey: PackKeySchema })).output(PackSchema),
+      disable: oc.input(z.object({ packKey: PackKeySchema })).output(PackSchema),
+      connect: oc.input(z.object({ packKey: PackKeySchema })).output(PackConnectResultSchema),
+      disconnect: oc.input(z.object({ packKey: PackKeySchema })).output(PackSchema),
+      complete: oc
+        .input(z.object({ code: z.string().min(1), state: z.string().min(1) }))
+        .output(PackSchema),
     },
     admin: {
       members: {

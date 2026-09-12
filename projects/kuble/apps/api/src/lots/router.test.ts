@@ -57,6 +57,8 @@ function lotsDeps(role: string) {
       findMany: vi.fn().mockResolvedValue([]),
     },
     message: { findMany: vi.fn().mockResolvedValue([]) },
+    capabilityInstall: { findMany: vi.fn().mockResolvedValue([]), findFirst: vi.fn() },
+    connection: { findMany: vi.fn().mockResolvedValue([]), findFirst: vi.fn() },
     user: { findUniqueOrThrow: vi.fn(), update: vi.fn() },
     spaceModelPreference: { findFirst: vi.fn().mockResolvedValue(null) },
     deploymentSettings: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -73,6 +75,7 @@ function lotsDeps(role: string) {
     dataDir: "/tmp/rakazo-lots-router-test",
     jobs: { enqueue: vi.fn(), cancel: vi.fn(), close: vi.fn() },
     events: { answerRunInput: vi.fn() },
+    secrets: { put: vi.fn() },
   } as unknown as RouterDeps;
   return { prisma, handler: new RPCHandler(createRouter(deps)) };
 }
