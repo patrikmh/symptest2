@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createLotsPacksConnector } from "./connector.js";
 import { executePackTool, findPackWrite } from "./execute.js";
 import { PackProviderError } from "./http.js";
-import { packTokensFromSecret, refreshGoogleAccessToken } from "./token.js";
+import { applyGoogleAccessToken, packTokensFromSecret, refreshGoogleAccessToken } from "./token.js";
 
 const context = {
   operationId: "test",
@@ -125,6 +125,15 @@ describe("pack tokens", () => {
         fetchImpl: fetchImpl as unknown as typeof fetch,
       }),
     ).resolves.toBe("next");
+  });
+
+  it("keeps the stored refresh token when applying a new access token", () => {
+    expect(
+      applyGoogleAccessToken(
+        JSON.stringify({ access_token: "old", refresh_token: "ref", scope: "gmail" }),
+        "fresh",
+      ),
+    ).toBe(JSON.stringify({ access_token: "fresh", refresh_token: "ref", scope: "gmail" }));
   });
 });
 

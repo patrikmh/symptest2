@@ -231,5 +231,6 @@ Acceptance (unit): accept creates memberships and claims the invite; Member cann
 - [x] GitHub / Gmail / Calendar HTTP `execute` in `@lots/packs` using the stored OAuth access token (`Connection` + `EncryptedSecretStore`).
 - [x] Connector resolves the token per space/user; missing connection still errors “needs a connected account.”
 - [x] `effect.reconcile` lookup hits the same APIs for `gmail.send`, `calendar.createEvent`, and GitHub issue/comment creates.
+- [x] Google 401 refreshes the access token once (`refresh_token` + `GOOGLE_CLIENT_*`) and retries the tool; the new token is persisted when `EncryptedSecretStore.put` is wired.
 
-Acceptance (unit, mocked fetch): create issue / send mail / create event return sanitized provider fields; no token in the result; reconcile finds a sent Gmail.
+Acceptance (unit, mocked fetch): create issue / send mail / create event return sanitized provider fields; no token in the result; reconcile finds a sent Gmail; Gmail 401 → token endpoint → retry succeeds without leaking tokens.

@@ -6,13 +6,14 @@ import type {
 } from "@rakazo/adapter-kit";
 import { LOTS_PACKS } from "./catalog.js";
 import { classificationRequiresApproval, normalizePackToolName } from "./classification.js";
-import type { PackAccessTokenResolver } from "./credentials.js";
-import type { PackKey } from "./define-pack.js";
+import type { PackAccessTokenResolver, PackGoogleRefresh } from "./credentials.js";
+import type { PackDefinition, PackKey, PackTool } from "./define-pack.js";
 import { PackProviderError } from "./http.js";
 
 export function createLotsPacksConnector(input: {
   listEnabledPackKeys: (context: AdapterContext) => Promise<Iterable<string>>;
   resolveAccessToken?: PackAccessTokenResolver;
+  refreshGoogleToken?: PackGoogleRefresh;
   fetchImpl?: typeof fetch;
 }): ConnectorProvider {
   return {
@@ -70,20 +71,30 @@ export function createLotsPacksConnector(input: {
           try {
             yield {
               type: "result",
-              data: await tool.execute(call.args, {
-                accessToken,
-                signal: context.signal,
-                fetchImpl: input.fetchImpl,
-              }),
+              data: await runPackTool(tool, call.args, accessToken, context, input.fetchImpl),
             };
           } catch (error) {
-            yield {
-              type: "error",
-              message:
-                error instanceof PackProviderError
-                  ? error.message
-                  : "The provider did not accept that request.",
-            };
+            const retried = await retryGoogleAfterUnauthorized({
+              error,
+              pack,
+              accessToken,
+              refreshGoogleToken: input.refreshGoogleToken,
+              context,
+              fetchImpl: input.fetchImpl,
+            });
+            if (retried) {
+              try {
+                yield {
+                  type: "result",
+                  data: await runPackTool(tool, call.args, retried, context, input.fetchImpl),
+                };
+                return;
+              } catch (retryError) {
+                yield { type: "error", message: packExecuteError(retryError) };
+                return;
+              }
+            }
+            yield { type: "error", message: packExecuteError(error) };
           }
           return;
         }
@@ -95,4 +106,46 @@ export function createLotsPacksConnector(input: {
 
 export function isEnabledPackKey(key: string, enabled: Iterable<string>): key is PackKey {
   return [...enabled].includes(key);
+}
+
+function runPackTool(
+  tool: PackTool,
+  args: Record<string, unknown>,
+  accessToken: string | undefined,
+  context: AdapterContext,
+  fetchImpl?: typeof fetch,
+): Promise<Record<string, unknown>> {
+  return tool.execute!(args, {
+    accessToken,
+    signal: context.signal,
+    fetchImpl,
+  });
+}
+
+function packExecuteError(error: unknown): string {
+  return error instanceof PackProviderError
+    ? error.message
+    : "The provider did not accept that request.";
+}
+
+async function retryGoogleAfterUnauthorized(input: {
+  error: unknown;
+  pack: PackDefinition;
+  accessToken: string | undefined;
+  refreshGoogleToken?: PackGoogleRefresh;
+  context: AdapterContext;
+  fetchImpl?: typeof fetch;
+}): Promise<string | null> {
+  if (!(input.error instanceof PackProviderError) || input.error.code !== "unauthorized") {
+    return null;
+  }
+  if (input.pack.connection !== "google" || !input.accessToken || !input.refreshGoogleToken) {
+    return null;
+  }
+  try {
+    const next = await input.refreshGoogleToken(input.context, input.fetchImpl);
+    return next && next !== input.accessToken ? next : null;
+  } catch {
+    return null;
+  }
 }

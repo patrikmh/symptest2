@@ -25,12 +25,17 @@ export function packTokensFromSecret(raw: string): PackTokenSecret | null {
   }
 }
 
-export async function refreshGoogleAccessToken(input: {
+export type GoogleRefreshedTokens = {
+  accessToken: string;
+  refreshToken: string | null;
+};
+
+export async function refreshGoogleTokens(input: {
   refreshToken: string;
   clientId: string;
   clientSecret: string;
   fetchImpl?: typeof fetch;
-}): Promise<string | null> {
+}): Promise<GoogleRefreshedTokens | null> {
   const fetchImpl = input.fetchImpl ?? fetch;
   const body = new URLSearchParams({
     grant_type: "refresh_token",
@@ -46,10 +51,50 @@ export async function refreshGoogleAccessToken(input: {
       signal: AbortSignal.timeout(10_000),
     });
     if (!response.ok) return null;
-    const parsed = (await response.json()) as { access_token?: unknown };
-    return typeof parsed.access_token === "string" ? parsed.access_token : null;
+    const parsed = (await response.json()) as {
+      access_token?: unknown;
+      refresh_token?: unknown;
+    };
+    if (typeof parsed.access_token !== "string" || !parsed.access_token.trim()) return null;
+    return {
+      accessToken: parsed.access_token.trim(),
+      refreshToken:
+        typeof parsed.refresh_token === "string" ? parsed.refresh_token.trim() || null : null,
+    };
   } catch {
     return null;
+  }
+}
+
+export async function refreshGoogleAccessToken(input: {
+  refreshToken: string;
+  clientId: string;
+  clientSecret: string;
+  fetchImpl?: typeof fetch;
+}): Promise<string | null> {
+  return (await refreshGoogleTokens(input))?.accessToken ?? null;
+}
+
+/** Keep the stored OAuth JSON, replacing only the access token (and refresh if Google rotated it). */
+export function applyGoogleAccessToken(
+  rawSecret: string,
+  accessToken: string,
+  refreshToken?: string | null,
+): string {
+  try {
+    const parsed = JSON.parse(rawSecret) as Record<string, unknown>;
+    parsed.access_token = accessToken;
+    if (typeof parsed.accessToken === "string") parsed.accessToken = accessToken;
+    if (refreshToken) {
+      parsed.refresh_token = refreshToken;
+      if (typeof parsed.refreshToken === "string") parsed.refreshToken = refreshToken;
+    }
+    return JSON.stringify(parsed);
+  } catch {
+    return JSON.stringify({
+      access_token: accessToken,
+      ...(refreshToken ? { refresh_token: refreshToken } : {}),
+    });
   }
 }
 

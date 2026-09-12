@@ -21,7 +21,8 @@ by hand. The `effect.reconcile` job looks it up on the connected account
 
 OAuth redirect is `${WEB_ORIGIN}/app/packs/oauth`. Set
 `GOOGLE_CLIENT_ID` / `GITHUB_CLIENT_ID` (or the `LOTS_*` aliases) and the
-matching secrets.
+matching secrets. A Gmail or Calendar 401 refreshes the Google access
+token once and writes it back; if refresh fails, reconnect the account.
 
 ## An invite does not appear
 

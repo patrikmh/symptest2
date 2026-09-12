@@ -39,3 +39,13 @@ export function githubAuthorizeUrl(input: {
 export function packOAuthRedirectUri(webOrigin: string): string {
   return `${webOrigin.replace(/\/$/, "")}/app/packs/oauth`;
 }
+
+export function googleOAuthClientsFromEnv(env: NodeJS.ProcessEnv = process.env): {
+  clientId?: string;
+  clientSecret?: string;
+} {
+  return {
+    clientId: env.GOOGLE_CLIENT_ID ?? env.LOTS_GOOGLE_CLIENT_ID,
+    clientSecret: env.GOOGLE_CLIENT_SECRET ?? env.LOTS_GOOGLE_CLIENT_SECRET,
+  };
+}

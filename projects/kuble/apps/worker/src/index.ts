@@ -2,11 +2,14 @@ import { createApprovalExpireStore, expireStaleApprovals } from "@lots/approvals
 import {
   createLotsPacksConnector,
   createPackAccessTokenResolver,
+  createPackGoogleRefresh,
   createPackReconcileLookup,
   enabledPackKeys,
+  googleOAuthClientsFromEnv,
   listPackSettingRows,
   lotsEffectIdempotencyKey,
   lotsToolRequiresApproval,
+  packSecretPutFromStore,
   runEffectReconcile,
 } from "@lots/packs";
 import type { JobPublisher, JobWorkerHost } from "@rakazo/adapter-kit";
@@ -75,6 +78,12 @@ async function main() {
   const resolvePackAccessToken = createPackAccessTokenResolver({
     prisma,
     decrypt: (ciphertext, recordId) => secrets.load(ciphertext, recordId),
+  });
+  const refreshGoogleToken = createPackGoogleRefresh({
+    prisma,
+    decrypt: (ciphertext, recordId) => secrets.load(ciphertext, recordId),
+    put: packSecretPutFromStore(secrets),
+    ...googleOAuthClientsFromEnv(),
   });
   const packReconcileLookup = createPackReconcileLookup({
     resolveToken: resolvePackAccessToken,
@@ -152,6 +161,7 @@ async function main() {
       listEnabledPackKeys: async (context) =>
         enabledPackKeys(context.spaceId ? await listPackSettingRows(prisma, context.spaceId) : []),
       resolveAccessToken: resolvePackAccessToken,
+      refreshGoogleToken,
     }),
     new InstalledConnectorProvider(prisma, secrets),
     ...integrationSettings.providers(),

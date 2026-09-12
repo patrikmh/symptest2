@@ -19,8 +19,12 @@ export {
 export { createLotsPacksConnector } from "./connector.js";
 export {
   createPackAccessTokenResolver,
+  createPackGoogleRefresh,
   createPackReconcileLookup,
   type PackAccessTokenResolver,
+  type PackGoogleRefresh,
+  type PackSecretPut,
+  packSecretPutFromStore,
   refreshPackGoogleToken,
 } from "./credentials.js";
 export {
@@ -50,6 +54,7 @@ export {
   GOOGLE_SCOPES,
   githubAuthorizeUrl,
   googleAuthorizeUrl,
+  googleOAuthClientsFromEnv,
   packOAuthRedirectUri,
 } from "./oauth.js";
 export {
@@ -77,5 +82,11 @@ export {
   PACK_SETTING_KIND,
   setPackEnabled,
 } from "./settings.js";
-export { packTokensFromSecret, providerForPackTool, refreshGoogleAccessToken } from "./token.js";
+export {
+  applyGoogleAccessToken,
+  packTokensFromSecret,
+  providerForPackTool,
+  refreshGoogleAccessToken,
+  refreshGoogleTokens,
+} from "./token.js";
 export { type WebSource, webExtract, webSource, webSummarize } from "./web-research.js";

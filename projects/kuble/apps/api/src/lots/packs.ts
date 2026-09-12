@@ -5,6 +5,7 @@ import {
   enabledPackKeys,
   githubAuthorizeUrl,
   googleAuthorizeUrl,
+  googleOAuthClientsFromEnv,
   isPackKey,
   LOTS_PACKS,
   listPackSettingRows,
@@ -326,10 +327,11 @@ export function packOAuthFromEnv(
   webOrigin: string,
   env: NodeJS.ProcessEnv = process.env,
 ): PackOAuthEnv {
+  const google = googleOAuthClientsFromEnv(env);
   return {
     webOrigin,
-    googleClientId: env.GOOGLE_CLIENT_ID ?? env.LOTS_GOOGLE_CLIENT_ID,
-    googleClientSecret: env.GOOGLE_CLIENT_SECRET ?? env.LOTS_GOOGLE_CLIENT_SECRET,
+    googleClientId: google.clientId,
+    googleClientSecret: google.clientSecret,
     githubClientId: env.GITHUB_CLIENT_ID ?? env.LOTS_GITHUB_CLIENT_ID,
     githubClientSecret: env.GITHUB_CLIENT_SECRET ?? env.LOTS_GITHUB_CLIENT_SECRET,
   };

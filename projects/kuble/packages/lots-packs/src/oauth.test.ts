@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { githubAuthorizeUrl, googleAuthorizeUrl, packOAuthRedirectUri } from "./oauth.js";
+import {
+  githubAuthorizeUrl,
+  googleAuthorizeUrl,
+  googleOAuthClientsFromEnv,
+  packOAuthRedirectUri,
+} from "./oauth.js";
 
 describe("pack OAuth URLs", () => {
   it("builds a Google authorize URL with Gmail and Calendar scopes", () => {
@@ -32,5 +37,21 @@ describe("pack OAuth URLs", () => {
     expect(packOAuthRedirectUri("http://127.0.0.1:5173/")).toBe(
       "http://127.0.0.1:5173/app/packs/oauth",
     );
+  });
+
+  it("reads Google clients from GOOGLE_* or LOTS_GOOGLE_*", () => {
+    expect(
+      googleOAuthClientsFromEnv({
+        LOTS_GOOGLE_CLIENT_ID: "lots-id",
+        LOTS_GOOGLE_CLIENT_SECRET: "lots-secret",
+      }),
+    ).toEqual({ clientId: "lots-id", clientSecret: "lots-secret" });
+    expect(
+      googleOAuthClientsFromEnv({
+        GOOGLE_CLIENT_ID: "id",
+        GOOGLE_CLIENT_SECRET: "secret",
+        LOTS_GOOGLE_CLIENT_ID: "lots-id",
+      }),
+    ).toEqual({ clientId: "id", clientSecret: "secret" });
   });
 });

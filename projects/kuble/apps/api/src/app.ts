@@ -3,11 +3,14 @@ import { rm } from "node:fs/promises";
 import {
   createLotsPacksConnector,
   createPackAccessTokenResolver,
+  createPackGoogleRefresh,
   createPackReconcileLookup,
   enabledPackKeys,
+  googleOAuthClientsFromEnv,
   listPackSettingRows,
   lotsEffectIdempotencyKey,
   lotsToolRequiresApproval,
+  packSecretPutFromStore,
   runEffectReconcile,
 } from "@lots/packs";
 import { ORPCError, onError } from "@orpc/server";
@@ -178,6 +181,12 @@ export async function createApp(
     prisma,
     decrypt: (ciphertext, recordId) => secrets.load(ciphertext, recordId),
   });
+  const refreshGoogleToken = createPackGoogleRefresh({
+    prisma,
+    decrypt: (ciphertext, recordId) => secrets.load(ciphertext, recordId),
+    put: packSecretPutFromStore(secrets),
+    ...googleOAuthClientsFromEnv(),
+  });
   const packReconcileLookup = createPackReconcileLookup({
     resolveToken: resolvePackAccessToken,
   });
@@ -289,6 +298,7 @@ export async function createApp(
       listEnabledPackKeys: async (context) =>
         enabledPackKeys(context.spaceId ? await listPackSettingRows(prisma, context.spaceId) : []),
       resolveAccessToken: resolvePackAccessToken,
+      refreshGoogleToken,
     }),
     installed,
     ...integrationSettings
