@@ -11,7 +11,7 @@ export const ActorSchema = z.object({
 });
 export type Actor = z.infer<typeof ActorSchema>;
 
-/** LOTS agent palette: pastel fills that keep dark eyes and black type legible. */
+/** Ratatosk agent palette: pastel fills that keep dark eyes and black type legible. */
 export const BOT_COLORS = [
   "#FFD86B",
   "#9AD0F5",

@@ -80,7 +80,7 @@ msgid "Shared computer"
 msgstr "Delad dator"
 
 msgid "New"
-msgstr "Nytt"
+msgstr "Ny"
 
 msgid "Say hello to get started"
 msgstr "Säg hej för att komma igång"

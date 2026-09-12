@@ -79,7 +79,12 @@ export function PlannedPage({ section }: { section: Exclude<LotsNavKey, "agents"
         <div className="max-w-[460px] rounded-3xl border border-border bg-card px-8 py-10 shadow-sm">
           <p className="text-[15px] leading-relaxed text-foreground/80">{page.description}</p>
           <p className="mt-4 text-[13.5px] leading-relaxed text-muted-foreground">{page.next}</p>
-          <Button variant="outline" className="mt-6" render={<Link to={page.href} />}>
+          <Button
+            variant="outline"
+            className="mt-6"
+            nativeButton={false}
+            render={<Link to={page.href} />}
+          >
             {page.cta}
           </Button>
         </div>
