@@ -48,6 +48,10 @@ function lotsDeps(role: string) {
       findMany: vi.fn().mockResolvedValue([otherBotRow]),
     },
     run: { findMany: vi.fn().mockResolvedValue([]) },
+    routine: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
     user: { findUniqueOrThrow: vi.fn(), update: vi.fn() },
     spaceModelPreference: { findFirst: vi.fn().mockResolvedValue(null) },
     deploymentSettings: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -62,6 +66,7 @@ function lotsDeps(role: string) {
       sandboxProvider: "fake",
     },
     dataDir: "/tmp/rakazo-lots-router-test",
+    jobs: { enqueue: vi.fn(), cancel: vi.fn(), close: vi.fn() },
   } as unknown as RouterDeps;
   return { prisma, handler: new RPCHandler(createRouter(deps)) };
 }
@@ -72,6 +77,17 @@ async function getAgent(handler: RPCHandler<unknown>, userId: string, botId = "b
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ json: { botId } }),
+    }),
+    { prefix: "/rpc", context: { actor: actor(userId) } },
+  );
+}
+
+async function getFyr(handler: RPCHandler<unknown>, userId: string, fyrId = "fyr-b") {
+  return handler.handle(
+    new Request("http://127.0.0.1/rpc/lots/fyrar/get", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ json: { fyrId } }),
     }),
     { prefix: "/rpc", context: { actor: actor(userId) } },
   );
@@ -94,6 +110,51 @@ describe("lots.agents.get", () => {
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toEqual({
         json: expect.objectContaining({ id: "bot-b", name: "B's coworker" }),
+      });
+    }
+  });
+});
+
+const otherFyrRow = {
+  id: "fyr-b",
+  spaceId,
+  botId: "bot-b",
+  userId: "user-b",
+  name: "Morning brief",
+  prompt: "Summarise overnight email",
+  crons: ["0 9 * * 1-5"],
+  timezone: "UTC",
+  active: true,
+  nextRunAt: new Date("2026-09-14T09:00:00.000Z"),
+  lastRunAt: null,
+  createdAt: new Date("2026-09-12T00:00:00.000Z"),
+  bot: { name: "B's coworker", userId: "user-b", archivedAt: null },
+};
+
+describe("lots.fyrar.get", () => {
+  it("returns 404 when a Member asks for another member's fyr", async () => {
+    const { prisma, handler } = lotsDeps("member");
+    vi.mocked(prisma.routine.findFirst).mockResolvedValue(otherFyrRow as never);
+    const { response } = await getFyr(handler, "user-a");
+    expect(response.status).toBe(404);
+  });
+
+  it("returns the fyr for Admin and Owner", async () => {
+    for (const [role, userId] of [
+      ["admin", "admin-1"],
+      ["owner", "owner-1"],
+    ] as const) {
+      const { prisma, handler } = lotsDeps(role);
+      vi.mocked(prisma.routine.findFirst).mockResolvedValue(otherFyrRow as never);
+      const { response } = await getFyr(handler, userId);
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual({
+        json: expect.objectContaining({
+          id: "fyr-b",
+          name: "Morning brief",
+          botName: "B's coworker",
+          schedule: "Weekdays at 9:00 AM",
+        }),
       });
     }
   });

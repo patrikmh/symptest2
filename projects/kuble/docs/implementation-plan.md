@@ -116,22 +116,22 @@ Acceptance (integration): invite creates an `Invitation`; role change to OWNER/A
 
 ### Slice 3.1 — Fyrar RPC facade
 
-- [ ] `lots.fyrar.list/get/create/update/pause/resume/runNow/runs` mapping to `routines.*`, `routines.testRun`, and a new `Run where routineId` query.
-- [ ] Status mapping to `QUEUED | RUNNING | WAITING_APPROVAL | SUCCEEDED | FAILED | CANCELLED`.
+- [x] `lots.fyrar.list/get/create/update/pause/resume/runNow/runs` mapping to `routines.*`, `routines.testRun`, and a new `Run where routineId` query.
+- [x] Status mapping to `QUEUED | RUNNING | WAITING_APPROVAL | SUCCEEDED | FAILED | CANCELLED`.
 
 Acceptance (integration): create → runNow → run appears in `fyrar.runs` and result message lands in the agent thread (fake sandbox, scripted runtime).
 
 ### Slice 3.2 — Fyrar UI
 
-- [ ] Fyrar page cards (name, agent, schedule in words, next run, Run now / Pause).
-- [ ] Fyr detail: instruction, schedule, agent, run history, latest result, edit.
-- [ ] "Create Fyr" from the agent detail panel.
+- [x] Fyrar page cards (name, agent, schedule in words, next run, Run now / Pause).
+- [x] Fyr detail: instruction, schedule, agent, run history, latest result, edit.
+- [x] "Create Fyr" from the agent detail panel.
 
 Acceptance (e2e B): Create Fyr → run now → result appears in chat.
 
 ### Slice 3.3 — Propose from chat
 
-- [ ] `schedule_create` marked approval-required via the existing gate; ask card rendered as "Create Fyr?" with name and schedule; confirm creates the routine.
+- [x] `schedule_create` marked approval-required via the existing gate; ask card rendered as "Create Fyr?" with name and schedule; confirm creates the routine.
 
 Acceptance (integration): scripted bot calls `schedule_create` → run enters `waiting_input` → answer allow → routine exists.
 

@@ -113,14 +113,14 @@ export function RoutineListHeader({ onCreate }: { onCreate: () => void }) {
   return (
     <div className="mt-[30px] mb-3 flex items-center justify-between gap-3">
       <div className="text-sm text-muted-foreground">
-        <Trans>Routines</Trans>
+        <Trans>Fyrar</Trans>
       </div>
       <Button
         variant="secondary"
         size="icon-sm"
         data-testid="routine-create-button"
-        aria-label={t`Create Routine`}
-        title={t`Create Routine`}
+        aria-label={t`Create Fyr`}
+        title={t`Create Fyr`}
         onClick={onCreate}
       >
         <Plus strokeWidth={1.9} />

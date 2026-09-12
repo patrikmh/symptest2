@@ -371,6 +371,62 @@ export const UpdateBotInput = z
     }
   });
 
+export const FyrRunStatusSchema = z.enum([
+  "QUEUED",
+  "RUNNING",
+  "WAITING_APPROVAL",
+  "SUCCEEDED",
+  "FAILED",
+  "CANCELLED",
+]);
+export type FyrRunStatus = z.infer<typeof FyrRunStatusSchema>;
+
+export const FyrSchema = z.object({
+  id: Id,
+  botId: Id,
+  botName: z.string(),
+  name: z.string(),
+  instruction: z.string(),
+  crons: z.array(z.string()),
+  schedule: z.string(),
+  timezone: z.string(),
+  enabled: z.boolean(),
+  nextRunAt: z.string().nullable(),
+  lastRunAt: z.string().nullable(),
+  createdAt: z.string(),
+});
+export type Fyr = z.infer<typeof FyrSchema>;
+
+export const FyrRunSchema = z.object({
+  id: Id,
+  fyrId: Id,
+  status: FyrRunStatusSchema,
+  createdAt: z.string(),
+  completedAt: z.string().nullable(),
+  error: z.string().nullable(),
+});
+export type FyrRun = z.infer<typeof FyrRunSchema>;
+
+export const CreateFyrInput = z.object({
+  botId: Id,
+  name: z.string().trim().min(1).max(80),
+  instruction: z.string().trim().min(1),
+  crons: z.array(z.string().min(1)).min(1),
+  timezone: z.string().default("UTC"),
+  enabled: z.boolean().default(true),
+});
+export type CreateFyrInput = z.infer<typeof CreateFyrInput>;
+
+export const UpdateFyrInput = z.object({
+  fyrId: Id,
+  name: z.string().trim().min(1).max(80).optional(),
+  instruction: z.string().trim().min(1).optional(),
+  crons: z.array(z.string().min(1)).min(1).optional(),
+  timezone: z.string().optional(),
+  enabled: z.boolean().optional(),
+});
+export type UpdateFyrInput = z.infer<typeof UpdateFyrInput>;
+
 export const RoutineSchema = z.object({
   id: Id,
   botId: Id,

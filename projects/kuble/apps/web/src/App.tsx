@@ -15,6 +15,8 @@ import {
 } from "./lib/session-gate";
 import { AdminPage } from "./lots/AdminPage";
 import { AgentsPage } from "./lots/AgentsPage";
+import { FyrarPage } from "./lots/FyrarPage";
+import { FyrDetailPage } from "./lots/FyrDetailPage";
 import { LotsFrame } from "./lots/LotsFrame";
 import { PlannedPage } from "./lots/PlannedPage";
 import { IntegrationSetupPage } from "./pages/IntegrationSetup";
@@ -30,7 +32,8 @@ const LOTS_ROUTES: readonly { path: string; element: ReactNode }[] = [
   { path: "/app", element: <AgentsPage /> },
   { path: "/app/agents", element: <AgentsPage /> },
   { path: "/app/inbox", element: <PlannedPage section="inbox" /> },
-  { path: "/app/fyrar", element: <PlannedPage section="fyrar" /> },
+  { path: "/app/fyrar", element: <FyrarPage /> },
+  { path: "/app/fyrar/:fyrId", element: <FyrDetailPage /> },
   { path: "/app/approvals", element: <PlannedPage section="approvals" /> },
   { path: "/app/packs", element: <PlannedPage section="packs" /> },
   { path: "/app/activity", element: <PlannedPage section="activity" /> },

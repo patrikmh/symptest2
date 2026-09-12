@@ -70,4 +70,25 @@ describe("buildApprovalAskBlock", () => {
     if (block.kind !== "ask") throw new Error("expected ask block");
     expect(block.detail).toContain("stay separate from other spaces");
   });
+
+  it("asks to create a Fyr with the name and schedule", () => {
+    const block = buildApprovalAskBlock(
+      "effect-1",
+      "schedule_create",
+      { name: "Morning brief", cron: "0 9 * * 1-5" },
+      [],
+    );
+
+    expect(block).toMatchObject({
+      kind: "ask",
+      text: "Create Fyr?",
+      actions: [
+        { id: "allow", label: "Create Fyr", outcome: "created" },
+        { id: "deny", label: "Cancel", outcome: "cancelled" },
+      ],
+    });
+    if (block.kind !== "ask") throw new Error("expected ask block");
+    expect(block.detail).toContain("Morning brief");
+    expect(block.detail).toContain("Weekdays at 9:00 AM");
+  });
 });

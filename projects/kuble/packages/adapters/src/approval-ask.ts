@@ -1,5 +1,5 @@
 import type { MessageBlock } from "@rakazo/contracts";
-import { redactSecrets } from "@rakazo/core";
+import { formatCron, redactSecrets } from "@rakazo/core";
 
 const MAX_APPROVAL_SUMMARY_LENGTH = 500;
 const MAX_APPROVAL_DETAIL_LENGTH = 4_000;
@@ -19,7 +19,11 @@ export function buildApprovalAskBlock(
     approvalEffectId: effectId,
     text: truncate(
       redactSecrets(
-        toolName === "create_space" ? `${summary}?` : `Review before ${summary}`,
+        toolName === "create_space"
+          ? `${summary}?`
+          : toolName === "schedule_create"
+            ? "Create Fyr?"
+            : `Review before ${summary}`,
         secrets,
       ),
       MAX_APPROVAL_SUMMARY_LENGTH,
@@ -32,11 +36,16 @@ export function buildApprovalAskBlock(
             { id: "allow", label: "Create space", outcome: "created" },
             { id: "deny", label: "Cancel", outcome: "cancelled" },
           ]
-        : [
-            { id: "allow", label: "Allow once" },
-            { id: "always", label: "Always allow this tool" },
-            { id: "deny", label: "Deny" },
-          ],
+        : toolName === "schedule_create"
+          ? [
+              { id: "allow", label: "Create Fyr", outcome: "created" },
+              { id: "deny", label: "Cancel", outcome: "cancelled" },
+            ]
+          : [
+              { id: "allow", label: "Allow once" },
+              { id: "always", label: "Always allow this tool" },
+              { id: "deny", label: "Deny" },
+            ],
   };
 }
 
@@ -53,6 +62,10 @@ function describeApprovalAction(toolName: string, args: Record<string, unknown>)
   if (toolName === "create_space") {
     const name = args.name ? String(args.name) : "Untitled";
     return `Create space “${name}”`;
+  }
+  if (toolName === "schedule_create") {
+    const name = args.name ? String(args.name) : "Untitled";
+    return `Create Fyr “${name}”`;
   }
   const target = pickScopeLabel(args);
   return target ? `${toolName} → ${target}` : toolName;
@@ -72,6 +85,11 @@ function formatApprovalDetail(
       "Bots, groups, chats, files, memory, and integrations in this space stay separate from other spaces.",
     );
   }
+  if (toolName === "schedule_create") {
+    const name = args.name ? String(args.name) : "Untitled";
+    lines.push(name);
+    lines.push(describeFyrSchedule(args));
+  }
   for (const key of ["collection", "title", "to", "subject", "amount", "body"]) {
     const value = args[key];
     if (value == null || value === "") continue;
@@ -79,6 +97,21 @@ function formatApprovalDetail(
   }
   if (lines.length === 0) return undefined;
   return lines.join("\n");
+}
+
+function describeFyrSchedule(args: Record<string, unknown>): string {
+  if (args.cron != null && String(args.cron).trim()) {
+    return formatCron(String(args.cron));
+  }
+  if (args.every != null && args.unit != null) {
+    return `Every ${String(args.every)} ${String(args.unit)}`;
+  }
+  if (args.runAt != null && String(args.runAt).trim()) {
+    return `Once at ${String(args.runAt)}`;
+  }
+  if (args.delayMinutes != null) return `In ${String(args.delayMinutes)} minutes`;
+  if (args.delaySeconds != null) return `In ${String(args.delaySeconds)} seconds`;
+  return "Scheduled work";
 }
 
 function pickScopeLabel(args: Record<string, unknown>): string | undefined {

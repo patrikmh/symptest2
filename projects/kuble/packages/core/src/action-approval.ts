@@ -17,7 +17,6 @@ const APPROVAL_EXEMPT_TOOLS = new Set([
   "request_secret",
   "run_subagent",
   "spawn_bot",
-  "schedule_create",
   "schedule_list",
   "schedule_cancel",
 ]);
@@ -32,6 +31,7 @@ const APPROVAL_REQUIRED_BUILTIN_TOOLS = new Set([
   "cloud_agent_launch",
   "cloud_agent_reply",
   "cloud_agent_cancel",
+  "schedule_create",
 ]);
 const EXPLICIT_APPROVAL_BUILTIN_TOOLS = new Set(["create_space"]);
 

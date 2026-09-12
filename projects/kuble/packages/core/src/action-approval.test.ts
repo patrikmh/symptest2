@@ -26,6 +26,7 @@ describe("toolRequiresApproval", () => {
     expect(toolRequiresApproval("archive_bot", false)).toBe(true);
     expect(toolRequiresApproval("cloud_agent_launch", false)).toBe(true);
     expect(toolRequiresApproval("create_space", false)).toBe(true);
+    expect(toolRequiresApproval("schedule_create", false)).toBe(true);
     expect(toolRequiresExplicitApproval("create_space")).toBe(true);
     expect(toolRequiresExplicitApproval("archive_bot")).toBe(false);
   });

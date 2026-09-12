@@ -19,7 +19,7 @@ type Planned = {
 export function PlannedPage({
   section,
 }: {
-  section: Exclude<LotsNavKey, "agents" | "settings" | "admin">;
+  section: Exclude<LotsNavKey, "agents" | "settings" | "admin" | "fyrar">;
 }) {
   const { t } = useLingui();
   const coworkers = "/app/agents";
@@ -31,13 +31,6 @@ export function PlannedPage({
       next: t`Until then, open a coworker — anything that needs you shows up in their chat.`,
       href: coworkers,
       cta: <Trans>Go to Coworkers</Trans>,
-    },
-    fyrar: {
-      title: t`Fyrar`,
-      description: t`A fyr is recurring work attached to a coworker — “every morning, summarise overnight email.”`,
-      next: t`Open a coworker and ask them to repeat something on a schedule. Their chat panel already has schedules.`,
-      href: coworkers,
-      cta: <Trans>Pick a coworker</Trans>,
     },
     approvals: {
       title: t`Approvals`,

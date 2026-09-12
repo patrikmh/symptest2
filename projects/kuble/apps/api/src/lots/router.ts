@@ -1,7 +1,18 @@
 import { ORPCError } from "@orpc/server";
+import type { JobPublisher } from "@rakazo/adapter-kit";
 import type { Actor, Bot } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { getLotsAgent, listLotsAgents } from "./agents.js";
+import {
+  createFyr,
+  getFyr,
+  LotsFyrError,
+  listFyrar,
+  listFyrRuns,
+  runFyrNow,
+  setFyrEnabled,
+  updateFyr,
+} from "./fyrar.js";
 import {
   inviteSpaceMember,
   LotsAccessError,
@@ -14,6 +25,9 @@ function mapAccessError(error: unknown): never {
   if (error instanceof LotsAccessError) {
     throw new ORPCError(error.code, { message: error.message });
   }
+  if (error instanceof LotsFyrError) {
+    throw new ORPCError(error.code, { message: error.message });
+  }
   throw error;
 }
 
@@ -22,8 +36,9 @@ export function createLotsRouter(args: {
   authed: any;
   prisma: PrismaClient;
   repos: { listBots: (actor: Actor) => Promise<Bot[]> };
+  jobs: JobPublisher;
 }) {
-  const { authed, prisma, repos } = args;
+  const { authed, prisma, repos, jobs } = args;
 
   return {
     agents: {
@@ -109,6 +124,112 @@ export function createLotsRouter(args: {
           },
         ),
       },
+    },
+    fyrar: {
+      list: authed.lots.fyrar.list.handler(async ({ context }: { context: { actor: Actor } }) => {
+        try {
+          const role = await loadSpaceRole(prisma, context.actor);
+          return await listFyrar(prisma, context.actor, role);
+        } catch (error) {
+          mapAccessError(error);
+        }
+      }),
+      get: authed.lots.fyrar.get.handler(
+        async ({ context, input }: { context: { actor: Actor }; input: { fyrId: string } }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await getFyr(prisma, context.actor, role, input.fyrId);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      create: authed.lots.fyrar.create.handler(
+        async ({
+          context,
+          input,
+        }: {
+          context: { actor: Actor };
+          input: {
+            botId: string;
+            name: string;
+            instruction: string;
+            crons: string[];
+            timezone: string;
+            enabled: boolean;
+          };
+        }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await createFyr(prisma, jobs, context.actor, role, input);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      update: authed.lots.fyrar.update.handler(
+        async ({
+          context,
+          input,
+        }: {
+          context: { actor: Actor };
+          input: {
+            fyrId: string;
+            name?: string;
+            instruction?: string;
+            crons?: string[];
+            timezone?: string;
+            enabled?: boolean;
+          };
+        }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await updateFyr(prisma, jobs, context.actor, role, input);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      pause: authed.lots.fyrar.pause.handler(
+        async ({ context, input }: { context: { actor: Actor }; input: { fyrId: string } }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await setFyrEnabled(prisma, jobs, context.actor, role, input.fyrId, false);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      resume: authed.lots.fyrar.resume.handler(
+        async ({ context, input }: { context: { actor: Actor }; input: { fyrId: string } }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await setFyrEnabled(prisma, jobs, context.actor, role, input.fyrId, true);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      runNow: authed.lots.fyrar.runNow.handler(
+        async ({ context, input }: { context: { actor: Actor }; input: { fyrId: string } }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await runFyrNow(prisma, jobs, context.actor, role, input.fyrId);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
+      runs: authed.lots.fyrar.runs.handler(
+        async ({ context, input }: { context: { actor: Actor }; input: { fyrId: string } }) => {
+          try {
+            const role = await loadSpaceRole(prisma, context.actor);
+            return await listFyrRuns(prisma, context.actor, role, input.fyrId);
+          } catch (error) {
+            mapAccessError(error);
+          }
+        },
+      ),
     },
   };
 }

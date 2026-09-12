@@ -11,3 +11,4 @@ export {
   firstBotProfile,
   LEGACY_FIRST_BOT_NAMES,
 } from "./first-bot.js";
+export { FYR_RUN_STATUSES, type FyrRunStatus, fyrarStatusFromRunStatus } from "./fyr-status.js";

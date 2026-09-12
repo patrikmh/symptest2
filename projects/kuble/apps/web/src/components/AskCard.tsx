@@ -31,8 +31,8 @@ function approvalActionLabel(
   fallback: string,
   outcome?: "created" | "cancelled",
 ): string {
-  if (outcome === "created") return t`Create space`;
-  if (outcome === "cancelled") return t`Cancel`;
+  if (outcome === "created") return fallback;
+  if (outcome === "cancelled") return fallback || t`Cancel`;
   if (id === "allow") return t`Allow once`;
   if (id === "always") return t`Always allow this tool`;
   if (id === "deny") return t`Deny`;

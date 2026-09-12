@@ -4622,7 +4622,7 @@ export function createRouter(deps: RouterDeps) {
         prepareVoice(deps, context.actor, input),
       ),
     },
-    lots: createLotsRouter({ authed, prisma: deps.prisma, repos }),
+    lots: createLotsRouter({ authed, prisma: deps.prisma, repos, jobs: deps.jobs }),
   });
 }
 
