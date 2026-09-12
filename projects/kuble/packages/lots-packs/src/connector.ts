@@ -115,11 +115,13 @@ function runPackTool(
   context: AdapterContext,
   fetchImpl?: typeof fetch,
 ): Promise<Record<string, unknown>> {
-  return tool.execute!(args, {
-    accessToken,
-    signal: context.signal,
-    fetchImpl,
-  });
+  return Promise.resolve(
+    tool.execute!(args, {
+      accessToken,
+      signal: context.signal,
+      fetchImpl,
+    }),
+  );
 }
 
 function packExecuteError(error: unknown): string {
