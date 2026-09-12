@@ -1611,6 +1611,7 @@ export function ShellPage() {
       "usage",
       "computer",
       "updates",
+      "system",
     ];
     const section = sections.find((candidate) => candidate === requested) ?? "general";
     setSettingsSection(section);

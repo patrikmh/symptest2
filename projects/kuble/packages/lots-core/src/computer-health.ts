@@ -1,7 +1,6 @@
 /**
- * Computer check for first-run onboarding (spec §38 step 5).
- * `/health/computer` arrives in Phase 7; until then the web reads `sandbox`
- * from `/health`.
+ * Computer check for first-run onboarding (spec §38 step 5) and Settings → System.
+ * Prefer `/health/computer`; `/health` still works via the `sandbox` field.
  */
 export type ComputerHealth = {
   ready: boolean;
@@ -14,8 +13,14 @@ export function computerHealthFromSandbox(sandbox: string | null | undefined): C
 }
 
 export function computerHealthFromPayload(
-  payload: { sandbox?: unknown } | null | undefined,
+  payload: { sandbox?: unknown; ready?: unknown; ok?: unknown } | null | undefined,
 ): ComputerHealth {
   const sandbox = typeof payload?.sandbox === "string" ? payload.sandbox : null;
+  if (typeof payload?.ready === "boolean") {
+    return { ready: payload.ready, sandbox };
+  }
+  if (typeof payload?.ok === "boolean") {
+    return { ready: payload.ok && computerHealthFromSandbox(sandbox).ready, sandbox };
+  }
   return computerHealthFromSandbox(sandbox);
 }

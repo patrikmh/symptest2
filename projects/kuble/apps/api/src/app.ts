@@ -94,6 +94,7 @@ import { cors } from "hono/cors";
 import { type AppEnv, loadEnv } from "./env.js";
 import { mountLocalSettings } from "./local-settings.js";
 import { runApprovalExpire } from "./lots/approvals.js";
+import { checkComputerHealth, checkDbHealth, checkWorkerHealth } from "./lots/health.js";
 import {
   createMessagingInboundHandler,
   teamChatSenderCanWakeMessageRoutines,
@@ -818,6 +819,24 @@ export async function createApp(
       revision: env.gitSha ?? null,
     }),
   );
+
+  app.get("/health/db", async (c) => {
+    const body = await checkDbHealth(prisma);
+    return c.json(body, body.ok ? 200 : 503);
+  });
+
+  app.get("/health/worker", async (c) => {
+    const body = await checkWorkerHealth({ driver: jobKind, prisma });
+    return c.json(body, body.ok ? 200 : 503);
+  });
+
+  app.get("/health/computer", async (c) => {
+    const body = await checkComputerHealth({
+      sandbox: env.sandboxProvider,
+      supervisorUrl: env.sandboxSupervisorUrl,
+    });
+    return c.json(body, body.ok ? 200 : 503);
+  });
 
   return {
     app,

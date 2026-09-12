@@ -280,6 +280,7 @@ export default defineConfig(({ mode }) => {
       proxy: {
         "/api": { target: api, changeOrigin: true },
         "/rpc": { target: api, changeOrigin: true },
+        "/health": { target: api, changeOrigin: true },
       },
     },
     preview: {
@@ -289,6 +290,7 @@ export default defineConfig(({ mode }) => {
       proxy: {
         "/api": { target: api, changeOrigin: true },
         "/rpc": { target: api, changeOrigin: true },
+        "/health": { target: api, changeOrigin: true },
       },
     },
   };

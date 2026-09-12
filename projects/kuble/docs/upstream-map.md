@@ -227,7 +227,8 @@ The mapping is applied at the LOTS UI/RPC boundary only.
 | `README.md` | LOTS README (this project); upstream README preserved at `docs/upstream/README.rakazo.md`. |
 | `docs/upstream-map.md` | this file |
 | `docs/implementation-plan.md` | Phase 0 deliverable |
-| `docs/architecture.md`, `installation.md`, `development.md`, `fyrar.md`, `packs.md`, `approvals.md`, `access.md`, `troubleshooting.md` | written with their phases (see plan). Upstream `docs/self-host.md`, `docs/computer-runtime.md`, `docs/self-host-secrets.md` remain authoritative for the parts LOTS does not change. |
+| `docs/architecture.md`, `development.md`, `fyrar.md`, `packs.md`, `approvals.md`, `access.md`, `troubleshooting.md` | written with their phases (see plan). Upstream `docs/self-host.md`, `docs/computer-runtime.md`, `docs/self-host-secrets.md` remain authoritative for the parts LOTS does not change. |
+| `docs/installation.md` | Phase 7 (`infra/install/install.sh`, health endpoints, `pnpm seed:demo`). |
 
 ---
 

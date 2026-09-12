@@ -49,5 +49,10 @@ describe("computerHealthFromSandbox", () => {
     expect(computerHealthFromSandbox(undefined)).toEqual({ ready: false, sandbox: null });
     expect(computerHealthFromPayload({ sandbox: "docker" }).ready).toBe(true);
     expect(computerHealthFromPayload({})).toEqual({ ready: false, sandbox: null });
+    expect(computerHealthFromPayload({ sandbox: "docker", ready: false })).toEqual({
+      ready: false,
+      sandbox: "docker",
+    });
+    expect(computerHealthFromPayload({ ok: false, sandbox: "docker" }).ready).toBe(false);
   });
 });

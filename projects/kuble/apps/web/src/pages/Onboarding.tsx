@@ -366,10 +366,9 @@ export function OnboardingPage() {
   useEffect(() => {
     if (step !== "computer") return;
     let cancelled = false;
-    void fetch("/health")
+    void fetch("/health/computer")
       .then(async (response) => {
-        if (!response.ok) throw new Error("health");
-        return response.json() as Promise<{ sandbox?: unknown }>;
+        return response.json() as Promise<{ sandbox?: unknown; ready?: unknown; ok?: unknown }>;
       })
       .then((payload) => {
         if (!cancelled) setComputerHealth(computerHealthFromPayload(payload));

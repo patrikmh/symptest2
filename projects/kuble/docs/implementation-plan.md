@@ -78,7 +78,7 @@ Acceptance (unit): `agent-status.test.ts` status table and template tests pass. 
 ### Slice 1.4 — Onboarding copy
 
 - [x] Onboarding steps read: Create workspace → Connect model → Create first coworker (Assistant — "General AI coworker for research and organization.") → Enable tools (Web Research on) → Computer check.
-- [x] The computer step reads `sandbox` from `/health` (`computerHealthFromPayload` in `@lots/core`). `/health/computer` arrives in Phase 7.
+- [x] The computer step reads `/health/computer` (`computerHealthFromPayload` in `@lots/core`).
 - [x] First coworker is created from `firstBotProfile()` (Assistant template + `onboarding:first` spawn key). Leftover Chief bots are still reused.
 
 Upstream edit points: `apps/web/src/pages/Onboarding.tsx` (copy + packs/computer steps).
@@ -196,9 +196,9 @@ Acceptance (unit): key stability under payload key reordering; (integration): ap
 
 ## Phase 7 — Installer and health
 
-- [ ] `infra/install/install.sh` wrapping `infra/compose/install-images.sh` with `--update`, `--uninstall`, `--delete-data`, `--dev`; preserves `.env`, volumes, credentials; `--uninstall` never deletes data without `--delete-data`.
-- [ ] `/health/db`, `/health/worker`, `/health/computer` in `apps/api`; Settings → System panel.
-- [ ] `pnpm seed:demo`.
+- [x] `infra/install/install.sh` wrapping `infra/compose/install-images.sh` with `--update`, `--uninstall`, `--delete-data`, `--dev`; preserves `.env`, volumes, credentials; `--uninstall` never deletes data without `--delete-data`.
+- [x] `/health/db`, `/health/worker`, `/health/computer` in `apps/api`; Settings → System panel.
+- [x] `pnpm seed:demo`.
 
 Acceptance (shell test with Compose available): fresh install → healthy; rerun → data preserved; `--uninstall` leaves volumes; `--uninstall --delete-data` removes them. Journey 5 (restart) passes.
 
@@ -210,6 +210,6 @@ Acceptance (shell test with Compose available): fresh install → healthy; rerun
 - [ ] Friendly error mapper (computer unavailable, provider down, UNKNOWN write).
 - [ ] Delegation surfaced in Activity; `LotsTeam` with LEAD/SPECIALIST/REVIEWER (Journey 4).
 - [ ] Root-level CI workflow for `projects/kuble` (lint, typecheck, unit, integration, build, Playwright smoke with fake providers).
-- [ ] Remaining docs from spec §58: `architecture.md`, `installation.md`, `development.md`, `fyrar.md`, `packs.md`, `approvals.md`, `access.md`, `troubleshooting.md`.
+- [ ] Remaining docs from spec §58: `architecture.md`, `development.md`, `fyrar.md`, `packs.md`, `approvals.md`, `access.md`, `troubleshooting.md`. (`installation.md` landed with Phase 7.)
 
 Acceptance: all Journeys 1–5 automated or documented as manual with steps; Definition of Done (§57) checklist complete.

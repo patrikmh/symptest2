@@ -16,11 +16,11 @@ name LOTS).
 
 ## Status
 
-Phases 0–6 (inspection, Ratatosk shell, access, Fyrar, approvals, packs, idempotency)
-are in place. See [`docs/implementation-plan.md`](./docs/implementation-plan.md)
-for the slice-by-slice checklist and
-[`docs/upstream-map.md`](./docs/upstream-map.md) for what is reused from
-Rakazo versus built here.
+Phases 0–7 (inspection, Ratatosk shell, access, Fyrar, approvals, packs,
+idempotency, installer and health) are in place. See
+[`docs/implementation-plan.md`](./docs/implementation-plan.md) for the
+slice-by-slice checklist and [`docs/upstream-map.md`](./docs/upstream-map.md)
+for what is reused from Rakazo versus built here.
 
 ## Layout
 
@@ -56,9 +56,29 @@ corepack pnpm sandbox:build
 corepack pnpm dev
 ```
 
-Open <http://127.0.0.1:5173>. Upstream's [self-hosting guide](./docs/self-host.md)
-and [computer runtime notes](./docs/computer-runtime.md) still apply. A
-Ratatosk `install.sh` arrives in Phase 7.
+Open <http://127.0.0.1:5173>. After signing in once,
+
+```bash
+corepack pnpm seed:demo
+```
+
+loads Assistant, Researcher, Developer, Reviewer, two Fyrar, two example
+approvals and a short chat. Settings → System reads `/health`, `/health/db`,
+`/health/worker` and `/health/computer`.
+
+For a Compose install (macOS/Linux, Docker required):
+
+```bash
+bash infra/install/install.sh          # first start or --update
+bash infra/install/install.sh --dev    # build from this checkout
+bash infra/install/install.sh --uninstall
+bash infra/install/install.sh --uninstall --delete-data
+```
+
+`--uninstall` keeps volumes and `.env` unless `--delete-data` is also passed.
+See [`docs/installation.md`](./docs/installation.md). Upstream's
+[self-hosting guide](./docs/self-host.md) and
+[computer runtime notes](./docs/computer-runtime.md) still apply.
 
 ## Test
 

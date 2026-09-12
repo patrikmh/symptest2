@@ -1,9 +1,20 @@
 import { useLingui } from "@lingui/react/macro";
 import type { AvatarStyle, SpaceMemoryConfig } from "@rakazo/contracts";
 import { Button, Dialog, DialogClose, DialogContent, DialogTitle } from "@rakazo/ui-web";
-import { Brain, CloudDownload, Cpu, Gauge, Monitor, Settings, Volume2, XIcon } from "lucide-react";
+import {
+  Brain,
+  CloudDownload,
+  Cpu,
+  Gauge,
+  HeartPulse,
+  Monitor,
+  Settings,
+  Volume2,
+  XIcon,
+} from "lucide-react";
 import { type ComponentType, useEffect, useRef, useState } from "react";
 import { computersAreUnavailable } from "../components/ComputersUnavailableHint";
+import { SystemSettingsPanel } from "../lots/SystemSettingsPanel";
 import {
   ComputerSettingsPanel,
   GeneralSettingsPanels,
@@ -21,7 +32,8 @@ export type SettingsSection =
   | "voice"
   | "usage"
   | "computer"
-  | "updates";
+  | "updates"
+  | "system";
 
 type NavItem = {
   id: SettingsSection;
@@ -87,6 +99,7 @@ export function SettingsOverlay({
     { id: "usage", label: t`Usage`, icon: Gauge },
     ...(showComputer ? [{ id: "computer" as const, label: t`Computer`, icon: Monitor }] : []),
     { id: "updates", label: t`Updates`, icon: CloudDownload },
+    { id: "system", label: t`System`, icon: HeartPulse },
   ];
 
   const sectionTitle =
@@ -214,6 +227,7 @@ export function SettingsOverlay({
               {section === "updates" ? (
                 <UpdatesSettingsPanel isDeploymentOwner={isDeploymentOwner} />
               ) : null}
+              {section === "system" ? <SystemSettingsPanel /> : null}
               {section === "models" ? (
                 <ModelSettingsOverlay embedded onClose={requestClose} />
               ) : null}

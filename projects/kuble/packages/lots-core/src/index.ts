@@ -21,3 +21,10 @@ export {
   UNCERTAIN_WRITE_COPY,
   UNCERTAIN_WRITE_HINT,
 } from "./idempotency.js";
+export {
+  type HealthPayload,
+  SYSTEM_CHECK_IDS,
+  type SystemCheck,
+  type SystemCheckId,
+  systemChecksFromHealth,
+} from "./system-health.js";
