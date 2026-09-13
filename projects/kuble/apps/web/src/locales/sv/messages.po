@@ -1,0 +1,296 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-09-12 00:00+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: sv\n"
+"Project-Id-Version: rakazo-web\n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Inbox"
+msgstr "Inkorg"
+
+msgid "Coworkers"
+msgstr "Medarbetare"
+
+msgid "Coworker"
+msgstr "Medarbetare"
+
+msgid "Fyrar"
+msgstr "Fyrar"
+
+msgid "Approvals"
+msgstr "Godkännanden"
+
+msgid "Tools"
+msgstr "Verktyg"
+
+msgid "Activity"
+msgstr "Aktivitet"
+
+msgid "Computers"
+msgstr "Datorer"
+
+msgid "Admin"
+msgstr "Admin"
+
+msgid "Settings"
+msgstr "Inställningar"
+
+msgid "More"
+msgstr "Mer"
+
+msgid "Close"
+msgstr "Stäng"
+
+msgid "Main"
+msgstr "Huvudmeny"
+
+msgid "New coworker"
+msgstr "Ny medarbetare"
+
+msgid "People you can give work to. They remember the conversation."
+msgstr "Folk du kan ge arbete till. De kommer ihåg samtalet."
+
+msgid "Your coworkers could not be loaded."
+msgstr "Dina medarbetare kunde inte laddas."
+
+msgid "Try again"
+msgstr "Försök igen"
+
+msgid "No coworkers yet"
+msgstr "Inga medarbetare än"
+
+msgid "A coworker is someone you keep: they remember what you talked about, can use tools, and can repeat work on a schedule."
+msgstr "En medarbetare är någon du behåller: de kommer ihåg vad ni pratat om, kan använda verktyg och kan upprepa arbete på schema."
+
+msgid "Add your first coworker"
+msgstr "Lägg till din första medarbetare"
+
+msgid "Own computer"
+msgstr "Egen dator"
+
+msgid "Shared computer"
+msgstr "Delad dator"
+
+msgid "New"
+msgstr "Ny"
+
+msgid "Say hello to get started"
+msgstr "Säg hej för att komma igång"
+
+msgid "Working"
+msgstr "Jobbar"
+
+msgid "Needs you"
+msgstr "Behöver dig"
+
+msgid "Failed"
+msgstr "Misslyckades"
+
+msgid "Ready"
+msgstr "Redo"
+
+msgid "The coworker could not be created. Please try again."
+msgstr "Medarbetaren kunde inte skapas. Försök igen."
+
+msgid "Pick a starting point. You can change the name, role and tools later."
+msgstr "Välj en startpunkt. Du kan ändra namn, roll och verktyg senare."
+
+msgid "Starting point"
+msgstr "Startpunkt"
+
+msgid "A fyr they could run"
+msgstr "En fyr de skulle kunna köra"
+
+msgid "Name"
+msgstr "Namn"
+
+msgid "Leave blank to use the suggested name."
+msgstr "Lämna tomt för att använda det föreslagna namnet."
+
+msgid "Cancel"
+msgstr "Avbryt"
+
+msgid "Creating…"
+msgstr "Skapar…"
+
+msgid "Add coworker"
+msgstr "Lägg till medarbetare"
+
+msgid "Sign in to Ratatosk"
+msgstr "Logga in på Ratatosk"
+
+msgid "Create your Ratatosk workspace"
+msgstr "Skapa din Ratatosk-arbetsyta"
+
+msgid "AI coworkers that remember, work on a schedule"
+msgstr "AI-medarbetare som kommer ihåg, jobbar på schema"
+
+msgid "and ask before they act."
+msgstr "och frågar innan de agerar."
+
+msgid "Sign up"
+msgstr "Skapa konto"
+
+msgid "Go to Coworkers"
+msgstr "Gå till Medarbetare"
+
+msgid "Pick a coworker"
+msgstr "Välj en medarbetare"
+
+msgid "Open settings"
+msgstr "Öppna inställningar"
+
+msgid "Ratatosk"
+msgstr "Ratatosk"
+
+msgid "Assistant"
+msgstr "Assistent"
+
+msgid "Helps with research, writing and keeping things organized."
+msgstr "Hjälper till med research, text och att hålla ordning."
+
+msgid "Every morning, summarise what came in overnight."
+msgstr "Varje morgon, sammanfatta vad som kom in under natten."
+
+msgid "Researcher"
+msgstr "Researcher"
+
+msgid "Finds, reads and summarizes sources with citations."
+msgstr "Hittar, läser och sammanfattar källor med hänvisningar."
+
+msgid "Every Monday, brief me on this week's news in my field."
+msgstr "Varje måndag, briefa mig om veckans nyheter i mitt område."
+
+msgid "Developer"
+msgstr "Utvecklare"
+
+msgid "Reads code and issues, then drafts a clear change."
+msgstr "Läser kod och issues, och skriver sedan ett tydligt förslag."
+
+msgid "Every weekday morning, list new issues on the repo."
+msgstr "Varje vardagsmorgon, lista nya issues i repot."
+
+msgid "Sales Scout"
+msgstr "Säljspejare"
+
+msgid "Looks for companies and people that match a profile."
+msgstr "Letar företag och personer som matchar en profil."
+
+msgid "Every morning, find five companies that match the profile."
+msgstr "Varje morgon, hitta fem företag som matchar profilen."
+
+msgid "Reviewer"
+msgstr "Granskare"
+
+msgid "Reads someone else's draft and gives structured feedback."
+msgstr "Läser någon annans utkast och ger strukturerad feedback."
+
+msgid "When another coworker finishes a draft, review it."
+msgstr "När en annan medarbetare är klar med ett utkast, granska det."
+
+msgid "Approvals that need you, finished Fyrar and notes from your coworkers will gather here."
+msgstr "Godkännanden som behöver dig, färdiga fyrar och besked från dina medarbetare samlas här."
+
+msgid "Until then, open a coworker — anything that needs you shows up in their chat."
+msgstr "Tills vidare: öppna en medarbetare — det som behöver dig syns i chatten."
+
+msgid "A fyr is recurring work attached to a coworker — “every morning, summarise overnight email.”"
+msgstr "En fyr är återkommande arbete kopplat till en medarbetare — ”varje morgon, sammanfatta nattens mejl.”"
+
+msgid "Open a coworker and ask them to repeat something on a schedule. Their chat panel already has schedules."
+msgstr "Öppna en medarbetare och be dem upprepa något på schema. Scheman finns redan i deras chattpanel."
+
+msgid "When a coworker wants to send email, post or create something outside Ratatosk, they wait for a yes."
+msgstr "När en medarbetare vill skicka mejl, publicera eller skapa något utanför Ratatosk väntar de på ett ja."
+
+msgid "Those questions already appear as cards inside the coworker's chat."
+msgstr "De frågorna syns redan som kort i medarbetarens chatt."
+
+msgid "Web research, GitHub, Gmail and Calendar that your coworkers can use, once you connect them."
+msgstr "Webbresearch, GitHub, Gmail och Kalender som dina medarbetare kan använda när du kopplat dem."
+
+msgid "Connections are managed under Settings for now."
+msgstr "Anslutningar hanteras under Inställningar just nu."
+
+msgid "A readable timeline of what your coworkers did, asked and were allowed to do."
+msgstr "En läsbar tidslinje över vad dina medarbetare gjorde, frågade om och fick lov att göra."
+
+msgid "Each coworker's chat is the record of their work today."
+msgstr "Varje medarbetares chatt är journalen över deras arbete idag."
+
+msgid "The place each coworker works — shared with the team, or their own."
+msgstr "Platsen varje medarbetare jobbar på — delad med teamet, eller deras egen."
+
+msgid "You do not need to set this up. Every coworker already has a place to work."
+msgstr "Du behöver inte ställa in det här. Varje medarbetare har redan en plats att jobba på."
+
+msgid "Members, roles, tools and connections for this workspace."
+msgstr "Medlemmar, roller, verktyg och anslutningar för den här arbetsytan."
+
+msgid "Invite people and manage connections from Settings for now."
+msgstr "Bjud in folk och hantera anslutningar från Inställningar tills vidare."
+
+msgid "Language"
+msgstr "Språk"
+
+msgid "Workspace"
+msgstr "Arbetsyta"
+
+msgid "Model"
+msgstr "Modell"
+
+msgid "Computer"
+msgstr "Dator"
+
+msgid "Tools they can use"
+msgstr "Verktyg de kan använda"
+
+msgid "Web Research is on — your coworker can search and read the web. GitHub, Gmail and Calendar connect later, when you need them."
+msgstr "Webbresearch är på — din medarbetare kan söka och läsa på webben. GitHub, Gmail och Kalender kopplas senare, när du behöver dem."
+
+msgid "Web Research"
+msgstr "Webbresearch"
+
+msgid "On"
+msgstr "På"
+
+msgid "GitHub, Gmail, Calendar"
+msgstr "GitHub, Gmail, Kalender"
+
+msgid "Later"
+msgstr "Senare"
+
+msgid "A place to work"
+msgstr "En plats att jobba på"
+
+msgid "Each coworker already has a computer. This just checks that it is reachable."
+msgstr "Varje medarbetare har redan en dator. Det här kontrollerar bara att den går att nå."
+
+msgid "Checking…"
+msgstr "Kontrollerar…"
+
+msgid "Ready — a computer is available."
+msgstr "Redo — en dator finns tillgänglig."
+
+msgid "No computer is configured yet. You can still chat; scheduled work that needs a computer will wait."
+msgstr "Ingen dator är konfigurerad ännu. Du kan ändå chatta; schemalagt arbete som behöver en dator får vänta."
+
+msgid "Could not create your coworker"
+msgstr "Kunde inte skapa din medarbetare"
+
+msgid "Opening {profile.name}…"
+msgstr "Öppnar {profile.name}…"
+
+msgid "Connect a model"
+msgstr "Koppla en modell"
+
+msgid "Continue"
+msgstr "Fortsätt"

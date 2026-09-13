@@ -1,0 +1,78 @@
+# GitHub only runs workflows from the repository root. This is the Ratatosk
+# (projects/kuble) slice: lint, typecheck, and unit tests. Full Rakazo
+# integration and Playwright stay in projects/kuble/.github/workflows and are
+# not executed from this monorepo.
+name: kuble
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "projects/kuble/**"
+      - ".github/workflows/kuble.yml"
+  pull_request:
+    paths:
+      - "projects/kuble/**"
+      - ".github/workflows/kuble.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kuble-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    working-directory: projects/kuble
+
+jobs:
+  lots:
+    name: Ratatosk unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: projects/kuble/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: projects/kuble/pnpm-lock.yaml
+
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+        env:
+          COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+
+      - run: pnpm db:generate
+        env:
+          DATABASE_URL: postgres://rakazo:rakazo@127.0.0.1:5433/rakazo
+
+      - name: Biome (LOTS-owned paths)
+        run: >
+          pnpm exec biome check
+          packages/lots-core
+          packages/lots-access
+          packages/lots-approvals
+          packages/lots-packs
+          apps/api/src/lots
+          apps/web/src/lots
+          infra/install
+
+      - name: Typecheck LOTS slice
+        run: >
+          pnpm --filter @lots/core --filter @lots/access --filter @lots/approvals
+          --filter @lots/packs --filter @rakazo/contracts --filter @rakazo/api
+          --filter @rakazo/web check
+
+      - name: Unit tests (LOTS slice)
+        run: >
+          pnpm --filter @lots/core --filter @lots/access --filter @lots/approvals
+          --filter @lots/packs test
+          && pnpm --filter @rakazo/api test -- apps/api/src/lots
+          && pnpm --filter @rakazo/web test -- apps/web/src/lots
