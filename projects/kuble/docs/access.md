@@ -12,6 +12,8 @@ or a coworker on a shared LotsTeam (`sharedViaTeam`).
   use the same visibility so Admin/Owner/LotsTeam can open another
   member's chat.
 - Admin Members: `lots.admin.members.list/invite/updateRole`.
+- Invite sends a transactional email (SMTP / emulator) with a sign-in
+  link. There is no accept token; the signed-in email must match.
 - Invitees accept or decline with `lots.invitations.list/accept/decline`
   (banner after sign-in). Accept creates `Member` + `SpaceMember` on the
   inviting org and switches the client to that workspace.

@@ -461,6 +461,7 @@ export async function createApp(
     memoryProviders,
     home,
     secrets,
+    email,
     oauthLogins,
     integrationSettings,
     mcpOAuth,

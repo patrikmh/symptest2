@@ -14,6 +14,7 @@ import {
   runContinueJob,
   runJobKey,
   type SandboxProvider,
+  type TransactionalEmailProvider,
 } from "@rakazo/adapter-kit";
 import type { IntegrationProviderSettings } from "@rakazo/adapters";
 import {
@@ -426,6 +427,7 @@ export interface RouterDeps {
   memoryProviders: MemoryProviderResolver;
   home: AgentHomeStore;
   secrets: EncryptedSecretStore;
+  email?: TransactionalEmailProvider;
   oauthLogins: PiOAuthLogins;
   integrationSettings?: IntegrationProviderSettings;
   composio?: ComposioProvider;
@@ -4638,6 +4640,7 @@ export function createRouter(deps: RouterDeps) {
       events: deps.events,
       secrets: deps.secrets,
       oauth: packOAuthFromEnv(deps.env.webOrigin),
+      email: deps.email,
       computerHealth: () =>
         checkComputerHealth({
           sandbox: deps.env.sandboxProvider,

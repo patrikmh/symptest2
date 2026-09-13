@@ -28,7 +28,10 @@ token once and writes it back; if refresh fails, reconnect the account.
 
 The signed-in email must match the invite (case-insensitive). Expired
 invites (7 days) disappear from Admin and from the join banner. Accept
-switches the selected workspace (`rakazo:space-id`).
+switches the selected workspace (`rakazo:space-id`). Invite email needs
+`SMTP_URL` (or `EMAIL_EMULATOR` in development); the invite is still
+created if sending fails. Check `/api/dev/emails` when the emulator is
+on.
 
 ## `pnpm seed:demo` fails
 

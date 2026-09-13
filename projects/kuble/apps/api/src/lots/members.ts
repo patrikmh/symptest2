@@ -9,6 +9,7 @@ import {
   roleFromSpaceMember,
   roleToSpaceMember,
 } from "@lots/access";
+import type { TransactionalEmail } from "@rakazo/adapter-kit";
 import type {
   Actor,
   InvitationAcceptResult,
@@ -17,7 +18,13 @@ import type {
   SpaceMembersList,
 } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
+import { workspaceInviteEmail } from "./invite-email.js";
 import { loadOrganizationId } from "./role.js";
+
+export type InviteMailer = {
+  send: (message: TransactionalEmail) => Promise<void>;
+  webOrigin: string;
+};
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -105,20 +112,31 @@ export async function inviteSpaceMember(
   actor: Actor,
   role: Role,
   input: { email: string; role: "owner" | "admin" | "member" },
+  mailer?: InviteMailer,
 ): Promise<SpaceMemberDto> {
   requireManageMembers(role);
   const invitedRole = roleFromSpaceMember(input.role);
   if (inviteDenial(role, invitedRole)) {
     throw new LotsAccessError("FORBIDDEN", "You cannot invite someone with that role.");
   }
-  const organizationId = await loadOrganizationId(prisma, actor.spaceId);
+  const space = await prisma.space.findUnique({
+    where: { id: actor.spaceId },
+    select: { organizationId: true, organization: { select: { name: true } } },
+  });
+  const organizationId = space?.organizationId;
   if (!organizationId) throw new LotsAccessError("NOT_FOUND", "Workspace not found.");
 
   const email = input.email.trim().toLowerCase();
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
-    select: { id: true },
-  });
+  const [existingUser, inviter] = await Promise.all([
+    prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    }),
+    prisma.user.findUnique({
+      where: { id: actor.userId },
+      select: { name: true, email: true },
+    }),
+  ]);
   if (existingUser) {
     const already = await prisma.spaceMember.findUnique({
       where: { spaceId_userId: { spaceId: actor.spaceId, userId: existingUser.id } },
@@ -145,6 +163,20 @@ export async function inviteSpaceMember(
       inviterId: actor.userId,
     },
   });
+  if (mailer) {
+    try {
+      await mailer.send(
+        workspaceInviteEmail({
+          to: email,
+          inviterName: inviter?.name.trim() || inviter?.email || actor.email,
+          organizationName: space?.organization?.name ?? "",
+          webOrigin: mailer.webOrigin,
+        }),
+      );
+    } catch {
+      // The invite row is already stored; they can still join after signing in.
+    }
+  }
   return toInvitationDto(created);
 }
 

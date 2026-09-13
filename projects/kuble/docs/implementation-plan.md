@@ -234,3 +234,13 @@ Acceptance (unit): accept creates memberships and claims the invite; Member cann
 - [x] Google 401 refreshes the access token once (`refresh_token` + `GOOGLE_CLIENT_*`) and retries the tool; the new token is persisted when `EncryptedSecretStore.put` is wired.
 
 Acceptance (unit, mocked fetch): create issue / send mail / create event return sanitized provider fields; no token in the result; reconcile finds a sent Gmail; Gmail 401 → token endpoint → retry succeeds without leaking tokens.
+
+---
+
+## Phase 11 — Invitation email
+
+- [x] `members.invite` sends a Ratatosk transactional email through the existing `TransactionalEmailProvider` (SMTP or the local emulator).
+- [x] Copy points at `/sign-in` (and `/sign-up`); accept is still signed-in email match, so the mail has no token.
+- [x] A mail failure does not roll back the `Invitation` row.
+
+Acceptance (unit): invite calls `send` with Ratatosk subject/sign-in URL and no invitation id; SMTP errors still return the created invite.

@@ -207,6 +207,12 @@ export function MembersPanel({
           <Trans>Invite</Trans>
         </Button>
       </form>
+      <p className="mt-2 text-[13px] text-muted-foreground">
+        <Trans>
+          They get an email when mail is configured. After they sign in with that address, they join
+          from the banner.
+        </Trans>
+      </p>
       {inviteError ? (
         <p className="mt-3 text-[13px] text-destructive" role="alert">
           {inviteError}

@@ -112,6 +112,76 @@ describe("inviteSpaceMember", () => {
       inviteSpaceMember(prismaMock({}), owner, "ADMIN", { email: "a@x.test", role: "admin" }),
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
+
+  it("sends a Ratatosk invite email when a mailer is wired", async () => {
+    const send = vi.fn().mockResolvedValue(undefined);
+    const prisma = prismaMock({
+      space: {
+        findUnique: vi.fn().mockResolvedValue({
+          organizationId: "org-1",
+          organization: { name: "Acme" },
+        }),
+      },
+      user: {
+        findUnique: vi.fn().mockImplementation(async ({ where }: { where: { id?: string } }) => {
+          if (where.id === "user-owner") return { name: "Owner", email: "owner@ratatosk.test" };
+          return null;
+        }),
+      },
+      invitation: {
+        findFirst: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue({
+          id: "inv-mail",
+          email: "alex@ratatosk.test",
+          role: "member",
+          expiresAt: new Date("2026-09-19T00:00:00.000Z"),
+        }),
+      },
+    });
+    await inviteSpaceMember(
+      prisma,
+      owner,
+      "OWNER",
+      { email: "alex@ratatosk.test", role: "member" },
+      { send, webOrigin: "http://127.0.0.1:5173" },
+    );
+    expect(send).toHaveBeenCalledOnce();
+    const message = send.mock.calls[0][0] as { to: string; subject: string; text: string };
+    expect(message.to).toBe("alex@ratatosk.test");
+    expect(message.subject).toContain("Ratatosk");
+    expect(message.subject).toContain("Acme");
+    expect(message.text).toContain("/sign-in");
+    expect(message.text).not.toContain("inv-mail");
+  });
+
+  it("keeps the invite when sending mail fails", async () => {
+    const create = vi.fn().mockResolvedValue({
+      id: "inv-keep",
+      email: "alex@ratatosk.test",
+      role: "member",
+      expiresAt: new Date("2026-09-19T00:00:00.000Z"),
+    });
+    const prisma = prismaMock({
+      space: { findUnique: vi.fn().mockResolvedValue({ organizationId: "org-1" }) },
+      user: { findUnique: vi.fn().mockResolvedValue(null) },
+      invitation: { findFirst: vi.fn().mockResolvedValue(null), create },
+    });
+    await expect(
+      inviteSpaceMember(
+        prisma,
+        owner,
+        "OWNER",
+        { email: "alex@ratatosk.test", role: "member" },
+        {
+          send: async () => {
+            throw new Error("smtp down");
+          },
+          webOrigin: "http://127.0.0.1:5173",
+        },
+      ),
+    ).resolves.toMatchObject({ id: "inv-keep", kind: "invitation" });
+    expect(create).toHaveBeenCalledOnce();
+  });
 });
 
 describe("updateSpaceMemberRole", () => {

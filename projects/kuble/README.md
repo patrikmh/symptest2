@@ -16,7 +16,7 @@ name LOTS).
 
 ## Status
 
-Phases 0–8 (inspection through hardening) are in place. See
+Phases 0–11 (inspection through invitation email) are in place. See
 [`docs/implementation-plan.md`](./docs/implementation-plan.md) for the
 slice-by-slice checklist and [`docs/upstream-map.md`](./docs/upstream-map.md)
 for what is reused from Rakazo versus built here.

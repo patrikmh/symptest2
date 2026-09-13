@@ -1,5 +1,5 @@
 import { ORPCError } from "@orpc/server";
-import type { JobPublisher } from "@rakazo/adapter-kit";
+import type { JobPublisher, TransactionalEmailProvider } from "@rakazo/adapter-kit";
 import type { EncryptedSecretStore } from "@rakazo/adapters";
 import type { Actor, Bot, PackKey } from "@rakazo/contracts";
 import type { PrismaClient, ThreadEvents } from "@rakazo/db";
@@ -75,9 +75,10 @@ export function createLotsRouter(args: {
   events: Pick<ThreadEvents, "answerRunInput">;
   secrets: Pick<EncryptedSecretStore, "put">;
   oauth: PackOAuthEnv;
+  email?: Pick<TransactionalEmailProvider, "send">;
   computerHealth?: () => Promise<ComputerHealthPayload>;
 }) {
-  const { authed, prisma, repos, jobs, events, secrets, oauth, computerHealth } = args;
+  const { authed, prisma, repos, jobs, events, secrets, oauth, email, computerHealth } = args;
 
   return {
     agents: {
@@ -198,7 +199,15 @@ export function createLotsRouter(args: {
           }) => {
             try {
               const role = await loadSpaceRole(prisma, context.actor);
-              return await inviteSpaceMember(prisma, context.actor, role, input);
+              return await inviteSpaceMember(
+                prisma,
+                context.actor,
+                role,
+                input,
+                email
+                  ? { send: (message) => email.send(message), webOrigin: oauth.webOrigin }
+                  : undefined,
+              );
             } catch (error) {
               mapAccessError(error);
             }
