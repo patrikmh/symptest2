@@ -187,7 +187,7 @@ const otherApprovalRow = {
   kind: "gmail_send_email",
   status: "intended",
   request: { to: "anna@example.com", subject: "Follow-up" },
-  createdAt: new Date("2026-09-12T10:00:00.000Z"),
+  createdAt: new Date(),
   run: {
     threadId: "thread-b",
     botId: "bot-b",

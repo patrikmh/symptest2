@@ -34,7 +34,7 @@ describe("listInbox", () => {
               kind: "gmail_send_email",
               status: "intended",
               request: { to: "anna@example.com" },
-              createdAt: new Date("2026-09-12T10:00:00.000Z"),
+              createdAt: new Date(),
               run: {
                 threadId: "t-1",
                 botId: "bot-1",
