@@ -52,13 +52,15 @@ Changed in v7.0:
 - **Ease is measured.** Ten minutes from install to a governed send.
   Approval fatigue has a default remedy. Notifications exist. Teach-once
   has a designed screen.
-- **The V1 test gate is 30 tests.** Graphiti tests gate Graphiti; sandbox
+- **Group A is the V1 test gate.** Graphiti tests gate Graphiti; sandbox
   tests gate Phase 5.
 
 v7.1 records the first interview decision: humans reach the appliance
 over a Tailscale tailnet when they are away, and over loopback when they
-are at the machine. Tailscale is a path, not a principal. Funnel and
-public ingress are forbidden. Part XX.A (§176–§182) is normative.
+are at the machine. Tailscale is a path, not a principal. The Member UI
+binds `127.0.0.1` only; the away path is `tailscale serve --https`.
+Funnel and public ingress are forbidden. Part XX.A (§176–§182) is
+normative. The V1 test gate is 37 tests (Group A, §173).
 
 ---
 
@@ -1411,7 +1413,7 @@ graph file, credential store and audit stay on one machine.
 31. takeover 2FA or password is not stored as memory or episode; workspace leftovers cannot be used by a later Task
 32. memory the product cannot show to a human is not included in a prompt
 33. first-run to governed send completes in the onboarding wizard without opening Admin (except the audit step)
-34. Member UI is not reachable on a physical NIC address (only loopback and the tailnet interface / `tailscale serve`)
+34. Member UI listens only on loopback; it is not bound to a physical NIC or the Tailscale address, and the tailnet path is `tailscale serve --https`
 35. presence on the tailnet without an Edge session cannot read, approve or dispatch
 36. Tailscale Funnel and any public ingress cannot be enabled from Admin
 37. the desk UI still serves when Tailscale is stopped; in-flight effects are unaffected
@@ -1454,10 +1456,16 @@ Tailscale is a path. An Edge login is still required (§145).
 
 ## 177. Listeners
 
-`agent-osd` binds the Member UI to `127.0.0.1` and to the appliance's
-Tailscale interface (or exposes that same local port with
-`tailscale serve`). It MUST NOT bind the Member UI to `0.0.0.0` on
-physical NICs. Cafe Wi-Fi and the office LAN are not an access path.
+`agent-osd` binds the Member UI to `127.0.0.1` only. Startup MUST succeed
+when Tailscale is not running. A missing tailnet interface MUST NOT stop
+the loopback listener (§180).
+
+The Member UI MUST NOT listen on the appliance's Tailscale address, on
+`tailscale0`, or on `0.0.0.0` on a physical NIC. Cafe Wi-Fi and the
+office LAN are not an access path.
+
+The away path MUST be `tailscale serve --https` proxying to that
+loopback port, with the tailnet certificate for the MagicDNS name.
 
 It MUST NOT enable Tailscale Funnel, a public A record, ngrok, or a
 reverse proxy on the open internet.
@@ -1467,13 +1475,19 @@ the tailnet is down.
 
 ## 178. Desk and phone
 
-At the appliance the Owner opens the loopback URL. No Tailscale client
-is required. That is how the ten-minute first send stays true.
+At the appliance the Owner opens the loopback URL (`http://127.0.0.1`).
+No Tailscale client is required. That is how the ten-minute first send
+stays true. User agents treat that host as a secure context.
 
 Away from the appliance, Home and approvals are the MagicDNS name over
-the tailnet. A phone MUST run a Tailscale client before the mobile web
-UI will load. Notification mail (§129) links to that MagicDNS URL and
-contains no message bodies.
+HTTPS. `tailscale serve --https` terminates TLS and proxies to the
+loopback listener (§177). A phone MUST run a Tailscale client before
+the mobile web UI will load. Plain HTTP on the tailnet is not a Member
+path.
+
+Session cookies MUST be `Secure`, `HttpOnly` and `SameSite=Strict` on
+both the loopback URL and the tailnet HTTPS URL. Notification mail
+(§129) links to that HTTPS MagicDNS URL and contains no message bodies.
 
 ## 179. Overlay vs vendor root
 
@@ -1485,9 +1499,11 @@ joined; rotation is an Owner action and an AuditEvent.
 
 ## 180. Failure
 
-If the tailnet is down: the desk UI still works; away clients see "can't
-reach the appliance"; Automations, Gmail effects and local models
-continue; Home shows the tailnet as unhealthy. A tailnet outage MUST NOT
+The desk UI still serves when Tailscale is stopped, because `agent-osd`
+binds only `127.0.0.1` and does not wait for a tailnet address (§177).
+Away clients see "can't reach the appliance". Automations, Gmail
+effects and local models continue. Home shows the tailnet as unhealthy.
+A tailnet outage, including `tailscale serve` not running, MUST NOT
 fail in-flight effects or invent `UNKNOWN`.
 
 ## 181. What is not a path
@@ -1520,8 +1536,8 @@ Phase 2  Effect law
 Phase 3  Runtime
          agent-osd modules, Worker interface, semaphores, detected profiles,
          Pi with generated tools, browserd with research profile, model
-         router with local_small and one external provider, UI listeners
-         on loopback + Tailscale only (§177)
+         router with local_small and one external provider, UI listener
+         on `127.0.0.1` only, away path `tailscale serve --https` (§177)
 
 Phase 4  Product
          Home roster + presence, chat transcript with cards and widgets,
