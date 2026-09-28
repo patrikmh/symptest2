@@ -1,12 +1,15 @@
 import asyncio
 import base64
+import hmac
 import json
 import logging
+import re
 import secrets
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Tuple
+from urllib.parse import urlencode
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse, PlainTextResponse
@@ -34,6 +37,40 @@ from grokcall.persistence.database import Database
 
 logger = logging.getLogger("grokcall.api")
 logging.basicConfig(level=logging.DEBUG if settings.debug else logging.INFO)
+
+# 46elks calls the whenhangup URL with the shared secret in the query string.
+# Access logs and any accidental log of that URL must not keep the secret.
+_HANGUP_TOKEN_RE = re.compile(r"(?i)((?:[?&]|\b)token=)[^&\s\"']+")
+
+
+class _RedactHangupTokenFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.msg = _redact_hangup_token(record.msg)
+        record.args = _redact_hangup_token(record.args)
+        return True
+
+
+def _redact_hangup_token(value):
+    if isinstance(value, str):
+        return _HANGUP_TOKEN_RE.sub(r"\1REDACTED", value)
+    if isinstance(value, tuple):
+        return tuple(_redact_hangup_token(item) for item in value)
+    if isinstance(value, dict):
+        return {key: _redact_hangup_token(item) for key, item in value.items()}
+    return value
+
+
+_hangup_token_redaction = _RedactHangupTokenFilter()
+
+
+def _install_hangup_token_redaction() -> None:
+    for name in ("grokcall", "uvicorn", "uvicorn.access", "uvicorn.error"):
+        log = logging.getLogger(name)
+        if _hangup_token_redaction not in log.filters:
+            log.addFilter(_hangup_token_redaction)
+
+
+_install_hangup_token_redaction()
 
 ASSETS_DIR = Path(__file__).resolve().parents[2] / "assets"
 
@@ -69,10 +106,37 @@ async def sweep_stale_sessions() -> None:
 
 # ------------------------------------------------------------------ lifespan
 
+def hangup_callback_url() -> str:
+    """whenhangup URL handed to 46elks. Includes the shared secret when configured."""
+    url = f"{settings.base_url.rstrip('/')}/46elks/hangup"
+    token = settings.fortysixelks_hangup_token
+    if not token:
+        return url
+    return f"{url}?{urlencode({'token': token})}"
+
+
+def hangup_token_accepted(presented: Optional[str]) -> bool:
+    """Fail closed. The comparison does not log either value."""
+    expected = settings.fortysixelks_hangup_token or ""
+    if not expected:
+        return False
+    candidate = presented or ""
+    try:
+        return hmac.compare_digest(candidate, expected)
+    except Exception:  # noqa: BLE001 - never log the token via the exception
+        return False
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global database
     logger.info("GrokCall gateway starting (env=%s)", settings.app_env)
+    if settings._base_url_fallback:
+        logger.warning("BASE_URL is not set; falling back to %s", settings.base_url)
+    if settings.app_env == "production" and settings._base_url_fallback:
+        raise RuntimeError("BASE_URL must be set when APP_ENV=production")
+    if not settings.fortysixelks_hangup_token:
+        logger.error("FORTYSIXELKS_HANGUP_TOKEN is not set; /46elks/hangup will reject every callback")
     if not settings.fortysixelks_realtime_number:
         logger.error("FORTYSIXELKS_REALTIME_NUMBER is not set; incoming calls will be rejected")
     if not settings.elevenlabs_api_key:
@@ -146,7 +210,7 @@ async def fortysixelks_incoming(request: Request):
     )
     _spawn(_wake_agent(session))
 
-    hangup_url = f"{settings.base_url.rstrip('/')}/46elks/hangup"
+    hangup_url = hangup_callback_url()
     if settings.connecting_audio_url:
         actions = FortySixElksActionBuilder.play_then_connect(
             settings.connecting_audio_url,
@@ -162,29 +226,41 @@ async def fortysixelks_incoming(request: Request):
 
 @app.post("/46elks/hangup")
 async def fortysixelks_hangup(request: Request):
-    """whenhangup callback for the voice number. The realtime leg normally ends the
-    call first; this is a safety net for legs that never connected."""
+    """whenhangup callback for the voice number.
+
+    46elks can POST this while the realtime WebSocket is still connecting, and
+    the voice leg's id is not the realtime leg's id. Ending the session here
+    would make the later WebSocket hello treat the call as already over.
+    Calls that never reach the realtime leg are failed by the session sweeper.
+    """
+    # Query value only — do not log the URL or the token.
+    presented = request.query_params.get("token")
+    if not hangup_token_accepted(presented):
+        logger.warning("Rejected 46elks hangup callback: missing or invalid token")
+        return PlainTextResponse("Forbidden", status_code=403)
+
     form = await request.form()
     provider_id = parse_hangup_form(form)
     logger.info("Hangup callback for %s (state=%s)", provider_id, form.get("state"))
     if provider_id:
         session = await registry.get_by_provider_id(provider_id)
         if session is not None and not session.is_terminal:
-            if session.pipeline is not None:
-                # Once the realtime WebSocket is up, that leg owns teardown. The
-                # original voice number's whenhangup can fire when the *connect*
-                # action completes, which must not kill a live conversation.
-                if session.realtime_call_id and provider_id != session.realtime_call_id:
-                    logger.info(
-                        "Ignoring voice-leg hangup for live call %s (realtime=%s)",
-                        session.call_id,
-                        session.realtime_call_id,
-                    )
-                else:
-                    await session.pipeline.on_leg_closed(reason="provider_hangup_callback")
+            voice_leg_of_connected_call = (
+                session.pipeline is not None
+                and bool(session.realtime_call_id)
+                and provider_id != session.realtime_call_id
+            )
+            # No pipeline yet: the realtime socket has not attached. Leave the
+            # session pending so that socket can still bind to this call.
+            if session.pipeline is None or voice_leg_of_connected_call:
+                logger.info(
+                    "Ignoring hangup for %s on call %s (realtime_attached=%s)",
+                    provider_id,
+                    session.call_id,
+                    session.pipeline is not None,
+                )
             else:
-                await session.set_status(CallStatus.ENDED, reason="hangup_before_connect")
-                await persist_session(session)
+                await session.pipeline.on_leg_closed(reason="provider_hangup_callback")
     return PlainTextResponse("OK")
 
 
