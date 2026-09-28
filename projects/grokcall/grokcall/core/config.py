@@ -1,6 +1,13 @@
+import logging
 from typing import Optional
 
+from pydantic import PrivateAttr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger("grokcall.config")
+
+# Used only when BASE_URL is unset and APP_ENV is not production.
+_DEV_BASE_URL = "http://localhost:8000"
 
 
 class Settings(BaseSettings):
@@ -22,12 +29,18 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
     # Public origin (behind the tunnel). Used to build URLs handed to 46elks.
-    base_url: str = "http://localhost:8000"
+    # Empty means BASE_URL was not set. Production refuses to start; anywhere
+    # else we warn and fall back to localhost. See ``_resolve_base_url``.
+    base_url: str = ""
+    _base_url_fallback: bool = PrivateAttr(default=False)
 
     # Security
     mcp_bearer_token: str = "dev-secret-token"
     # When set, the realtime WebSocket is only served at /46elks/realtime/<token>.
     realtime_path_token: Optional[str] = None
+    # Shared secret 46elks must send back as ?token= on POST /46elks/hangup.
+    # When unset the callback rejects every request. Never log this value.
+    fortysixelks_hangup_token: Optional[str] = None
 
     # 46elks
     fortysixelks_api_username: Optional[str] = None
@@ -73,6 +86,18 @@ class Settings(BaseSettings):
 
     # Persistence
     sqlite_db_path: str = "grokcall.db"
+
+    @model_validator(mode="after")
+    def _resolve_base_url(self) -> "Settings":
+        if self.base_url.strip():
+            self._base_url_fallback = False
+            return self
+        if self.app_env == "production":
+            raise ValueError("BASE_URL must be set when APP_ENV=production")
+        self._base_url_fallback = True
+        logger.warning("BASE_URL is not set; falling back to %s", _DEV_BASE_URL)
+        self.base_url = _DEV_BASE_URL
+        return self
 
 
 settings = Settings()

@@ -89,7 +89,10 @@ async def test_full_call_through_real_server_and_mcp_client(test_settings):
                 data={"callid": "c_voice_leg", "direction": "incoming", "from": "+46709876543", "to": "+46766861234"},
             )
             assert res.status_code == 200
-            assert res.json() == {"connect": test_settings.fortysixelks_realtime_number}
+            assert res.json() == {
+                "connect": test_settings.fortysixelks_realtime_number,
+                "whenhangup": f"{test_settings.base_url}/46elks/hangup?token={test_settings.fortysixelks_hangup_token}",
+            }
 
         session = await registry.get_by_provider_id("c_voice_leg")
         call_id = session.call_id
@@ -254,6 +257,102 @@ async def test_realtime_path_token_enforced(test_settings):
             await ws.send(json.dumps({"t": "hello", "callid": "c_tok", "from": "+4670", "to": "+4676"}))
             assert json.loads(await ws.recv())["t"] == "listening"
             await ws.send(json.dumps({"t": "bye", "reason": "hangup"}))
+
+
+async def _wait_until(call_id: str, predicate, timeout: float = 2.0):
+    deadline = asyncio.get_running_loop().time() + timeout
+    session = await registry.get_by_id(call_id)
+    while asyncio.get_running_loop().time() < deadline:
+        if session is not None and predicate(session):
+            return session
+        await asyncio.sleep(0.02)
+        session = await registry.get_by_id(call_id)
+    return session
+
+
+@pytest.mark.asyncio
+async def test_hangup_before_realtime_websocket_keeps_connecting_call(test_settings):
+    """whenhangup can beat the realtime hello. The call must still go live."""
+    test_settings.connecting_audio_url = "https://phone.example.com/static/connecting.mp3"
+    async with RunningServer(free_port()) as srv:
+        async with httpx.AsyncClient(base_url=srv.base) as http:
+            res = await http.post(
+                "/46elks/incoming",
+                data={"callid": "c_voice_race", "from": "+46703330001", "to": "+46766861234"},
+            )
+            assert res.status_code == 200
+            assert res.json()["whenhangup"].endswith(f"token={test_settings.fortysixelks_hangup_token}")
+            session = await registry.get_by_provider_id("c_voice_race")
+            call_id = session.call_id
+
+            hang = await http.post(
+                "/46elks/hangup",
+                params={"token": test_settings.fortysixelks_hangup_token},
+                data={"id": "c_voice_race", "state": "success", "duration": "1"},
+            )
+            assert hang.status_code == 200
+            pending = await registry.get_by_id(call_id)
+            assert pending is not None and not pending.is_terminal
+
+            async with websockets.connect(f"{srv.ws_base}/46elks/realtime") as elks:
+                await elks.send(json.dumps({
+                    "t": "hello",
+                    "callid": "c_rt_race",
+                    "from": "+46703330001",
+                    "to": test_settings.fortysixelks_realtime_number,
+                }))
+                assert json.loads(await elks.recv())["t"] == "listening"
+                assert json.loads(await elks.recv())["t"] == "sending"
+                live = await _wait_until(call_id, lambda s: s.status == CallStatus.LIVE)
+                assert live.call_id == call_id
+                assert live.status == CallStatus.LIVE
+                assert live.realtime_call_id == "c_rt_race"
+                assert live.end_reason is None
+                assert [s.call_id for s in await registry.list_all()] == [call_id]
+                await elks.send(json.dumps({"t": "bye", "reason": "hangup"}))
+                ended = await _wait_until(call_id, lambda s: s.status == CallStatus.ENDED)
+                assert ended.status == CallStatus.ENDED
+
+
+@pytest.mark.asyncio
+async def test_voice_hangup_after_realtime_websocket_keeps_live_call(test_settings):
+    """Normal order: the realtime leg is up before whenhangup. The voice-leg callback must not end it."""
+    test_settings.connecting_audio_url = "https://phone.example.com/static/connecting.mp3"
+    async with RunningServer(free_port()) as srv:
+        async with httpx.AsyncClient(base_url=srv.base) as http:
+            await http.post(
+                "/46elks/incoming",
+                data={"callid": "c_voice_ok", "from": "+46703330002", "to": "+46766861234"},
+            )
+            session = await registry.get_by_provider_id("c_voice_ok")
+            call_id = session.call_id
+            async with websockets.connect(f"{srv.ws_base}/46elks/realtime") as elks:
+                await elks.send(json.dumps({
+                    "t": "hello",
+                    "callid": "c_rt_ok",
+                    "from": "+46703330002",
+                    "to": test_settings.fortysixelks_realtime_number,
+                }))
+                assert json.loads(await elks.recv())["t"] == "listening"
+                assert json.loads(await elks.recv())["t"] == "sending"
+                live = await _wait_until(call_id, lambda s: s.status == CallStatus.LIVE)
+                assert live.status == CallStatus.LIVE
+                assert live.realtime_call_id == "c_rt_ok"
+
+                hang = await http.post(
+                    "/46elks/hangup",
+                    params={"token": test_settings.fortysixelks_hangup_token},
+                    data={"id": "c_voice_ok", "state": "success"},
+                )
+                assert hang.status_code == 200
+                still = await registry.get_by_id(call_id)
+                assert still.status == CallStatus.LIVE
+                assert still.end_reason is None
+
+                await elks.send(json.dumps({"t": "bye", "reason": "hangup", "message": "the caller hung up"}))
+                ended = await _wait_until(call_id, lambda s: s.status == CallStatus.ENDED)
+                assert ended.status == CallStatus.ENDED
+                assert ended.end_reason == "hangup"
 
 
 @pytest.mark.asyncio

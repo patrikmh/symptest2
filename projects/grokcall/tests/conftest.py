@@ -27,6 +27,7 @@ def test_settings(monkeypatch, tmp_path):
     monkeypatch.setattr(settings, "fortysixelks_realtime_number", "+46766860099")
     monkeypatch.setattr(settings, "connecting_audio_url", None)
     monkeypatch.setattr(settings, "realtime_path_token", None)
+    monkeypatch.setattr(settings, "fortysixelks_hangup_token", "test-hangup-token")
     monkeypatch.setattr(settings, "mcp_bearer_token", "test-token")
     monkeypatch.setattr(settings, "sqlite_db_path", str(tmp_path / "grokcall-test.db"))
     yield settings
